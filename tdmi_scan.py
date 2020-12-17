@@ -16,7 +16,7 @@ def DMI(x, y, delay):
     data = np.vstack((x,y)).T
   elif delay > 0:
     data = np.vstack((x[:-delay],y[delay:])).T
-  elif delay < 0:
+  else:
     data = np.vstack((x[-delay:],y[:delay])).T
   return mutual_info(data)
 
@@ -58,7 +58,7 @@ def DMI_01(x, y, bins, delay):
   elif delay > 0:
     x_new = x[:-delay].copy()
     y_new = y[delay:].copy()
-  elif delay < 0:
+  else:
     x_new = x[-delay:].copy()
     y_new = y[:delay].copy()
   return mutual_info_01(x_new, y_new)
@@ -73,7 +73,7 @@ def Dcorr(x, y, delay):
   elif delay > 0:
     x_new = x[:-delay].copy()
     y_new = y[delay:].copy()
-  elif delay < 0:
+  else:
     x_new = x[-delay:].copy()
     y_new = y[:delay].copy()
   return np.corrcoef(x_new, y_new)[0,1]
@@ -85,25 +85,25 @@ data_package = np.load('preprocessed_data.npz')
 
 #channel index
 def ScanTDMI(datafile:str, band:str, pn:int)->None:
-  id_x = data_package['chose']
-  id_y = np.arange(126)
-  time_delay = np.arange(0,10)
-  mi_data = np.zeros((len(id_x), len(id_y)))
-  for i in range(len(id_x)):
+  id_x = np.arange(126)
+  id_y = data_package['chose']
+  time_delay = np.arange(0,41)
+  mi_data = np.zeros((len(id_x), len(id_y), len(time_delay)))
+  for j in range(len(id_y)):
     p = multiprocessing.Pool(pn)
     result = [p.apply_async(func = TDMI,
                             args=(data_package[datafile+'_'+band][:,id_x[i]],
                                   data_package[datafile+'_'+band][:,id_y[j]], 
                                   time_delay
                                   )
-                            ) for j in range(len(id_y))]
+                            ) for i in range(len(id_y))]
     p.close()
     p.join()
-    j = 0
+    i = 0
     for res in result:
-      mi_data[i,j] = np.sum(res.get())
-      j += 1
-  np.save(datafile+'_'+band+'_tdmi.npy', mi_data)
+      mi_data[i,j,:] = res.get()
+      i += 1
+  np.save(datafile+'_'+band+'_tdmi_total.npy', mi_data)
 
 
 start = time.time()
