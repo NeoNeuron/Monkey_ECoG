@@ -84,16 +84,21 @@ def Dcorr(x, y, delay):
 data_package = np.load('preprocessed_data.npz')
 
 #channel index
-def ScanTDMI(datafile:str, band:str, pn:int)->None:
+def ScanTDMI(datafile:str, band:str=None, pn:int=None)->None:
   id_x = np.arange(126)
   id_y = data_package['chose']
   time_delay = np.arange(0,41)
   mi_data = np.zeros((len(id_x), len(id_y), len(time_delay)))
+  key = datafile+'_'+band
+  fname = f'{datafile:s}_{band:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
+  if band is None:  # using original time series
+    key = datafile
+    fname = f'{datafile:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
   for j in range(len(id_y)):
     p = multiprocessing.Pool(pn)
     result = [p.apply_async(func = TDMI,
-                            args=(data_package[datafile+'_'+band][:,id_x[i]],
-                                  data_package[datafile+'_'+band][:,id_y[j]], 
+                            args=(data_package[key][:,id_x[i]],
+                                  data_package[key][:,id_y[j]], 
                                   time_delay
                                   )
                             ) for i in range(len(id_x))]
@@ -103,12 +108,12 @@ def ScanTDMI(datafile:str, band:str, pn:int)->None:
     for res in result:
       mi_data[i,j,:] = res.get()
       i += 1
-  np.save(datafile+'_'+band+'_tdmi_total.npy', mi_data)
+  np.save(fname, mi_data)
 
 
 start = time.time()
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
 for band in filter_pool:
-  ScanTDMI('data_r', band, 10)
+  ScanTDMI('data_r', band)
 finish = time.time()
 print('[-] totally cost %3.3f s.' % (finish - start))
