@@ -10,10 +10,13 @@ import matplotlib.pyplot as plt
 
 data_package = np.load('preprocessed_data.npz')
 
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
 
 for band in filter_pool:
-    tdmi_data = np.load('sum_tdmi_processing_1217/data/data_r_'+band+'_tdmi_126-10_total.npy')
+    if band == None:
+        tdmi_data = np.load('sum_tdmi_processing_1217/data/data_r2_tdmi_126-10_total.npy')
+    else:
+        tdmi_data = np.load('sum_tdmi_processing_1217/data/data_r2_'+band+'_tdmi_126-10_total.npy')
     print(tdmi_data.shape)
     # sum tdmi mode
     # tdmi_data = tdmi_data[:,:,:10].sum(2)
@@ -37,13 +40,13 @@ for band in filter_pool:
 
 
     ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
-    try:
-        popt, pcov = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
-        ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[0],popt[2],popt[4]), 'ro', markersize = 4, label=r'$1^{st}$ Gaussian fit')
-        ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[1],popt[3],popt[5]), 'bo', markersize = 4, label=r'$2^{nd}$ Gaussian fit')
-    except:
-        print(f'WARNING: Failed fitting the {band:s} band case.')
-        pass
+    # try:
+    #     popt, pcov = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
+    #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[0],popt[2],popt[4]), 'ro', markersize = 4, label=r'$1^{st}$ Gaussian fit')
+    #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[1],popt[3],popt[5]), 'bo', markersize = 4, label=r'$2^{nd}$ Gaussian fit')
+    # except:
+    #     print(f'WARNING: Failed fitting the {band:s} band case.')
+    #     pass
     ax[0,0].set_xlabel('$log_{10}(Value)$')
     ax[0,0].set_ylabel('Density')
     ax[0,0].legend(fontsize=15)
@@ -57,7 +60,8 @@ for band in filter_pool:
     ax[1,0].plot(np.log10(answer.flatten()), log_tdmi_data.flatten(), 'k.', label='TDMI samples')
     ax[1,0].plot(np.log10(answer_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
     ax[1,0].plot(np.log10(answer_set), np.polyval(pval, np.log10(answer_set)), 'r', label='Linear Fitting')
-    ax[1,0].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
+    # ax[1,0].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
+    ax[1,0].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
     ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
     ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
     ax[1,0].legend(fontsize=15)
@@ -87,4 +91,7 @@ for band in filter_pool:
         ax[1,idx+1].set_title(f'AUC = {auc:5.3f}')
 
     plt.tight_layout()
-    plt.savefig('data_r_'+band+'_analysis.png')
+    if band == None:
+        plt.savefig('data_r2_analysis.png')
+    else:
+        plt.savefig('data_r2_'+band+'_analysis.png')
