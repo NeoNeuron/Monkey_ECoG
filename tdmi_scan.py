@@ -89,11 +89,12 @@ def ScanTDMI(datafile:str, band:str=None, pn:int=None)->None:
   id_y = data_package['chose']
   time_delay = np.arange(0,41)
   mi_data = np.zeros((len(id_x), len(id_y), len(time_delay)))
-  key = datafile+'_'+band
-  fname = f'{datafile:s}_{band:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
   if band is None:  # using original time series
     key = datafile
     fname = f'{datafile:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
+  else:
+    key = datafile+'_'+band
+    fname = f'{datafile:s}_{band:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
   for j in range(len(id_y)):
     p = multiprocessing.Pool(pn)
     result = [p.apply_async(func = TDMI,
