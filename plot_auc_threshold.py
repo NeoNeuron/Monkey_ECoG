@@ -11,16 +11,23 @@ import matplotlib.pyplot as plt
 data_package = np.load('preprocessed_data.npz')
 
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+tdmi_mode = 'sum' # or max
+# tdmi_mode = 'max' # or sum
 fig, ax = plt.subplots(2,3,figsize=(20,10), sharey=True)
 ax = ax.reshape((6,))
 threshold_options = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
 for idx, band in enumerate(filter_pool):
     tdmi_data = np.load('sum_tdmi_processing_1217/data/data_r2_'+band+'_tdmi_126-10_total.npy')
+    if tdmi_mode == 'sum':
+        # sum tdmi mode
+        tdmi_data = tdmi_data[:,:,:10].sum(2)
+    elif tdmi_mode == 'max':
+        # max tdmi mode
+        tdmi_data = tdmi_data.max(2)
+    else:
+        raise ValueError('Invalid tdmi_mode')
     print(tdmi_data.shape)
-    # sum tdmi mode
-    tdmi_data = tdmi_data[:,:,:10].sum(2)
-    # max tdmi mode
-    # tdmi_data = tdmi_data.max(2)
+
     log_tdmi_data = np.log10(tdmi_data)
     log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
 
@@ -39,4 +46,4 @@ for idx, band in enumerate(filter_pool):
     ax[idx].grid(ls='--')
 
 plt.tight_layout()
-plt.savefig('data_r2_auc-threshold.png')
+plt.savefig(f'data_r2_auc-threshold_{tdmi_mode:s}.png')
