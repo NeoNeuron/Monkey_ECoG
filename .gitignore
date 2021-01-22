@@ -1,0 +1,8 @@
+*.mat
+*.npy
+*.npz
+*.swp
+.DS_Store
+literatures/
+*.png
+*.pyc

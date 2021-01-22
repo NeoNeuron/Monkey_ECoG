@@ -30,20 +30,37 @@ if __name__ == '__main__':
     for i in range(len(idx)):
       for j in range(len(idx)):
         mi_data[i,j] = np.zeros((multiplicity[i], multiplicity[j], len(time_delay)))
-        for k in range(multiplicity[i]):
-          p = multiprocessing.Pool(pn)
-          result = [p.apply_async(func = TDMI,
-                                  args=(data_package[key][i][:,k],
-                                        data_package[key][j][:,l], 
-                                        time_delay
-                                        )
-                                  ) for l in range(multiplicity[j])]
-          p.close()
-          p.join()
-          l = 0
-          for res in result:
-            mi_data[i,j][k,l] = res.get()
-            l += 1
+        # auto select the axes with smaller length to loop
+        if multiplicity[i] <= multiplicity[j]:
+          for k in range(multiplicity[i]):
+            p = multiprocessing.Pool(pn)
+            result = [p.apply_async(func = TDMI,
+                                    args=(data_package[key][i][:,k],
+                                          data_package[key][j][:,l], 
+                                          time_delay
+                                          )
+                                    ) for l in range(multiplicity[j])]
+            p.close()
+            p.join()
+            l = 0
+            for res in result:
+              mi_data[i,j][k,l] = res.get()
+              l += 1
+        else:
+          for l in range(multiplicity[j]):
+            p = multiprocessing.Pool(pn)
+            result = [p.apply_async(func = TDMI,
+                                    args=(data_package[key][i][:,k],
+                                          data_package[key][j][:,l], 
+                                          time_delay
+                                          )
+                                    ) for k in range(multiplicity[i])]
+            p.close()
+            p.join()
+            k = 0
+            for res in result:
+              mi_data[i,j][k,l] = res.get()
+              k += 1
     np.save(path + fname, mi_data)
 
   start = time.time()
