@@ -79,42 +79,41 @@ def Dcorr(x, y, delay):
   return np.corrcoef(x_new, y_new)[0,1]
 
 
-# load data
+if __name__ == '__main__':
+  # load data
+  data_package = np.load('preprocessed_data.npz')
 
-data_package = np.load('preprocessed_data.npz')
+  #channel index
+  def ScanTDMI(datafile:str, band:str=None, pn:int=None)->None:
+    id_x = np.arange(126)
+    id_y = data_package['chose']
+    time_delay = np.arange(0,41)
+    mi_data = np.zeros((len(id_x), len(id_y), len(time_delay)))
+    if band is None:  # using original time series
+      key = datafile
+      fname = f'{datafile:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
+    else:
+      key = datafile+'_'+band
+      fname = f'{datafile:s}_{band:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
+    for j in range(len(id_y)):
+      p = multiprocessing.Pool(pn)
+      result = [p.apply_async(func = TDMI,
+                              args=(data_package[key][:,id_x[i]],
+                                    data_package[key][:,id_y[j]], 
+                                    time_delay
+                                    )
+                              ) for i in range(len(id_x))]
+      p.close()
+      p.join()
+      i = 0
+      for res in result:
+        mi_data[i,j,:] = res.get()
+        i += 1
+    np.save(fname, mi_data)
 
-#channel index
-def ScanTDMI(datafile:str, band:str=None, pn:int=None)->None:
-  id_x = np.arange(126)
-  id_y = data_package['chose']
-  time_delay = np.arange(0,41)
-  mi_data = np.zeros((len(id_x), len(id_y), len(time_delay)))
-  if band is None:  # using original time series
-    key = datafile
-    fname = f'{datafile:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
-  else:
-    key = datafile+'_'+band
-    fname = f'{datafile:s}_{band:s}_tdmi_{len(id_x):d}-{len(id_y):d}_total.npy'
-  for j in range(len(id_y)):
-    p = multiprocessing.Pool(pn)
-    result = [p.apply_async(func = TDMI,
-                            args=(data_package[key][:,id_x[i]],
-                                  data_package[key][:,id_y[j]], 
-                                  time_delay
-                                  )
-                            ) for i in range(len(id_x))]
-    p.close()
-    p.join()
-    i = 0
-    for res in result:
-      mi_data[i,j,:] = res.get()
-      i += 1
-  np.save(fname, mi_data)
-
-
-start = time.time()
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
-for band in filter_pool:
-  ScanTDMI('data_r', band)
-finish = time.time()
-print('[-] totally cost %3.3f s.' % (finish - start))
+  start = time.time()
+  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+  for band in filter_pool:
+    ScanTDMI('data_r', band)
+  finish = time.time()
+  print('[-] totally cost %3.3f s.' % (finish - start))
