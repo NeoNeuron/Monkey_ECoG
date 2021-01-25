@@ -35,7 +35,6 @@ for idx, band in enumerate(filter_pool):
                 tdmi_data_flatten.append(tdmi_data[i,j].flatten())
             else:
                 tdmi_data_flatten.append(tdmi_data[i,j][~np.eye(data_package['multiplicity'][i], dtype=bool)])
-    print(tdmi_data.shape)
 
     tdmi_data_flatten = np.hstack(tdmi_data_flatten)
     log_tdmi_data = np.log10(tdmi_data_flatten)

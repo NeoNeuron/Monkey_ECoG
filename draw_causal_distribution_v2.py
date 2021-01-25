@@ -3,6 +3,7 @@
 # Institute: INS, SJTU
 # Analyze the causal relation calculated from ECoG data.
 
+from math import log
 import numpy as np
 import matplotlib as mpl 
 mpl.rcParams['font.size'] = 16
@@ -24,28 +25,39 @@ data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
 
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
 
+# is interarea or not
+
+tdmi_mode = 'sum'  # or 'max'
+is_interarea = False
+
 for band in filter_pool:
     weight_flatten = data_package['weight_flatten'].copy()
+    if is_interarea:
+        interarea_mask = (weight_flatten != 1.5)
+        weight_flatten = weight_flatten[interarea_mask]
     if band == None:
         tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
     else:
         tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-    print(tdmi_data.shape)
     tdmi_data_flatten = []
     for i in range(tdmi_data.shape[0]):
         for j in range(tdmi_data.shape[1]):
-            # sum tdmi mode
-            tdmi_data[i,j] = tdmi_data[i,j][:,:,:10].sum(2)
-            # max tdmi mode
-            # tdmi_data[i,j] = tdmi_data[i,j].max(2)
+            if tdmi_mode == 'sum':
+                tdmi_data[i,j] = tdmi_data[i,j][:,:,:10].sum(2)
+            elif tdmi_mode == 'max':
+                tdmi_data[i,j] = tdmi_data[i,j].max(2)
+            else:
+                raise RuntimeError('Invalid tdmi_mode.')
             if i != j:
                 tdmi_data_flatten.append(tdmi_data[i,j].flatten())
             else:
                 tdmi_data_flatten.append(tdmi_data[i,j][~np.eye(data_package['multiplicity'][i], dtype=bool)])
 
-    # tdmi_data_flatten = np.hstack([item.flatten() for item in tdmi_data.flatten()])
     tdmi_data_flatten = np.hstack(tdmi_data_flatten)
-    log_tdmi_data = np.log10(tdmi_data_flatten)
+    if is_interarea:
+        log_tdmi_data = np.log10(tdmi_data_flatten[interarea_mask])
+    else:
+        log_tdmi_data = np.log10(tdmi_data_flatten)
     log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
 
     # calculate histogram
@@ -73,13 +85,16 @@ for band in filter_pool:
     ax[1,0].plot(np.log10(weight_flatten+1e-8), log_tdmi_data.flatten(), 'k.', label='TDMI samples')
     ax[1,0].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
     ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
-    ax[1,0].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
-    # ax[1,0].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
+    if tdmi_mode == 'sum':
+        ax[1,0].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
+    elif tdmi_mode == 'max':
+        ax[1,0].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
     ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
     ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
     ax[1,0].legend(fontsize=15)
 
-    threshold_options = [0.1, 1e-3, 1e-5]
+    # Draw ROC curves
+    threshold_options = [1e-1, 5e-3, 1e-4]
     for idx, threshold in enumerate(threshold_options):
         answer = weight_flatten.copy()
         ax[0,idx+1].semilogy(np.sort(answer))
@@ -105,6 +120,12 @@ for band in filter_pool:
 
     plt.tight_layout()
     if band == None:
-        plt.savefig(path + 'data_series_analysis.png')
+        if is_interarea:
+            plt.savefig(path + 'data_series_interarea_analysis_'+tdmi_mode+'.png')
+        else:
+            plt.savefig(path + 'data_series_analysis_'+tdmi_mode+'.png')
     else:
-        plt.savefig(path + 'data_series_'+band+'_analysis.png')
+        if is_interarea:
+            plt.savefig(path + 'data_series_'+band+'_interarea_analysis_'+tdmi_mode+'.png')
+        else:
+            plt.savefig(path + 'data_series_'+band+'_analysis_'+tdmi_mode+'.png')
