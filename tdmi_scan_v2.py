@@ -64,7 +64,7 @@ if __name__ == '__main__':
     np.save(path + fname, mi_data)
 
   start = time.time()
-  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
   for band in filter_pool:
     ScanTDMI(band)
   finish = time.time()

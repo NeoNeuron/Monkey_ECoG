@@ -65,6 +65,17 @@ adj_mat = np.zeros((num_region, num_region))
 adj_mat[w[:,1].astype(int)-1, w[:,0].astype(int)-1] = w[:,2]
 data_package['adj_mat'] = adj_mat
 
+# create pair-channel-wise connectivity matrix
+weight_flatten = []
+for i in range(num_region):
+    for j in range(num_region):
+        if i != j:
+            weight_flatten.append(adj_mat[i,j]*np.ones(multiplicity[i]*multiplicity[j]))
+        else:
+            weight_flatten.append(1.5*np.ones(multiplicity[i]*(multiplicity[j]-1)))
+weight_flatten = np.hstack(weight_flatten)
+data_package['weight_flatten'] = weight_flatten
+
 for band in filter_pool:
     data_filtered = np.empty_like(data_series, dtype=np.ndarray)
     for region_id in range(data_filtered.shape[0]):
