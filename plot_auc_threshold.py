@@ -6,18 +6,27 @@
 import numpy as np
 import matplotlib as mpl 
 mpl.rcParams['font.size']=20
+mpl.rcParams['axes.labelsize']=25
 import matplotlib.pyplot as plt
 
 path = 'data_preprocessing_46_region/'
 data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
 
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+
 tdmi_mode = 'sum' # or max
-# tdmi_mode = 'max' # or sum
+is_interarea = True
+
 fig, ax = plt.subplots(2,4,figsize=(20,10), sharey=True)
 ax = ax.reshape((8,))
 threshold_options = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
 for idx, band in enumerate(filter_pool):
+    # setup interarea mask
+    weight_flatten = data_package['weight_flatten'].copy()
+    if is_interarea:
+        interarea_mask = (weight_flatten != 1.5)
+        weight_flatten = weight_flatten[interarea_mask]
+    
     if band is None:
         tdmi_data = np.load(path + '/data_series_tdmi_total.npy', allow_pickle=True)
     else:
@@ -37,12 +46,15 @@ for idx, band in enumerate(filter_pool):
                 tdmi_data_flatten.append(tdmi_data[i,j][~np.eye(data_package['multiplicity'][i], dtype=bool)])
 
     tdmi_data_flatten = np.hstack(tdmi_data_flatten)
-    log_tdmi_data = np.log10(tdmi_data_flatten)
+    if is_interarea:
+        log_tdmi_data = np.log10(tdmi_data_flatten[interarea_mask])
+    else:
+        log_tdmi_data = np.log10(tdmi_data_flatten)
     log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
 
     aucs = np.zeros_like(threshold_options)
     for iidx, threshold in enumerate(threshold_options):
-        answer = data_package['weight_flatten'].copy()
+        answer = weight_flatten.copy()
         answer = (answer>threshold).astype(bool)
         false_positive = np.array([np.sum((log_tdmi_data>i)*(~answer))/np.sum(~answer) for i in np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)])
         true_positive = np.array([np.sum((log_tdmi_data>i)*(answer))/np.sum(answer) for i in np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)])
@@ -50,12 +62,21 @@ for idx, band in enumerate(filter_pool):
         aucs[iidx] = auc
     ax[idx].semilogx(threshold_options, aucs, '-*')
     ax[idx].set_xlabel('Threshold value')
-    ax[idx].set_ylabel('AUC')
     if band is None:
         ax[idx].set_title('Origin')
     else:
         ax[idx].set_title(band)
     ax[idx].grid(ls='--')
 
+
+ax[0].set_ylabel('AUC')
+ax[4].set_ylabel('AUC')
+
+# make last subfigure invisible
+ax[-1].set_visible(False)
+
 plt.tight_layout()
-plt.savefig(path + f'data_series_auc-threshold_{tdmi_mode:s}.png')
+if is_interarea:
+    plt.savefig(path + f'auc-threshold_interarea_{tdmi_mode:s}.png')
+else:
+    plt.savefig(path + f'auc-threshold_{tdmi_mode:s}.png')

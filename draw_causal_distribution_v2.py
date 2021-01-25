@@ -31,10 +31,12 @@ tdmi_mode = 'sum'  # or 'max'
 is_interarea = False
 
 for band in filter_pool:
+    # setup interarea mask
     weight_flatten = data_package['weight_flatten'].copy()
     if is_interarea:
         interarea_mask = (weight_flatten != 1.5)
         weight_flatten = weight_flatten[interarea_mask]
+
     if band == None:
         tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
     else:

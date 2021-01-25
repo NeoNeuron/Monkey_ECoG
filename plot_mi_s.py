@@ -5,15 +5,17 @@
 
 import numpy as np
 import matplotlib as mpl 
-mpl.rcParams['font.size']=20
+mpl.rcParams['font.size']=15
+mpl.rcParams['axes.labelsize'] = 15
 import matplotlib.pyplot as plt
 
 path = 'data_preprocessing_46_region/'
 data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
 
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+
 tdmi_mode = 'sum' # or max
-# tdmi_mode = 'max' # or sum
+is_interarea = False
 
 def Linear_R2(x, y, pval):
     mask = ~np.isnan(y)
@@ -21,9 +23,15 @@ def Linear_R2(x, y, pval):
     R = np.corrcoef(y[mask], y_predict)[0,1]
     return R**2
 
-fig, ax = plt.subplots(2,4,figsize=(20,10))
+fig, ax = plt.subplots(2,4,figsize=(20,10), sharex=True)
 ax = ax.reshape((8,))
 for idx, band in enumerate(filter_pool):
+    # setup interarea mask
+    weight_flatten = data_package['weight_flatten'].copy()
+    if is_interarea:
+        interarea_mask = (weight_flatten != 1.5)
+        weight_flatten = weight_flatten[interarea_mask]
+
     if band is None:
         tdmi_data = np.load(path + '/data_series_tdmi_total.npy', allow_pickle=True)
     else:
@@ -44,10 +52,13 @@ for idx, band in enumerate(filter_pool):
                 tdmi_data_flatten.append(tdmi_data[i,j][~np.eye(data_package['multiplicity'][i], dtype=bool)])
 
     tdmi_data_flatten = np.hstack(tdmi_data_flatten)
-    log_tdmi_data = np.log10(tdmi_data_flatten)
+    if is_interarea:
+        log_tdmi_data = np.log10(tdmi_data_flatten[interarea_mask])
+    else:
+        log_tdmi_data = np.log10(tdmi_data_flatten)
     log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
 
-    answer = data_package['weight_flatten'].copy()
+    answer = weight_flatten.copy()
     # pval, cov = np.polyfit(answer.flatten(), log_tdmi_data.flatten(), deg=1,cov=True)
     # answer_set = np.unique(answer.flatten())
     # log_tdmi_data_mean = np.array([np.mean(log_tdmi_data.flatten()[answer.flatten()==key]) for key in answer_set])
@@ -62,20 +73,30 @@ for idx, band in enumerate(filter_pool):
         else:
             log_tdmi_data_mean[i] = log_tdmi_data[mask].mean()
     pval = np.polyfit(answer_edges[:-1][~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
-    # ax[idx].plot(log_answer, log_tdmi_data, 'k.', label='TDMI samples')
     ax[idx].plot(answer_edges[:-1], log_tdmi_data_mean, 'k.', markersize=15, label='TDMI mean')
     ax[idx].plot(answer_edges[:-1], np.polyval(pval, answer_edges[:-1]), 'r', label='Linear Fitting')
     if tdmi_mode == 'sum':
         ax[idx].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
     elif tdmi_mode == 'max':
         ax[idx].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
-    ax[idx].set_xlabel(r'$log_{10}$(Connectivity Strength)')
+    ax[idx].set_xlabel('Weight')
+    ticks = [-7, -5, -3, -1]
+    labels = ['$10^{%d}$'%item for item in ticks]
+    ax[idx].set_xticks(ticks)
+    ax[idx].set_xticklabels(labels)
+
     if band is None:
-        ax[idx].set_title(f'Origin $R^2$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval):5.3f}')
+        ax[idx].set_title(f'Origin ($R^2$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval):5.3f})')
     else:
-        ax[idx].set_title(f'{band:s} $R^2$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval):5.3f}')
+        ax[idx].set_title(f'{band:s} ($R^2$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval):5.3f})')
     ax[idx].legend(fontsize=15)
     ax[idx].grid(ls='--')
 
+# make last subfigure invisible
+ax[-1].set_visible(False)
+
 plt.tight_layout()
-plt.savefig(path + f'/data_series_mi-s_{tdmi_mode:s}.png')
+if is_interarea:
+    plt.savefig(path + f'mi-s_interarea_{tdmi_mode:s}.png')
+else:
+    plt.savefig(path + f'mi-s_{tdmi_mode:s}.png')
