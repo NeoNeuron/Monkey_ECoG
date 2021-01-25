@@ -12,26 +12,26 @@ mpl.rcParams['ytick.labelsize'] = 16
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-path = 'data_preprocessing_46_region/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-
-answer = data_package['adj_mat']
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
-
+# define fitting function
 def Gaussian(x, a, mu, sigma):
     return a*np.exp(-(x-mu)**2/sigma)
 
 def Double_Gaussian(x, a1, a2, mu1, mu2, sigma1, sigma2):
     return Gaussian(x, a1, mu1, sigma1) + Gaussian(x, a2, mu2, sigma2)
 
+path = 'data_preprocessing_46_region/'
+data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+
 for band in filter_pool:
+    weight_flatten = data_package['weight_flatten'].copy()
     if band == None:
         tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
     else:
         tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
     print(tdmi_data.shape)
     tdmi_data_flatten = []
-    weight_flatten = []
     for i in range(tdmi_data.shape[0]):
         for j in range(tdmi_data.shape[1]):
             # sum tdmi mode
@@ -40,14 +40,11 @@ for band in filter_pool:
             # tdmi_data[i,j] = tdmi_data[i,j].max(2)
             if i != j:
                 tdmi_data_flatten.append(tdmi_data[i,j].flatten())
-                weight_flatten.append(answer[i,j]*np.ones(len(tdmi_data_flatten[-1])))
             else:
                 tdmi_data_flatten.append(tdmi_data[i,j][~np.eye(data_package['multiplicity'][i], dtype=bool)])
-                weight_flatten.append(1.5*np.ones(len(tdmi_data_flatten[-1])))
 
     # tdmi_data_flatten = np.hstack([item.flatten() for item in tdmi_data.flatten()])
     tdmi_data_flatten = np.hstack(tdmi_data_flatten)
-    weight_flatten = np.hstack(weight_flatten)
     log_tdmi_data = np.log10(tdmi_data_flatten)
     log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
 
@@ -71,7 +68,6 @@ for band in filter_pool:
     # pval, cov = np.polyfit(answer.flatten(), log_tdmi_data.flatten(), deg=1,cov=True)
     weight_set = np.unique(weight_flatten)
     log_tdmi_data_mean = np.array([np.mean(log_tdmi_data[weight_flatten==key]) for key in weight_set])
-    weight_flatten
     weight_set[weight_set==0]=1e-6
     pval, cov = np.polyfit(np.log10(weight_set), log_tdmi_data_mean, deg=1,cov=True)
     ax[1,0].plot(np.log10(weight_flatten+1e-8), log_tdmi_data.flatten(), 'k.', label='TDMI samples')
