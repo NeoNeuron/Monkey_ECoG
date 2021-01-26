@@ -3,7 +3,9 @@
 *.npz
 *.swp
 .DS_Store
-literatures/
+literatures
 .vscode
+.ipynb_checkpoints
 *.png
 *.pyc
+*.pdf
