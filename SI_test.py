@@ -1,0 +1,78 @@
+#!/usr/bin python
+# coding: utf-8
+# Author: Kai Chen
+# Institute: INS, SJTU
+# Description: Parallelly calculating TDMI from filtered ECoG data. Return an matrix of
+#              accumulative tdmi with order p. By default, p=10.
+
+import numpy as np
+import multiprocessing
+import time
+from tdmi_scan import DMI
+
+def MI_SI(x:np.ndarray, y:np.ndarray):
+  '''Mutual information significance level.
+  :param x: first time series
+  :param y: second time series
+  :return: MI value of shuffled time series
+
+  '''
+  np.random.shuffle(x)
+  return DMI(x, y, 0)
+
+if __name__ == '__main__':
+  # load data
+  path = 'data_preprocessing_46_region/'
+  data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+
+  multiplicity = data_package['multiplicity']
+
+  #channel index
+  def ScanTDMI(band:str=None, pn:int=None)->None:
+    idx = np.arange(46)
+    mi_data = np.zeros((len(idx), len(idx)), dtype=np.ndarray)
+    if band is None:  # using original time series
+      key = 'data_series'
+    else:
+      key = 'data_series_'+band
+    fname = f'{key:s}_tdmi_shuffle.npy'
+    for i in range(len(idx)):
+      for j in range(len(idx)):
+        mi_data[i,j] = np.zeros((multiplicity[i], multiplicity[j]))
+        # auto select the axes with smaller length to loop
+        if multiplicity[i] <= multiplicity[j]:
+          for k in range(multiplicity[i]):
+            p = multiprocessing.Pool(pn)
+            result = [p.apply_async(func = MI_SI,
+                                    args=(data_package[key][i][:,k],
+                                          data_package[key][j][:,l], 
+                                          )
+                                    ) for l in range(multiplicity[j])]
+            p.close()
+            p.join()
+            l = 0
+            for res in result:
+              mi_data[i,j][k,l] = res.get()
+              l += 1
+        else:
+          for l in range(multiplicity[j]):
+            p = multiprocessing.Pool(pn)
+            result = [p.apply_async(func = MI_SI,
+                                    args=(data_package[key][i][:,k],
+                                          data_package[key][j][:,l], 
+                                          )
+                                    ) for k in range(multiplicity[i])]
+            p.close()
+            p.join()
+            k = 0
+            for res in result:
+              mi_data[i,j][k,l] = res.get()
+              k += 1
+    np.save(path + fname, mi_data)
+
+  start = time.time()
+  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+  for band in filter_pool:
+    ScanTDMI(band)
+  finish = time.time()
+  print('[-] totally cost %3.3f s.' % (finish - start))
