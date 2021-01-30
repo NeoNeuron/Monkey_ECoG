@@ -10,22 +10,30 @@ import multiprocessing
 import time
 from tdmi_scan import DMI
 
-def MI_SI(x:np.ndarray, y:np.ndarray):
-  '''Mutual information significance level.
-  :param x: first time series
-  :param y: second time series
-  :return: MI value of shuffled time series
-
-  '''
-  np.random.shuffle(x)
-  return DMI(x, y, 0)
+def print_log(string, t0):
+  print(f"[INFO] {time.time()-t0:5.2f}: {string:s}")
 
 if __name__ == '__main__':
+  t0 = time.time()
   # load data
   path = 'data_preprocessing_46_region/'
   data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
 
   multiplicity = data_package['multiplicity']
+  
+  # shuffle data
+  print_log("start shuffling data", t0)
+  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+  for band in filter_pool:
+    if band is None:  # using original time series
+      key = 'data_series'
+    else:
+      key = 'data_series_'+band
+    for i in range(len(data_package[key])):
+      for j in range(data_package[key][i].shape[1]):
+        np.random.shuffle(data_package[key][i][:,j])
+
+  print_log("finish shuffling data", t0)
 
   #channel index
   def ScanTDMI(band:str=None, pn:int=None)->None:
@@ -43,9 +51,10 @@ if __name__ == '__main__':
         if multiplicity[i] <= multiplicity[j]:
           for k in range(multiplicity[i]):
             p = multiprocessing.Pool(pn)
-            result = [p.apply_async(func = MI_SI,
+            result = [p.apply_async(func = DMI,
                                     args=(data_package[key][i][:,k],
                                           data_package[key][j][:,l], 
+                                          0
                                           )
                                     ) for l in range(multiplicity[j])]
             p.close()
@@ -57,9 +66,10 @@ if __name__ == '__main__':
         else:
           for l in range(multiplicity[j]):
             p = multiprocessing.Pool(pn)
-            result = [p.apply_async(func = MI_SI,
+            result = [p.apply_async(func = DMI,
                                     args=(data_package[key][i][:,k],
                                           data_package[key][j][:,l], 
+                                          0
                                           )
                                     ) for k in range(multiplicity[i])]
             p.close()
@@ -71,8 +81,15 @@ if __name__ == '__main__':
     np.save(path + fname, mi_data)
 
   start = time.time()
-  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
   for band in filter_pool:
+    if band is None:
+      print_log("start processing raw data", t0)
+    else: 
+      print_log(f"start processing {band:s} data", t0)
     ScanTDMI(band)
+    if band is None:
+      print_log("finish processing raw data", t0)
+    else:
+      print_log(f"finish processing {band:s} data", t0)
   finish = time.time()
-  print('[-] totally cost %3.3f s.' % (finish - start))
+  print_log(f'totally time cost {finish-start:3.3f} s.', t0)
