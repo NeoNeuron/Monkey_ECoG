@@ -33,13 +33,15 @@ weight_flatten = weight_flatten.flatten()
 for band in filter_pool:
     if band == None:
         tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
+        tdmi_data_shuffle = np.load(path + 'data_series_tdmi_shuffle.npy', allow_pickle=True)
     else:
         tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
+        tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
     tdmi_data_cg = np.zeros_like(tdmi_data, dtype=float)
     for i in range(tdmi_data.shape[0]):
         for j in range(tdmi_data.shape[1]):
             if tdmi_mode == 'sum':
-                tdmi_data[i,j] = tdmi_data[i,j][:,:,:10].sum(2)
+                tdmi_data[i,j] = tdmi_data[i,j][:,:,1:11].sum(2)
             elif tdmi_mode == 'max':
                 tdmi_data[i,j] = tdmi_data[i,j].max(2)
             else:
@@ -61,7 +63,11 @@ for band in filter_pool:
 
     fig, ax = plt.subplots(2,4,figsize=(20,10))
 
+    SI_value = tdmi_data_shuffle[~np.eye(data_package['multiplicity'].sum(), dtype=bool)].mean()
+    if tdmi_mode == 'sum':
+        SI_value *= 10
     ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
+    ax[0,0].axvline(np.log10(SI_value), color='cyan')
     # try:
     #     popt, pcov = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
     #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[0],popt[2],popt[4]), 'ro', markersize = 4, label=r'$1^{st}$ Gaussian fit')
