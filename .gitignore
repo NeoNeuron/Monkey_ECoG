@@ -1,11 +1,14 @@
-*.mat
-*.npy
-*.npz
-*.swp
+# ignore folders
 .DS_Store
 literatures
 .vscode
 .ipynb_checkpoints
+
+# ignore file types
+*.npy
+*.mat
+*.npz
+*.swp
 *.png
 *.pyc
 *.pdf
