@@ -8,59 +8,43 @@ import matplotlib as mpl
 mpl.rcParams['font.size']=15
 mpl.rcParams['axes.labelsize'] = 15
 import matplotlib.pyplot as plt
+from CG_causal_distribution import Extract_MI_CG
+from plot_mi_s import Linear_R2
 
 path = 'data_preprocessing_46_region/'
 data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+multiplicity = data_package['multiplicity']
+stride = data_package['stride']
 
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
 
 tdmi_mode = 'sum' # or max
 
-def Linear_R2(x, y, pval):
-    mask = ~np.isnan(y)
-    y_predict = x[mask]*pval[0]+pval[1]
-    R = np.corrcoef(y[mask], y_predict)[0,1]
-    return R**2
+# create adj_weight_flatten by excluding 
+#   auto-tdmi in region with single channel
+adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
+cg_mask = ~np.diag(multiplicity == 1).astype(bool)
+adj_weight_flatten = adj_weight[cg_mask]
 
-adj_mat = data_package['adj_mat']
-weight_flatten = adj_mat + np.eye(adj_mat.shape[0])*1.5
-weight_flatten = weight_flatten.flatten()
-fig, ax = plt.subplots(2,4,figsize=(20,10), sharex=True)
+fig, ax = plt.subplots(2,4,figsize=(20,10))
 ax = ax.reshape((8,))
 for idx, band in enumerate(filter_pool):
+    # load data for target band
     if band is None:
         tdmi_data = np.load(path + '/data_series_tdmi_total.npy', allow_pickle=True)
     else:
         tdmi_data = np.load(path + '/data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-    tdmi_data_cg = np.zeros_like(tdmi_data, dtype=float)
-    for i in range(tdmi_data.shape[0]):
-        for j in range(tdmi_data.shape[1]):
-            if tdmi_mode == 'sum':
-                tdmi_data[i,j] = tdmi_data[i,j][:,:,:10].sum(2)
-            elif tdmi_mode == 'max':
-                tdmi_data[i,j] = tdmi_data[i,j].max(2)
-                # bin counts = [673,2,53,120,81,123,110,51,47]
-            else:
-                raise ValueError('Invalid tdmi_mode')
-            if i != j:
-                tdmi_data_cg[i,j]=tdmi_data[i,j].mean()
-            else:
-                if data_package['multiplicity'][i] > 1:
-                    tdmi_data_cg[i,j]=np.mean(tdmi_data[i,j][~np.eye(data_package['multiplicity'][i], dtype=bool)])
-                else:
-                    tdmi_data_cg[i,j]=tdmi_data[i,j].mean()
 
-    tdmi_data_flatten = tdmi_data_cg.flatten()
+    tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
+
+    tdmi_data_flatten = tdmi_data_cg[cg_mask]
     log_tdmi_data = np.log10(tdmi_data_flatten)
     log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
 
-    answer = weight_flatten.copy()
-    # pval, cov = np.polyfit(answer.flatten(), log_tdmi_data.flatten(), deg=1,cov=True)
-    # answer_set = np.unique(answer.flatten())
-    # log_tdmi_data_mean = np.array([np.mean(log_tdmi_data.flatten()[answer.flatten()==key]) for key in answer_set])
+    answer = adj_weight_flatten.copy()
     answer[answer==0]=1e-7
     log_answer = np.log10(answer)
-    answer_edges = np.linspace(-7, 1, num = 10)
+    answer_edges = np.linspace(-6, 1, num = 15)
     log_tdmi_data_mean = np.zeros(len(answer_edges)-1)
     for i in range(len(answer_edges)-1):
         mask = (log_answer >= answer_edges[i]) & (log_answer < answer_edges[i+1])
@@ -71,12 +55,7 @@ for idx, band in enumerate(filter_pool):
     pval = np.polyfit(answer_edges[:-1][~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
     ax[idx].plot(answer_edges[:-1], log_tdmi_data_mean, 'k.', markersize=15, label='TDMI mean')
     ax[idx].plot(answer_edges[:-1], np.polyval(pval, answer_edges[:-1]), 'r', label='Linear Fitting')
-    if tdmi_mode == 'sum':
-        ax[idx].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
-    elif tdmi_mode == 'max':
-        ax[idx].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
-    ax[idx].set_xlabel('Weight')
-    ticks = [-7, -5, -3, -1]
+    ticks = [-5, -3, -1]
     labels = ['$10^{%d}$'%item for item in ticks]
     ax[idx].set_xticks(ticks)
     ax[idx].set_xticklabels(labels)
@@ -87,6 +66,12 @@ for idx, band in enumerate(filter_pool):
         ax[idx].set_title(f'{band:s} ($R^2$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval):5.3f})')
     ax[idx].legend(fontsize=15)
     ax[idx].grid(ls='--')
+
+if tdmi_mode == 'sum':
+    [ax[i].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$') for i in (0,4)]
+elif tdmi_mode == 'max':
+    [ax[i].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$') for i in (0,4)]
+[ax[i].set_xlabel('Weight') for i in (4,5,6)]
 
 # make last subfigure invisible
 ax[-1].set_visible(False)

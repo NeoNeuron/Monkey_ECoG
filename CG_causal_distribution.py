@@ -3,7 +3,6 @@
 # Institute: INS, SJTU
 # Analyze the causal relation calculated from ECoG data.
 
-from math import log
 import numpy as np
 import matplotlib as mpl 
 mpl.rcParams['font.size'] = 16
@@ -11,116 +10,154 @@ mpl.rcParams['axes.labelsize'] = 16
 mpl.rcParams['xtick.labelsize'] = 16
 mpl.rcParams['ytick.labelsize'] = 16
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
+from draw_causal_distribution_v2 import MI_stats, ROC_curve, AUC
 
-# define fitting function
-def Gaussian(x, a, mu, sigma):
-    return a*np.exp(-(x-mu)**2/sigma)
+def CG(tdmi_data:np.ndarray, stride:np.ndarray, multiplicity:np.ndarray=None)->np.ndarray:
+    """Compute the coarse-grained average of 
+        each cortical region for tdmi_data.
 
-def Double_Gaussian(x, a1, a2, mu1, mu2, sigma1, sigma2):
-    return Gaussian(x, a1, mu1, sigma1) + Gaussian(x, a2, mu2, sigma2)
+    Args:
+        tdmi_data (np.ndarray): channel-wise tdmi_data.
+        stride (np.ndarray): stride of channels. 
+            Equal to the `cumsum` of multiplicity.
+        multiplicity (np.ndarray, optional): number of channel
+            in each cortical region. Defaults to None.
 
-path = 'data_preprocessing_46_region/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
-
-tdmi_mode = 'sum'  # or 'max'
-
-adj_mat = data_package['adj_mat']
-weight_flatten = adj_mat + np.eye(adj_mat.shape[0])*1.5
-weight_flatten = weight_flatten.flatten()
-for band in filter_pool:
-    if band == None:
-        tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
-        tdmi_data_shuffle = np.load(path + 'data_series_tdmi_shuffle.npy', allow_pickle=True)
-    else:
-        tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-        tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
-    tdmi_data_cg = np.zeros_like(tdmi_data, dtype=float)
-    for i in range(tdmi_data.shape[0]):
-        for j in range(tdmi_data.shape[1]):
-            if tdmi_mode == 'sum':
-                tdmi_data[i,j] = tdmi_data[i,j][:,:,1:11].sum(2)
-            elif tdmi_mode == 'max':
-                tdmi_data[i,j] = tdmi_data[i,j].max(2)
-            else:
-                raise RuntimeError('Invalid tdmi_mode.')
+    Returns:
+        np.ndarray: coarse-grained average of tdmi_data
+    """
+    if multiplicity is None:
+        multiplicity = np.diff(stride).astype(int)
+    n_region = stride.shape[0]-1
+    tdmi_data_cg = np.zeros((n_region, n_region))
+    for i in range(n_region):
+        for j in range(n_region):
+            data_buffer = tdmi_data[stride[i]:stride[i+1],stride[j]:stride[j+1]]
             if i != j:
-                tdmi_data_cg[i,j]=tdmi_data[i,j].mean()
+                tdmi_data_cg[i,j]=data_buffer.mean()
             else:
-                if data_package['multiplicity'][i] > 1:
-                    tdmi_data_cg[i,j]=np.mean(tdmi_data[i,j][~np.eye(data_package['multiplicity'][i], dtype=bool)])
+                if multiplicity[i] > 1:
+                    tdmi_data_cg[i,j]=np.mean(data_buffer[~np.eye(multiplicity[i], dtype=bool)])
                 else:
-                    tdmi_data_cg[i,j]=tdmi_data[i,j].mean()
+                    tdmi_data_cg[i,j]=data_buffer.mean() # won't be used in ROC.
+    return tdmi_data_cg
 
-    tdmi_data_flatten = tdmi_data_cg.flatten()
-    log_tdmi_data = np.log10(tdmi_data_flatten)
-    log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
+def Extract_MI_CG(tdmi_data:np.ndarray, mi_mode:str, stride:np.ndarray, 
+                  multiplicity:np.ndarray=None)->np.ndarray:
+    """Extract coarse-grained tdmi_data from original tdmi data.
 
-    # calculate histogram
-    (counts, edges) = np.histogram(log_tdmi_data, bins=100, density=True)
+    Args:
+        tdmi_data (np.ndarray): original tdmi data
+        mi_mode (str): mode of mi statistics
+        stride (np.ndarray): stride of channels.
+            Equal to the `cumsum` of multiplicity.
+        multiplicity (np.ndarray): number of channels
+            in each cortical region. Default to None.
 
-    fig, ax = plt.subplots(2,4,figsize=(20,10))
+    Returns:
+        np.ndarray: coarse-grained average of tdmi_data.
+    """
+    tdmi_data = MI_stats(tdmi_data, mi_mode)
+    tdmi_data_cg = CG(tdmi_data, stride, multiplicity)
+    return tdmi_data_cg
 
-    SI_value = tdmi_data_shuffle[~np.eye(data_package['multiplicity'].sum(), dtype=bool)].mean()
-    if tdmi_mode == 'sum':
-        SI_value *= 10
-    ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
-    ax[0,0].axvline(np.log10(SI_value), color='cyan')
-    # try:
-    #     popt, pcov = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
-    #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[0],popt[2],popt[4]), 'ro', markersize = 4, label=r'$1^{st}$ Gaussian fit')
-    #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[1],popt[3],popt[5]), 'bo', markersize = 4, label=r'$2^{nd}$ Gaussian fit')
-    # except:
-    #     print(f'WARNING: Failed fitting the {band:s} band case.')
-    #     pass
-    ax[0,0].set_xlabel('$log_{10}(Value)$')
-    ax[0,0].set_ylabel('Density')
-    ax[0,0].legend(fontsize=15)
+if __name__ == '__main__':
+    path = 'data_preprocessing_46_region/'
+    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    multiplicity = data_package['multiplicity']
+    stride = data_package['stride']
+    n_region = multiplicity.shape[0]
 
-    weight_set = np.unique(weight_flatten)
-    log_tdmi_data_mean = np.array([np.mean(log_tdmi_data[weight_flatten==key]) for key in weight_set])
-    weight_set[weight_set==0]=1e-6
-    pval, cov = np.polyfit(np.log10(weight_set), log_tdmi_data_mean, deg=1,cov=True)
-    ax[1,0].plot(np.log10(weight_flatten+1e-8), log_tdmi_data, 'k.', label='TDMI samples')
-    # ax[1,0].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
-    ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
-    if tdmi_mode == 'sum':
-        ax[1,0].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
-    elif tdmi_mode == 'max':
-        ax[1,0].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
-    ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
-    ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
-    ax[1,0].legend(fontsize=15)
+    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
 
-    # Draw ROC curves
-    threshold_options = [1e-1, 5e-3, 1e-4]
-    for idx, threshold in enumerate(threshold_options):
-        answer = weight_flatten.copy()
-        ax[0,idx+1].semilogy(np.sort(answer))
-        ax[0,idx+1].set_xlabel('Ranked connectivity strength')
-        ax[0,idx+1].set_ylabel('Connectivity Strength')
-        ax[0,idx+1].axhline(threshold, color='r', ls = '--')
-        ax[0,idx+1].set_title(f'Threshold = {threshold:3.2e}')
+    tdmi_mode = 'sum'  # or 'max'
 
-        # Plot ROC curve
-        answer = (answer>threshold).astype(bool)
+    # create adj_weight_flatten by excluding 
+    #   auto-tdmi in region with single channel
+    adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
+    cg_mask = ~np.diag(multiplicity == 1).astype(bool)
+    adj_weight_flatten = adj_weight[cg_mask]
 
-        false_positive = np.array([np.sum((log_tdmi_data>i)*(~answer))/np.sum(~answer) for i in np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)])
-        true_positive = np.array([np.sum((log_tdmi_data>i)*(answer))/np.sum(answer) for i in np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)])
+    for band in filter_pool:
+        # load shuffled tdmi data for target band
+        if band == None:
+            tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
+            tdmi_data_shuffle = np.load(path + 'data_series_tdmi_shuffle.npy', allow_pickle=True)
+        else:
+            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
+            tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
+        
+        tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
 
-        ax[1,idx+1].plot(false_positive, true_positive)
-        ax[1,idx+1].set_xlabel('False positive rate')
-        ax[1,idx+1].set_ylabel('True positive rate')
-        ax[1,idx+1].plot(range(2),range(2), '--')
-        ax[1,idx+1].set_xlim(0,1)
-        ax[1,idx+1].set_ylim(0,1)
-        auc = -np.sum(np.diff(false_positive)*(true_positive[:-1]+true_positive[1:])/2)
-        ax[1,idx+1].set_title(f'AUC = {auc:5.3f}')
+        tdmi_data_flatten = tdmi_data_cg[cg_mask]
+        log_tdmi_data = np.log10(tdmi_data_flatten)
+        log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
 
-    plt.tight_layout()
-    if band == None:
-        plt.savefig(path + 'cg_analysis_'+tdmi_mode+'.png')
-    else:
-        plt.savefig(path + 'cg_'+band+'_analysis_'+tdmi_mode+'.png')
+        # calculate histogram
+        (counts, edges) = np.histogram(log_tdmi_data, bins=100, density=True)
+
+        fig, ax = plt.subplots(2,4,figsize=(20,10))
+
+        SI_value = tdmi_data_shuffle[~np.eye(stride[-1], dtype=bool)].mean()
+        if tdmi_mode == 'sum':
+            SI_value *= 10
+        ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
+        ax[0,0].axvline(np.log10(SI_value), color='cyan')
+        # UNCOMMENT to create double Gaussian fitting of TDMI PDF
+        # # import fitting function
+        # from scipy.optimize import curve_fit
+        # from draw_causal_distribution_v2 import Gaussian, Double_Gaussian
+        # try:
+        #     popt, _ = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
+        #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[0],popt[2],popt[4]), 'ro', markersize = 4, label=r'$1^{st}$ Gaussian fit')
+        #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[1],popt[3],popt[5]), 'bo', markersize = 4, label=r'$2^{nd}$ Gaussian fit')
+        # except:
+        #     print(f'WARNING: Failed fitting the {band:s} band case.')
+        #     pass
+        ax[0,0].set_xlabel('$log_{10}(Value)$')
+        ax[0,0].set_ylabel('Density')
+        ax[0,0].legend(fontsize=15)
+
+        weight_set = np.unique(adj_weight_flatten)
+        log_tdmi_data_mean = np.array([np.mean(log_tdmi_data[adj_weight_flatten==key]) for key in weight_set])
+        weight_set[weight_set==0]=1e-6
+        pval = np.polyfit(np.log10(weight_set), log_tdmi_data_mean, deg=1)
+        ax[1,0].plot(np.log10(adj_weight_flatten+1e-8), log_tdmi_data, 'k.', label='TDMI samples')
+        # ax[1,0].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
+        ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
+        if tdmi_mode == 'sum':
+            ax[1,0].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
+        elif tdmi_mode == 'max':
+            ax[1,0].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
+        ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
+        ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
+        ax[1,0].legend(fontsize=15)
+
+        # Draw ROC curves
+        threshold_options = [1e-1, 5e-3, 1e-4]
+        for idx, threshold in enumerate(threshold_options):
+            answer = adj_weight_flatten.copy()
+            ax[0,idx+1].semilogy(np.sort(answer))
+            ax[0,idx+1].set_xlabel('Ranked connectivity strength')
+            ax[0,idx+1].set_ylabel('Connectivity Strength')
+            ax[0,idx+1].axhline(threshold, color='r', ls = '--')
+            ax[0,idx+1].set_title(f'Threshold = {threshold:3.2e}')
+
+            # Plot ROC curve
+            answer = (answer>threshold).astype(bool)
+            thresholds = np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)
+            fpr, tpr = ROC_curve(answer, log_tdmi_data, thresholds)
+
+            ax[1,idx+1].plot(fpr, tpr, 'navy')
+            ax[1,idx+1].set_xlabel('False positive rate')
+            ax[1,idx+1].set_ylabel('True positive rate')
+            ax[1,idx+1].plot(range(2),range(2), '--', color='orange')
+            ax[1,idx+1].set_xlim(0,1)
+            ax[1,idx+1].set_ylim(0,1)
+            ax[1,idx+1].set_title(f'AUC = {AUC(fpr, tpr):5.3f}')
+
+        plt.tight_layout()
+        if band == None:
+            plt.savefig(path + 'cg_analysis_'+tdmi_mode+'.png')
+        else:
+            plt.savefig(path + 'cg_'+band+'_analysis_'+tdmi_mode+'.png')
