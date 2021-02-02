@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     for band in filter_pool:
         # load shuffled tdmi data for target band
-        tdmi_data = load_data(path, band, shuffle=True)
+        tdmi_data, tdmi_data_shuffle = load_data(path, band, shuffle=True)
         tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
 
         tdmi_data_flatten = tdmi_data_cg[cg_mask]

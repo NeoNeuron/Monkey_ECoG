@@ -1,4 +1,4 @@
-#!/usr/bin python
+#!/Users/kchen/miniconda3/bin/python
 # Author: Kai Chen
 # Institute: INS, SJTU
 # Plot MI vs. connection strength.
