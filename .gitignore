@@ -12,3 +12,5 @@ literatures
 *.png
 *.pyc
 *.pdf
+*.eps
+*.zip
