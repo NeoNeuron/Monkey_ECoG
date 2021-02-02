@@ -62,7 +62,7 @@ if __name__ == '__main__':
     mpl.rcParams['xtick.labelsize'] = 16
     mpl.rcParams['ytick.labelsize'] = 16
     import matplotlib.pyplot as plt
-    from draw_causal_distribution_v2 import ROC_curve, AUC, Youden_Index
+    from draw_causal_distribution_v2 import load_data, ROC_curve, AUC, Youden_Index
 
     path = 'data_preprocessing_46_region/'
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
@@ -82,13 +82,7 @@ if __name__ == '__main__':
 
     for band in filter_pool:
         # load shuffled tdmi data for target band
-        if band == None:
-            tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
-            tdmi_data_shuffle = np.load(path + 'data_series_tdmi_shuffle.npy', allow_pickle=True)
-        else:
-            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-            tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
-        
+        tdmi_data = load_data(path, band, shuffle=True)
         tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
 
         tdmi_data_flatten = tdmi_data_cg[cg_mask]

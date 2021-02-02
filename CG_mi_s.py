@@ -8,6 +8,7 @@ import matplotlib as mpl
 mpl.rcParams['font.size']=15
 mpl.rcParams['axes.labelsize'] = 15
 import matplotlib.pyplot as plt
+from draw_causal_distribution_v2 import load_data
 from CG_causal_distribution import Extract_MI_CG
 from plot_mi_s import Linear_R2
 
@@ -30,11 +31,7 @@ fig, ax = plt.subplots(2,4,figsize=(20,10))
 ax = ax.reshape((8,))
 for idx, band in enumerate(filter_pool):
     # load data for target band
-    if band is None:
-        tdmi_data = np.load(path + '/data_series_tdmi_total.npy', allow_pickle=True)
-    else:
-        tdmi_data = np.load(path + '/data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-
+    tdmi_data = load_data(path, band)
     tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
 
     tdmi_data_flatten = tdmi_data_cg[cg_mask]

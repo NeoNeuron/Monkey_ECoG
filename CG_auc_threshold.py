@@ -9,7 +9,7 @@ import matplotlib as mpl
 mpl.rcParams['font.size']=20
 mpl.rcParams['axes.labelsize']=25
 import matplotlib.pyplot as plt
-from draw_causal_distribution_v2 import ROC_curve, Youden_Index, AUC
+from draw_causal_distribution_v2 import load_data, ROC_curve, Youden_Index, AUC
 from CG_causal_distribution import Extract_MI_CG
 
 path = 'data_preprocessing_46_region/'
@@ -34,11 +34,7 @@ adj_weight_flatten = adj_weight[cg_mask]
 optimal_threshold = {}
 for idx, band in enumerate(filter_pool):
     # load data for target band
-    if band is None:
-        tdmi_data = np.load(path + '/data_series_tdmi_total.npy', allow_pickle=True)
-    else:
-        tdmi_data = np.load(path + '/data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-
+    tdmi_data = load_data(path, band)
     tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
 
     tdmi_data_flatten = tdmi_data_cg[cg_mask]

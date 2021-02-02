@@ -8,6 +8,7 @@ if __name__ == '__main__':
     import matplotlib as mpl 
     import matplotlib.pyplot as plt
     from mpl_toolkits.axes_grid1 import make_axes_locatable
+    from draw_causal_distribution_v2 import load_data
     from CG_causal_distribution import Extract_MI_CG
 
     path = 'data_preprocessing_46_region/'
@@ -48,11 +49,7 @@ if __name__ == '__main__':
             ax[idx, 0].set_visible(False)
 
         # load tdmi data for target band
-        if band == None:
-            tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
-        else:
-            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-        
+        tdmi_data = load_data(path, band)
         tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
         tdmi_data_cg = np.log10(tdmi_data_cg)
 
@@ -77,4 +74,4 @@ if __name__ == '__main__':
         plt.colorbar(pax1, cax = cax)
         cax.set_visible(True)
 
-    plt.savefig(f'tmp/recon_cg_{tdmi_mode:s}_all.png')
+    plt.savefig(path + f'recon_cg_{tdmi_mode:s}_all.png')

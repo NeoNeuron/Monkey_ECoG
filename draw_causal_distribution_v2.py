@@ -107,6 +107,37 @@ def AUC(fpr:np.ndarray, tpr:np.ndarray)->float:
     """
     return -np.sum(np.diff(fpr)*(tpr[:-1]+tpr[1:])/2)
 
+def load_data(path:str, band:str=None, shuffle:bool=False):
+    """Load data from files.
+
+    Args:
+        path (str): folder path of data.
+        band (str, optional): name of target band. None for unfiltered. Defaults to None.
+        shuffle (bool, optional): True for loading shuffled dataset. Defaults to False.
+
+    Returns:
+        np.ndarray: tdmi_data and tdmi_data_shuffle(if shuffle==True).
+    """
+    if band == None:
+        try:
+            tdmi_data = np.load(path + 'data_series_tdmi_long_total.npy', allow_pickle=True)
+        except:
+            tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
+        if shuffle:
+            tdmi_data_shuffle = np.load(path + 'data_series_tdmi_shuffle.npy', allow_pickle=True)
+    else:
+        try:
+            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_long_total.npy', allow_pickle=True)
+        except:
+            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
+        if shuffle:
+            tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
+
+    if shuffle:
+        return tdmi_data, tdmi_data_shuffle
+    else:
+        return tdmi_data
+
 if __name__ == '__main__':
     import matplotlib as mpl
     mpl.rcParams['font.size'] = 16
@@ -127,13 +158,7 @@ if __name__ == '__main__':
 
     for band in filter_pool:
         # load data for target band
-        if band == None:
-            tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
-            tdmi_data_shuffle = np.load(path + 'data_series_tdmi_shuffle.npy', allow_pickle=True)
-        else:
-            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-            tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
-
+        tdmi_data, tdmi_data_shuffle = load_data(path, band, shuffle=True)
         tdmi_data = MI_stats(tdmi_data, tdmi_mode)
         tdmi_data_flatten = tdmi_data[~np.eye(stride[-1], dtype=bool)]
 

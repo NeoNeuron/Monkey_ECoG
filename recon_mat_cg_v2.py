@@ -8,6 +8,7 @@ if __name__ == '__main__':
     import matplotlib as mpl 
     import matplotlib.pyplot as plt
     from mpl_toolkits.axes_grid1 import make_axes_locatable
+    from draw_causal_distribution_v2 import load_data
     from CG_causal_distribution import Extract_MI_CG
 
     path = 'data_preprocessing_46_region/'
@@ -42,11 +43,10 @@ if __name__ == '__main__':
     optimal_threshold = np.load(path+f'opt_threshold_{tdmi_mode:s}.npz', allow_pickle=True)
     for idx, band in enumerate(filter_pool):
         # load shuffled tdmi data for target band
+        tdmi_data = load_data(path, band)
         if band == None:
-            tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
             thresholds = optimal_threshold['origin'][1:-1]
         else:
-            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
             thresholds = optimal_threshold[band][1:-1]
         print(thresholds)
         
@@ -65,4 +65,4 @@ if __name__ == '__main__':
             ax[idx+1, iidx].xaxis.set_visible(False)
             ax[idx+1, iidx].yaxis.set_visible(False)
      
-    plt.savefig(f'tmp/recon_cg_{tdmi_mode:s}_all_binary.eps')
+    plt.savefig(path + f'recon_cg_{tdmi_mode:s}_all_binary.eps')
