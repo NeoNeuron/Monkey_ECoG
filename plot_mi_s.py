@@ -4,11 +4,6 @@
 # Plot MI vs. connection strength.
 
 import numpy as np
-import matplotlib as mpl 
-mpl.rcParams['font.size']=15
-mpl.rcParams['axes.labelsize'] = 15
-import matplotlib.pyplot as plt
-from draw_causal_distribution_v2 import MI_stats
 
 def Linear_R2(x:np.ndarray, y:np.ndarray, pval:np.ndarray)->float:
     """Compute R-square value for linear fitting.
@@ -27,6 +22,12 @@ def Linear_R2(x:np.ndarray, y:np.ndarray, pval:np.ndarray)->float:
     return R**2
 
 if __name__ == '__main__':
+    import matplotlib as mpl 
+    mpl.rcParams['font.size']=15
+    mpl.rcParams['axes.labelsize'] = 15
+    import matplotlib.pyplot as plt
+    from draw_causal_distribution_v2 import MI_stats
+
     path = 'data_preprocessing_46_region/'
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']

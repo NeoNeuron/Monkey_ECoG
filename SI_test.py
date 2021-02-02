@@ -8,12 +8,10 @@
 import numpy as np
 import multiprocessing
 import time
-from tdmi_scan import DMI
-
-def print_log(string, t0):
-  print(f"[INFO] {time.time()-t0:6.2f}: {string:s}")
 
 if __name__ == '__main__':
+  from tdmi_scan import DMI
+  from tdmi_scan_v2 import print_log
   t0 = time.time()
   # load data
   path = 'data_preprocessing_46_region/'

@@ -1,16 +1,10 @@
-#!/usr/bin python
+#!/Users/kchen/miniconda3/bin/python
 # Author: Kai Chen
 # Institute: INS, SJTU
 # Analyze the causal relation calculated from ECoG data.
 
 import numpy as np
-import matplotlib as mpl 
-mpl.rcParams['font.size'] = 16
-mpl.rcParams['axes.labelsize'] = 16
-mpl.rcParams['xtick.labelsize'] = 16
-mpl.rcParams['ytick.labelsize'] = 16
-import matplotlib.pyplot as plt
-from draw_causal_distribution_v2 import MI_stats, ROC_curve, AUC
+from draw_causal_distribution_v2 import MI_stats
 
 def CG(tdmi_data:np.ndarray, stride:np.ndarray, multiplicity:np.ndarray=None)->np.ndarray:
     """Compute the coarse-grained average of 
@@ -62,6 +56,14 @@ def Extract_MI_CG(tdmi_data:np.ndarray, mi_mode:str, stride:np.ndarray,
     return tdmi_data_cg
 
 if __name__ == '__main__':
+    import matplotlib as mpl 
+    mpl.rcParams['font.size'] = 16
+    mpl.rcParams['axes.labelsize'] = 16
+    mpl.rcParams['xtick.labelsize'] = 16
+    mpl.rcParams['ytick.labelsize'] = 16
+    import matplotlib.pyplot as plt
+    from draw_causal_distribution_v2 import ROC_curve, AUC, Youden_Index
+
     path = 'data_preprocessing_46_region/'
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
     multiplicity = data_package['multiplicity']
@@ -102,7 +104,7 @@ if __name__ == '__main__':
         if tdmi_mode == 'sum':
             SI_value *= 10
         ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
-        ax[0,0].axvline(np.log10(SI_value), color='cyan')
+        ax[0,0].axvline(np.log10(SI_value), color='cyan', label='SI')
         # UNCOMMENT to create double Gaussian fitting of TDMI PDF
         # # import fitting function
         # from scipy.optimize import curve_fit
@@ -116,7 +118,7 @@ if __name__ == '__main__':
         #     pass
         ax[0,0].set_xlabel('$log_{10}(Value)$')
         ax[0,0].set_ylabel('Density')
-        ax[0,0].legend(fontsize=15)
+        ax[0,0].legend(fontsize=13, loc=2)
 
         weight_set = np.unique(adj_weight_flatten)
         log_tdmi_data_mean = np.array([np.mean(log_tdmi_data[adj_weight_flatten==key]) for key in weight_set])
@@ -135,6 +137,7 @@ if __name__ == '__main__':
 
         # Draw ROC curves
         threshold_options = [1e-1, 5e-3, 1e-4]
+        opt_threshold = np.zeros(len(threshold_options))
         for idx, threshold in enumerate(threshold_options):
             answer = adj_weight_flatten.copy()
             ax[0,idx+1].semilogy(np.sort(answer))
@@ -147,6 +150,8 @@ if __name__ == '__main__':
             answer = (answer>threshold).astype(bool)
             thresholds = np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)
             fpr, tpr = ROC_curve(answer, log_tdmi_data, thresholds)
+            Youden_index = Youden_Index(fpr, tpr)
+            opt_threshold[idx] = thresholds[Youden_index]
 
             ax[1,idx+1].plot(fpr, tpr, 'navy')
             ax[1,idx+1].set_xlabel('False positive rate')
@@ -155,6 +160,8 @@ if __name__ == '__main__':
             ax[1,idx+1].set_xlim(0,1)
             ax[1,idx+1].set_ylim(0,1)
             ax[1,idx+1].set_title(f'AUC = {AUC(fpr, tpr):5.3f}')
+        ax[0,0].axvline(opt_threshold.mean(), color='orange', label='opt_threshold')
+        ax[0,0].legend(fontsize=13, loc=2)
 
         plt.tight_layout()
         if band == None:
