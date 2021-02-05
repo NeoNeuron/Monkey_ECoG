@@ -1,4 +1,4 @@
-#!/usr/bin python
+#!/Users/kchen/miniconda3/bin/python
 # coding: utf-8
 # Author: Kai Chen
 # Institute: INS, SJTU

@@ -58,9 +58,9 @@ for idx, band in enumerate(filter_pool):
     ax[idx].set_xticklabels(labels)
 
     if band is None:
-        ax[idx].set_title(f'Origin ($R^2$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval):5.3f})')
+        ax[idx].set_title(f'Origin ($r$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval)**0.5:5.3f})')
     else:
-        ax[idx].set_title(f'{band:s} ($R^2$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval):5.3f})')
+        ax[idx].set_title(f'{band:s} ($r$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval)**0.5:5.3f})')
     ax[idx].legend(fontsize=15)
     ax[idx].grid(ls='--')
 
