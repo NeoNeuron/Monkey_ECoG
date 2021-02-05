@@ -1,4 +1,4 @@
-#!/usr/bin python
+#!/Users/kchen/miniconda3/bin/python
 # coding: utf-8
 # Author: Kai Chen
 # Institute: INS, SJTU
@@ -19,7 +19,7 @@ def print_log(string, t0):
 if __name__ == '__main__':
   import numpy as np
   import multiprocessing
-  from tdmi_scan import TDMI
+  from mutual_info_cy import tdmi as TDMI
   # load data
   path = 'data_preprocessing_46_region/'
   data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
@@ -36,9 +36,8 @@ if __name__ == '__main__':
         delay_len (int, optional): number of time delay to be scanned. Defaults to 10.
         pn (int, optional): number of processes for multiprocessing. Defaults to None.
     """
-    time_delay = np.arange(delay_len)
     N = stride[-1]
-    mi_data = np.zeros((N, N, len(time_delay)))
+    mi_data = np.zeros((N, N, delay_len))
     if band is None:  # using original time series
       key = 'data_series'
     else:
@@ -49,7 +48,7 @@ if __name__ == '__main__':
       result = [p.apply_async(func = TDMI,
                               args=(data_package[key][:,i],
                                     data_package[key][:,j], 
-                                    time_delay)
+                                    delay_len)
                               ) for j in range(N)]
       p.close()
       p.join()

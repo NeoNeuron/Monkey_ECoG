@@ -1,4 +1,4 @@
-#!/usr/bin python
+#!/Users/kchen/miniconda3/bin/python
 # coding: utf-8
 # Author: Kai Chen
 # Institute: INS, SJTU
@@ -10,7 +10,7 @@ import multiprocessing
 import time
 
 if __name__ == '__main__':
-  from tdmi_scan import DMI
+  from mutual_info_cy import mutual_info
   from tdmi_scan_v2 import print_log
   t0 = time.time()
   # load data
@@ -47,10 +47,8 @@ if __name__ == '__main__':
     mi_data = np.zeros((N, N))
     for i in range(N):
       p = multiprocessing.Pool(pn)
-      result = [p.apply_async(func = DMI,
-                              args=(data_dict[key][:,i],
-                                    data_dict[key][:,j], 
-                                    0)
+      result = [p.apply_async(func = mutual_info,
+                              args=(data_dict[key][:,i], data_dict[key][:,j])
                               ) for j in range(N)]
       p.close()
       p.join()
