@@ -17,7 +17,7 @@ if __name__ == '__main__':
     multiplicity = data_package['multiplicity']
     stride = data_package['stride']
 
-    filter_pool = [None, 'delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+    filter_pool = ['raw', 'delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
 
     tdmi_mode = 'sum'  # or 'max'
 
@@ -44,10 +44,7 @@ if __name__ == '__main__':
     for idx, band in enumerate(filter_pool):
         # load shuffled tdmi data for target band
         tdmi_data = load_data(path, band)
-        if band == None:
-            thresholds = optimal_threshold['origin'][1:-1]
-        else:
-            thresholds = optimal_threshold[band][1:-1]
+        thresholds = optimal_threshold[band][1:-1]
         print(thresholds)
         
         tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     multiplicity = data_package['multiplicity']
     stride = data_package['stride']
 
-    filter_pool = [None, 'delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+    filter_pool = ['raw', 'delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
 
     tdmi_mode = 'sum'  # or 'max'
 

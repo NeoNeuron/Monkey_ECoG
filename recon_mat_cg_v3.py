@@ -16,7 +16,7 @@ if __name__ == '__main__':
     multiplicity = data_package['multiplicity']
     stride = data_package['stride']
 
-    filter_pool = [None, 'delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+    filter_pool = ['raw', 'delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
 
     tdmi_mode = 'max'  # or 'max'
 
@@ -43,10 +43,7 @@ if __name__ == '__main__':
     for idx, band in enumerate(filter_pool):
         # load shuffled tdmi data for target band
         tdmi_data = load_data(path, band)
-        if band == None:
-            thresholds = optimal_threshold['origin'][1:-1]
-        else:
-            thresholds = optimal_threshold[band][1:-1]
+        thresholds = optimal_threshold[band][1:-1]
         threshold = thresholds.mean()
         
         tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
@@ -59,10 +56,7 @@ if __name__ == '__main__':
         tdmi_data_cg_binary = (tdmi_data_cg>threshold)
 
         pax1 = ax[1, idx].imshow(tdmi_data_cg_binary, cmap='gist_gray')
-        if band is None:
-            ax[1,idx].set_title('Origin')
-        else:
-            ax[1,idx].set_title(band)
+        ax[1,idx].set_title(band)
         ax[1, idx].axis('scaled')
         ax[1, idx].xaxis.set_visible(False)
         ax[1, idx].yaxis.set_visible(False)
