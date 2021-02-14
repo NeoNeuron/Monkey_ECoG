@@ -28,20 +28,17 @@ if __name__ == '__main__':
   stride = data_package['stride']
 
   #channel index
-  def ScanTDMI(band:str=None, delay_len:int=10, pn:int=None)->None:
+  def ScanTDMI(band:str='raw', delay_len:int=10, pn:int=None)->None:
     """Scan channel-wise TDMI for target band.
 
     Args:
-        band (str, optional): band to scan. Defaults to None.
+        band (str, optional): band to scan. Defaults to 'raw'.
         delay_len (int, optional): number of time delay to be scanned. Defaults to 10.
         pn (int, optional): number of processes for multiprocessing. Defaults to None.
     """
     N = stride[-1]
     mi_data = np.zeros((N, N, delay_len))
-    if band is None:  # using original time series
-      key = 'data_series'
-    else:
-      key = 'data_series_'+band
+    key = 'data_series_'+band
     fname = f'{key:s}_tdmi_total.npy'
     for i in range(N):
       p = multiprocessing.Pool(pn)
@@ -59,12 +56,9 @@ if __name__ == '__main__':
     np.save(path + fname, mi_data)
 
   start = time.time()
-  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
   for band in filter_pool:
     ScanTDMI(band, 41)
-    if band is None:
-      print_log("Finish processing raw data", start)
-    else:
-      print_log(f"Finish processing {band:s} data", start)
+    print_log(f"Finish processing {band:s} data", start)
   finish = time.time()
   print_log(f'totally time cost {finish-start:5.2f} s.', start)

@@ -4,56 +4,36 @@
 # Analyze the causal relation calculated from ECoG data.
 
 import numpy as np
-from draw_causal_distribution_v2 import MI_stats
 
-def CG(tdmi_data:np.ndarray, stride:np.ndarray, multiplicity:np.ndarray=None)->np.ndarray:
+def CG(gc_data:np.ndarray, stride:np.ndarray, multiplicity:np.ndarray=None)->np.ndarray:
     """Compute the coarse-grained average of 
-        each cortical region for tdmi_data.
+        each cortical region for gc_data.
 
     Args:
-        tdmi_data (np.ndarray): channel-wise tdmi_data.
+        gc_data (np.ndarray): channel-wise gc_data.
         stride (np.ndarray): stride of channels. 
             Equal to the `cumsum` of multiplicity.
         multiplicity (np.ndarray, optional): number of channel
             in each cortical region. Defaults to None.
 
     Returns:
-        np.ndarray: coarse-grained average of tdmi_data
+        np.ndarray: coarse-grained average of gc_data
     """
     if multiplicity is None:
         multiplicity = np.diff(stride).astype(int)
     n_region = stride.shape[0]-1
-    tdmi_data_cg = np.zeros((n_region, n_region))
+    gc_data_cg = np.zeros((n_region, n_region))
     for i in range(n_region):
         for j in range(n_region):
-            data_buffer = tdmi_data[stride[i]:stride[i+1],stride[j]:stride[j+1]]
+            data_buffer = gc_data[stride[i]:stride[i+1],stride[j]:stride[j+1]]
             if i != j:
-                tdmi_data_cg[i,j]=data_buffer.mean()
+                gc_data_cg[i,j]=data_buffer.mean()
             else:
                 if multiplicity[i] > 1:
-                    tdmi_data_cg[i,j]=np.mean(data_buffer[~np.eye(multiplicity[i], dtype=bool)])
+                    gc_data_cg[i,j]=np.mean(data_buffer[~np.eye(multiplicity[i], dtype=bool)])
                 else:
-                    tdmi_data_cg[i,j]=data_buffer.mean() # won't be used in ROC.
-    return tdmi_data_cg
-
-def Extract_MI_CG(tdmi_data:np.ndarray, mi_mode:str, stride:np.ndarray, 
-                  multiplicity:np.ndarray=None)->np.ndarray:
-    """Extract coarse-grained tdmi_data from original tdmi data.
-
-    Args:
-        tdmi_data (np.ndarray): original tdmi data
-        mi_mode (str): mode of mi statistics
-        stride (np.ndarray): stride of channels.
-            Equal to the `cumsum` of multiplicity.
-        multiplicity (np.ndarray): number of channels
-            in each cortical region. Default to None.
-
-    Returns:
-        np.ndarray: coarse-grained average of tdmi_data.
-    """
-    tdmi_data = MI_stats(tdmi_data, mi_mode)
-    tdmi_data_cg = CG(tdmi_data, stride, multiplicity)
-    return tdmi_data_cg
+                    gc_data_cg[i,j]=data_buffer.mean() # won't be used in ROC.
+    return gc_data_cg
 
 if __name__ == '__main__':
     import matplotlib as mpl 
@@ -62,7 +42,8 @@ if __name__ == '__main__':
     mpl.rcParams['xtick.labelsize'] = 16
     mpl.rcParams['ytick.labelsize'] = 16
     import matplotlib.pyplot as plt
-    from draw_causal_distribution_v2 import load_data, ROC_curve, AUC, Youden_Index
+    from draw_causal_distribution_v2 import ROC_curve, AUC, Youden_Index
+    from gc_analysis import load_data
 
     path = 'data_preprocessing_46_region/'
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
@@ -72,34 +53,34 @@ if __name__ == '__main__':
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
-    tdmi_mode = 'sum'  # or 'max'
-
+    order = 10
     # create adj_weight_flatten by excluding 
-    #   auto-tdmi in region with single channel
+    #   auto-gc in region with single channel
     adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
     cg_mask = ~np.diag(multiplicity == 1).astype(bool)
     adj_weight_flatten = adj_weight[cg_mask]
 
     for band in filter_pool:
-        # load shuffled tdmi data for target band
-        tdmi_data, tdmi_data_shuffle = load_data(path, band, shuffle=True)
-        tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
+        # load shuffled gc data for target band
+        gc_data, gc_data_shuffle = load_data(path, band, order, shuffle=True)
+        gc_data_cg = CG(gc_data, stride, multiplicity)
 
-        tdmi_data_flatten = tdmi_data_cg[cg_mask]
-        log_tdmi_data = np.log10(tdmi_data_flatten)
-        log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
+        gc_data_flatten = gc_data_cg[cg_mask]
+        gc_data_flatten[gc_data_flatten<=0] = 1e-5
+        log_gc_data = np.log10(gc_data_flatten)
+        log_gc_range = [log_gc_data.min(), log_gc_data.max()]
 
         # calculate histogram
-        (counts, edges) = np.histogram(log_tdmi_data, bins=100, density=True)
+        (counts, edges) = np.histogram(log_gc_data, bins=100, density=True)
 
         fig, ax = plt.subplots(2,4,figsize=(20,10))
 
-        SI_value = tdmi_data_shuffle[~np.eye(stride[-1], dtype=bool)].mean()
-        if tdmi_mode == 'sum':
-            SI_value *= 10
+        SI_value = gc_data_shuffle[~np.eye(stride[-1], dtype=bool)]
+        SI_value[SI_value<=0] = 0
+        SI_value = SI_value.mean()
         ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
         ax[0,0].axvline(np.log10(SI_value), color='cyan', label='SI')
-        # UNCOMMENT to create double Gaussian fitting of TDMI PDF
+        # UNCOMMENT to create double Gaussian fitting of gc PDF
         # # import fitting function
         # from scipy.optimize import curve_fit
         # from draw_causal_distribution_v2 import Gaussian, Double_Gaussian
@@ -115,16 +96,13 @@ if __name__ == '__main__':
         ax[0,0].legend(fontsize=13, loc=2)
 
         weight_set = np.unique(adj_weight_flatten)
-        log_tdmi_data_mean = np.array([np.mean(log_tdmi_data[adj_weight_flatten==key]) for key in weight_set])
+        log_gc_data_mean = np.array([np.mean(log_gc_data[adj_weight_flatten==key]) for key in weight_set])
         weight_set[weight_set==0]=1e-6
-        pval = np.polyfit(np.log10(weight_set), log_tdmi_data_mean, deg=1)
-        ax[1,0].plot(np.log10(adj_weight_flatten+1e-8), log_tdmi_data, 'k.', label='TDMI samples')
-        # ax[1,0].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
+        pval = np.polyfit(np.log10(weight_set), log_gc_data_mean, deg=1)
+        ax[1,0].plot(np.log10(adj_weight_flatten+1e-8), log_gc_data, 'k.', label='gc samples')
+        # ax[1,0].plot(np.log10(weight_set), log_gc_data_mean, 'm.', label='gc mean')
         ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
-        if tdmi_mode == 'sum':
-            ax[1,0].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
-        elif tdmi_mode == 'max':
-            ax[1,0].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
+        ax[1,0].set_ylabel(r'$log_{10}\left(gc\right)$')
         ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
         ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
         ax[1,0].legend(fontsize=15)
@@ -142,8 +120,8 @@ if __name__ == '__main__':
 
             # Plot ROC curve
             answer = (answer>threshold).astype(bool)
-            thresholds = np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)
-            fpr, tpr = ROC_curve(answer, log_tdmi_data, thresholds)
+            thresholds = np.linspace(log_gc_range[0],log_gc_range[1],100)
+            fpr, tpr = ROC_curve(answer, log_gc_data, thresholds)
             Youden_index = Youden_Index(fpr, tpr)
             opt_threshold[idx] = thresholds[Youden_index]
 
@@ -158,4 +136,4 @@ if __name__ == '__main__':
         ax[0,0].legend(fontsize=13, loc=2)
 
         plt.tight_layout()
-        plt.savefig(path + 'cg_'+band+'_analysis_'+tdmi_mode+'.png')
+        plt.savefig(path + f'cg_{band:s}_gc_order_{order:d}.png')

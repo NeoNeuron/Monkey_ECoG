@@ -107,31 +107,23 @@ def AUC(fpr:np.ndarray, tpr:np.ndarray)->float:
     """
     return -np.sum(np.diff(fpr)*(tpr[:-1]+tpr[1:])/2)
 
-def load_data(path:str, band:str=None, shuffle:bool=False):
+def load_data(path:str, band:str='raw', shuffle:bool=False):
     """Load data from files.
 
     Args:
         path (str): folder path of data.
-        band (str, optional): name of target band. None for unfiltered. Defaults to None.
+        band (str, optional): name of target band. 'raw' for unfiltered. Defaults to 'raw'.
         shuffle (bool, optional): True for loading shuffled dataset. Defaults to False.
 
     Returns:
         np.ndarray: tdmi_data and tdmi_data_shuffle(if shuffle==True).
     """
-    if band == None:
-        try:
-            tdmi_data = np.load(path + 'data_series_tdmi_long_total.npy', allow_pickle=True)
-        except:
-            tdmi_data = np.load(path + 'data_series_tdmi_total.npy', allow_pickle=True)
-        if shuffle:
-            tdmi_data_shuffle = np.load(path + 'data_series_tdmi_shuffle.npy', allow_pickle=True)
-    else:
-        try:
-            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_long_total.npy', allow_pickle=True)
-        except:
-            tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
-        if shuffle:
-            tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
+    try:
+        tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_long_total.npy', allow_pickle=True)
+    except:
+        tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
+    if shuffle:
+        tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
 
     if shuffle:
         return tdmi_data, tdmi_data_shuffle
@@ -151,7 +143,7 @@ if __name__ == '__main__':
     multiplicity = data_package['multiplicity']
     stride = data_package['stride']
 
-    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
     tdmi_mode = 'sum'     # or 'max'
     is_interarea = False  # is inter area or not
@@ -244,13 +236,7 @@ if __name__ == '__main__':
         ax[0,0].legend(fontsize=13, loc=2)
 
         plt.tight_layout()
-        if band == None:
-            if is_interarea:
-                plt.savefig(path + 'channel_interarea_analysis_'+tdmi_mode+'.png')
-            else:
-                plt.savefig(path + 'channel_analysis_'+tdmi_mode+'.png')
+        if is_interarea:
+            plt.savefig(path + 'channel_'+band+'_interarea_analysis_'+tdmi_mode+'.png')
         else:
-            if is_interarea:
-                plt.savefig(path + 'channel_'+band+'_interarea_analysis_'+tdmi_mode+'.png')
-            else:
-                plt.savefig(path + 'channel_'+band+'_analysis_'+tdmi_mode+'.png')
+            plt.savefig(path + 'channel_'+band+'_analysis_'+tdmi_mode+'.png')

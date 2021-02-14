@@ -1,5 +1,6 @@
 #!/Users/kchen/miniconda3/bin/python
 # Author: Kai Chen
+# plot mean TDMI curve, colored w.r.t true connectivity weight
 
 import numpy as np 
 import matplotlib.pyplot as plt 
@@ -30,7 +31,7 @@ my_colors = cm.Oranges(weight_color)
 
 
 yaxis_type = 'linear'
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 for band in filter_pool:
     data = load_data(path, band)    
     
@@ -71,8 +72,5 @@ for band in filter_pool:
 
     plt.tight_layout()
     plt.grid(ls='--', color='grey', lw=0.5)
-    if band is None:
-        plt.savefig(path+f'tdmi_trace_v3_{yaxis_type:s}.png')
-    else:
-        plt.savefig(path+f'tdmi_trace_v3_{band:s}_{yaxis_type:s}.png')
+    plt.savefig(path+f'tdmi_trace_v3_{band:s}_{yaxis_type:s}.png')
     plt.close()

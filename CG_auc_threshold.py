@@ -17,7 +17,7 @@ data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
 multiplicity = data_package['multiplicity']
 stride = data_package['stride']
 
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 tdmi_mode = 'sum' # or max
 
@@ -50,12 +50,8 @@ for idx, band in enumerate(filter_pool):
         opt_th[iidx] = thresholds[Youden_Index(fpr, tpr)]
         aucs[iidx] = AUC(fpr, tpr)
     ax[idx].semilogx(w_thresholds, aucs, '-*', color='navy')
-    if band is None:
-        ax[idx].set_title('Origin')
-        optimal_threshold['origin'] = opt_th
-    else:
-        ax[idx].set_title(band)
-        optimal_threshold[band] = opt_th
+    ax[idx].set_title(band)
+    optimal_threshold[band] = opt_th
     ax[idx].grid(ls='--')
 
 # save optimal threshold computed by Youden Index

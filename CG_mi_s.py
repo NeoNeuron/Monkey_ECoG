@@ -17,7 +17,7 @@ data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
 multiplicity = data_package['multiplicity']
 stride = data_package['stride']
 
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 tdmi_mode = 'sum' # or max
 
@@ -56,11 +56,7 @@ for idx, band in enumerate(filter_pool):
     labels = ['$10^{%d}$'%item for item in ticks]
     ax[idx].set_xticks(ticks)
     ax[idx].set_xticklabels(labels)
-
-    if band is None:
-        ax[idx].set_title(f'Origin ($r$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval)**0.5:5.3f})')
-    else:
-        ax[idx].set_title(f'{band:s} ($r$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval)**0.5:5.3f})')
+    ax[idx].set_title(f'{band:s} ($r$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval)**0.5:5.3f})')
     ax[idx].legend(fontsize=15)
     ax[idx].grid(ls='--')
 

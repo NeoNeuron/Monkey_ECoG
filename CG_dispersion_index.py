@@ -78,7 +78,7 @@ if __name__ == '__main__':
     stride = data_package['stride']
     n_region = multiplicity.shape[0]
 
-    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
     tdmi_mode = 'max'  # or 'max'
 
@@ -115,7 +115,4 @@ if __name__ == '__main__':
         ax[1].set_xlim(0.95,7.3)
 
         plt.tight_layout()
-        if band == None:
-            plt.savefig('tmp/' + 'cg_dispersion_'+tdmi_mode+'.png')
-        else:
-            plt.savefig('tmp/' + 'cg_dispersion_'+band+'_'+tdmi_mode+'.png')
+        plt.savefig('tmp/' + 'cg_dispersion_'+band+'_'+tdmi_mode+'.png')

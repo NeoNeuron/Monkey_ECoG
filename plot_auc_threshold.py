@@ -14,7 +14,7 @@ path = 'data_preprocessing_46_region/'
 data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
 
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', None]
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 tdmi_mode = 'sum' # or max
 is_interarea = False  # is inter area or not
@@ -50,10 +50,7 @@ for idx, band in enumerate(filter_pool):
 
     # plot dependence of AUC w.r.t w_threshold value
     ax[idx].semilogx(w_thresholds, aucs, '-*', color='navy')
-    if band is None:
-        ax[idx].set_title('Origin')
-    else:
-        ax[idx].set_title(band)
+    ax[idx].set_title(band)
     ax[idx].grid(ls='--')
 
 

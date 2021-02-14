@@ -63,7 +63,7 @@ data_package['stride'] = stride
 
 # reshape the data_series
 data_series = np.hstack(data_series)
-data_package['data_series'] = data_series
+data_package['data_series_raw'] = data_series
 
 # adjacent matrix
 w = loadmat(data_path+'wei_r.mat')['wei_r']
@@ -96,14 +96,14 @@ data_package = np.load(path+'preprocessed_data.npz', allow_pickle=True)
 from scipy.ndimage.filters import gaussian_filter1d
 dt = 0.001
 fig, ax = plt.subplots(2,1, figsize=(10,6))
-ax[0].plot(np.arange(data_package['data_series'].shape[0])*dt, data_package['data_series'][:,0], label='channel 0')
+ax[0].plot(np.arange(data_package['data_series_raw'].shape[0])*dt, data_package['data_series_raw'][:,0], label='channel 0')
 ax[0].set_xlabel('Time(s)')
 ax[0].set_ylabel('Signal Intensity')
 ax[0].legend()
 ax[0].set_title('Original ECoG Data')
 ax[0].set_xlim(0,24)
-fftfreq = np.fft.fftfreq(data_package['data_series'].shape[0], d=dt)
-power = np.abs(np.fft.fft(data_package['data_series'][:,0]))[fftfreq>0]
+fftfreq = np.fft.fftfreq(data_package['data_series_raw'].shape[0], d=dt)
+power = np.abs(np.fft.fft(data_package['data_series_raw'][:,0]))[fftfreq>0]
 power_smooth = gaussian_filter1d(power, sigma=5)
 ax[1].semilogy(fftfreq[fftfreq>0], power_smooth, label='channel 0')
 ax[1].set_xlim(0,200)
