@@ -72,7 +72,7 @@ def GC(x, y, order):
     '''
     res_auto = auto_reg(x, order)
     res_joint = joint_reg(x, y, order)
-    if res_auto.mean() <= 1e-12:
+    if res_auto.std() <= 1e-12:
         print('[WARNING]: too small residue error, closing to eps.')
     GC_value = 2.*np.log(res_auto.std()/res_joint.std())
     return GC_value
