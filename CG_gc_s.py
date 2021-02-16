@@ -30,8 +30,13 @@ adj_weight_flatten = adj_weight[cg_mask]
 fig, ax = plt.subplots(2,4,figsize=(20,10))
 ax = ax.reshape((8,))
 for idx, band in enumerate(filter_pool):
+    # 10 order is too high for theta band
+    if band == 'theta':
+        order = 8
+    else:
+        order = 10
     # load data for target band
-    gc_data = load_data(path, band)
+    gc_data = load_data(path, band, order)
     gc_data_cg = CG(gc_data, stride, multiplicity)
 
     gc_data_flatten = gc_data_cg[cg_mask]

@@ -34,6 +34,11 @@ adj_weight_flatten = adj_weight[cg_mask]
 
 optimal_threshold = {}
 for idx, band in enumerate(filter_pool):
+    # 10 order is too high for theta band
+    if band == 'theta':
+        order = 8
+    else:
+        order = 10
     # load data for target band
     gc_data = load_data(path, band, order)
     gc_data_cg = CG(gc_data, stride, multiplicity)

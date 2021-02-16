@@ -24,6 +24,11 @@ fig, ax = plt.subplots(2,4,figsize=(20,10), sharey=True)
 ax = ax.reshape((8,))
 w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
 for idx, band in enumerate(filter_pool):
+    # 10 order is too high for theta band
+    if band == 'theta':
+        order = 8
+    else:
+        order = 10
     # load data for target band
     gc_data = load_data(path, band, order)
     gc_data_flatten = gc_data[~np.eye(stride[-1], dtype=bool)]
