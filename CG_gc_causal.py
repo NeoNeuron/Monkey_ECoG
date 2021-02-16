@@ -99,10 +99,10 @@ if __name__ == '__main__':
         log_gc_data_mean = np.array([np.mean(log_gc_data[adj_weight_flatten==key]) for key in weight_set])
         weight_set[weight_set==0]=1e-6
         pval = np.polyfit(np.log10(weight_set), log_gc_data_mean, deg=1)
-        ax[1,0].plot(np.log10(adj_weight_flatten+1e-8), log_gc_data, 'k.', label='gc samples')
+        ax[1,0].plot(np.log10(adj_weight_flatten+1e-8), log_gc_data, 'k.', label='GC samples')
         # ax[1,0].plot(np.log10(weight_set), log_gc_data_mean, 'm.', label='gc mean')
         ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
-        ax[1,0].set_ylabel(r'$log_{10}\left(gc\right)$')
+        ax[1,0].set_ylabel(r'$log_{10}\left(GC\right)$')
         ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
         ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
         ax[1,0].legend(fontsize=15)
