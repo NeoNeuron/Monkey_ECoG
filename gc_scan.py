@@ -28,8 +28,8 @@ for band in filters:
                 gc_value[i,j] = GC(data_series[:,i],data_series[:,j], order)
 
     if shuffle:
-        print_log(band + f' shuffled GC (order {order:d}) finished', t0)
+        print_log(f'{band:s} shuffled GC (order {order:d}) finished', t0)
         np.save(path + f'gc_values_{band:s}_shuffled_order_{order:d}.npy', gc_value)
     else:
-        print_log('raw signal' + f' GC (order {order:d}) finished', t0)
-        np.save(path + f'gc_values_raw_order_{order:d}.npy', gc_value)
+        print_log(f'{band:s} GC (order {order:d}) finished', t0)
+        np.save(path + f'gc_values_{band:s}_order_{order:d}.npy', gc_value)
