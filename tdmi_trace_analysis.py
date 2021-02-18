@@ -19,7 +19,7 @@ def plot_tdmi(ax, i, j, color, yaxis_type='linear'):
     else:
         raise TypeError('Invalid yaxis type.')
 
-path = "data_preprocessing_46_region_short/"
+path = "data_preprocessing_46_region/"
 data_package = np.load(path+"preprocessed_data.npz", allow_pickle=True)
 weight = data_package['weight']
 weight_log = np.log10(weight+1e-6)
