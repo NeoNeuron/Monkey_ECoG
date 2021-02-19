@@ -33,9 +33,9 @@ def auto_reg(x, order)->np.ndarray:
     
     '''
     reg_array = create_structure_array(x, order)
-    coef = np.linalg.lstsq(reg_array, x[order:], rcond=None)[0]
+    coef,_,rank,_ = np.linalg.lstsq(reg_array, x[order:], rcond=-1)
     res = x[order:] - reg_array @ coef
-    return res
+    return res, rank
 
 def joint_reg(x, y, order)->np.ndarray:
     '''
@@ -53,9 +53,9 @@ def joint_reg(x, y, order)->np.ndarray:
     reg_array_x = create_structure_array(x, order)
     reg_array_y = create_structure_array(y, order)
     reg_array = np.hstack((reg_array_x, reg_array_y))
-    coef = np.linalg.lstsq(reg_array, x[order:], rcond=None)[0]
+    coef,_,rank,_ = np.linalg.lstsq(reg_array, x[order:], rcond=-1)
     res = x[order:] - reg_array @ coef
-    return res
+    return res, rank
 
 def GC(x, y, order):
     '''
@@ -70,8 +70,8 @@ def GC(x, y, order):
     GC_value  : residual vector
     
     '''
-    res_auto = auto_reg(x, order)
-    res_joint = joint_reg(x, y, order)
+    res_auto, _  = auto_reg(x, order)
+    res_joint, _ = joint_reg(x, y, order)
     if res_auto.std() <= 1e-12:
         print('[WARNING]: too small residue error, closing to eps.')
     GC_value = 2.*np.log(res_auto.std()/res_joint.std())
