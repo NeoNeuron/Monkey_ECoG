@@ -2,17 +2,23 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 # plt.style.use('dark_background')
-from GC import auto_reg
+from GC import joint_reg
 
 def compute_AIC_BIC(data_series):
     order_max = 50
-    AIC = np.zeros((data_series.shape[1], order_max))
+    n_channel = data_series.shape[1]
+    AIC = np.zeros((n_channel*(n_channel-1), order_max))
     BIC = np.zeros_like(AIC)
     rank = np.zeros_like(AIC)
-    for i in range(data_series.shape[1]):
-        x = data_series[:,i].copy()
+    for i in range(n_channel*(n_channel-1)):
+        x_id = i // (n_channel-1)
+        y_id = i % (n_channel-1)
+        if y_id >= x_id:
+            y_id += 1
+        x = data_series[:,x_id].copy()
+        y = data_series[:,y_id].copy()
         for j, order in enumerate(np.arange(AIC.shape[1])+1):
-            res, rank[i,j] = auto_reg(x, order)
+            res, rank[i,j] = joint_reg(x, y, order)
             buffer = (x.shape[0]-order)*np.log(res.std())
             AIC[i,j] = 2*(order + buffer)
             BIC[i,j] = np.log(x.shape[0]-order)*order + 2*buffer
@@ -20,9 +26,9 @@ def compute_AIC_BIC(data_series):
 
 def get_AICs_BICs(path, force_compute=False):
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-    fname_aic = 'gc_aic.npz'
-    fname_bic = 'gc_bic.npz'
-    fname_rank = 'gc_rank.npz'
+    fname_aic = 'gc_aic_joint.npz'
+    fname_bic = 'gc_bic_joint.npz'
+    fname_rank = 'gc_rank_joint.npz'
     if os.path.isfile(path+fname_aic) \
         and os.path.isfile(path+fname_bic) \
         and os.path.isfile(path+fname_rank) \
@@ -55,7 +61,7 @@ def gen_figure(XICs, ranks, title):
     ax = fig.add_subplot(gs_raw[0])
 
     axt = ax.twinx()
-    axt.plot(np.arange(51), ls='--', color='g')
+    axt.plot(np.arange(51), np.arange(51)*2, ls='--', color='g')
     for xic, rank in zip(XICs['raw'], ranks['raw']):
         xic = (xic-xic.min())/(xic.max()-xic.min())
         ax.plot(np.arange(50)+1, xic, 'navy', alpha=.5)
@@ -76,7 +82,7 @@ def gen_figure(XICs, ranks, title):
     axs = np.array([fig.add_subplot(i) for i in gs])
     for band, ax in zip(filter_pool, axs):
         axt = ax.twinx()
-        axt.plot(np.arange(51), ls='--', color='g')
+        axt.plot(np.arange(51), np.arange(51)*2, ls='--', color='g')
         for xic, rank in zip(XICs[band], ranks[band]):
             xic = (xic-xic.min())/(xic.max()-xic.min())
             ax.plot(np.arange(50)+1, xic, 'navy', alpha=.5)
@@ -89,7 +95,7 @@ def gen_figure(XICs, ranks, title):
 
     # [axs[i].set_ylabel('Normalized XIC value') for i in (0,3)]
     [axs[i].set_xlabel('order', fontsize=16) for i in (3,4,5)]
-    plt.savefig(path+f'gc_{title.lower():s}.png')
+    plt.savefig(path+f'gc_{title.lower():s}_joint.png')
     plt.close()
 
 if __name__ == '__main__':
