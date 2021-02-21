@@ -8,9 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt 
 plt.rcParams['font.size']=15
 plt.rcParams['axes.labelsize'] = 15
-from CG_causal_distribution import Extract_MI_CG
-from plot_mi_s import gen_mi_s_figure
-from tdmi_scan_v2 import print_log
+from utils.tdmi import Extract_MI_CG
+from utils.plot import gen_mi_s_figure
+from utils.utils import print_log
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 arg_default = {'path': 'data_preprocessing_46_region/',
                 'tdmi_mode': 'max',
@@ -40,6 +40,7 @@ filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
 cg_mask = ~np.diag(multiplicity == 1).astype(bool)
 adj_weight_flatten = adj_weight[cg_mask]
+adj_weight_flatten = {band:adj_weight_flatten for band in filter_pool}
 
 tdmi_data = np.load(args.path + 'tdmi_data.npz', allow_pickle=True)
 tdmi_data_flatten = {}

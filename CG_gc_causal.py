@@ -3,35 +3,17 @@
 # Institute: INS, SJTU
 # Analyze the causal relation calculated from ECoG data.
 
-import numpy as np
-from CG_causal_distribution import CG as CG_tdmi
-
-def CG(gc_data:np.ndarray, stride:np.ndarray)->np.ndarray:
-    """Compute the coarse-grained average of 
-        each cortical region for gc_data.
-
-    Args:
-        gc_data (np.ndarray): channel-wise gc_data.
-        stride (np.ndarray): stride of channels. 
-            Equal to the `cumsum` of multiplicity.
-
-    Returns:
-        np.ndarray: coarse-grained average of gc_data
-    """
-    
-    return CG_tdmi(gc_data, stride)
-
 if __name__ == '__main__':
     import time
-    import matplotlib as mpl 
-    mpl.rcParams['font.size'] = 16
-    mpl.rcParams['axes.labelsize'] = 16
-    mpl.rcParams['xtick.labelsize'] = 16
-    mpl.rcParams['ytick.labelsize'] = 16
+    import numpy as np
     import matplotlib.pyplot as plt
-    from draw_causal_distribution_v2 import gen_causal_distribution_figure
+    plt.rcParams['font.size'] = 16
+    plt.rcParams['axes.labelsize'] = 16
+    plt.rcParams['xtick.labelsize'] = 16
+    plt.rcParams['ytick.labelsize'] = 16
+    from utils.utils import CG, print_log
+    from utils.plot import gen_causal_distribution_figure
     from gc_analysis import load_data
-    from tdmi_scan_v2 import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'data_preprocessing_46_region/',
                    'order': 6,

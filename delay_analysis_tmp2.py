@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 plt.rcParams['axes.linewidth']=0.5
 plt.rcParams['lines.linewidth']=0.1
-from tdmi_delay_analysis import compute_delay_matrix, compute_snr_matrix
+from utils.tdmi import compute_delay_matrix, compute_snr_matrix, get_sparsity_threshold
 from cluster import get_cluster_id, get_sorted_mat
 
 path = 'data_preprocessing_46_region/'
@@ -23,20 +23,13 @@ for band in filter_pool:
 
 fig, ax = plt.subplots(4,4, figsize=(12,12))
 
-def get_th_val(mat, p=0.1):
-    counts, edges = np.histogram(mat.flatten(), bins=100)
-    mid_tick = edges[:-1] + edges[1]-edges[0]
-    th_id = np.argmin(np.abs(np.cumsum(counts)/np.sum(counts) + p - 1))
-    th_val = mid_tick[th_id]
-    return th_val
-
 def plt_unit(axi, mat, p, title):
-    th_val = get_th_val(mat, p)
+    th_val = get_sparsity_threshold(mat, p)
     axi.pcolormesh(mat>=th_val, cmap=plt.cm.gray)
     axi.set_title(title)
 
 p = 0.25
-th_val = get_th_val(snr_mat['raw'], p)
+th_val = get_sparsity_threshold(snr_mat['raw'], p)
 mask = (snr_mat['raw']>=th_val)
 sorted_id = get_cluster_id(mask)
 

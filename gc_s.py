@@ -3,16 +3,14 @@
 # Institute: INS, SJTU
 # Plot MI vs. connection strength.
 
-import numpy as np
-
 if __name__ == '__main__':
     import time
+    import numpy as np
     import matplotlib.pyplot as plt 
     plt.rcParams['font.size']=15
     plt.rcParams['axes.labelsize'] = 15
-    import matplotlib.pyplot as plt
-    from plot_mi_s import gen_mi_s_figure
-    from tdmi_scan_v2 import print_log
+    from utils.plot import gen_mi_s_figure
+    from utils.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'data_preprocessing_46_region/',
                     'order': 6,
@@ -46,6 +44,7 @@ if __name__ == '__main__':
         weight_flatten = weight_flatten[interarea_mask]
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
+    weight_flatten = {band:weight_flatten for band in filter_pool}
     gc_data = np.load(args.path + f'gc_order_{args.order:d}.npz', allow_pickle=True)
 
     gc_data_flatten = {}

@@ -1,7 +1,7 @@
 # Author: Kai Chen
 import numpy as np
 from GC import GC
-from tdmi_scan_v2 import print_log
+from utils.utils import print_log
 import time
 import os
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter

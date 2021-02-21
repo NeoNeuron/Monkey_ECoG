@@ -5,21 +5,12 @@
 # Description: Parallelly calculating TDMI from filtered ECoG data. Return an matrix of
 #              maximum tdmi.
 
-import time
-
-def print_log(string, t0):
-  """Print log info.
-
-  Args:
-      string (str): string-like information to print.
-      t0 (float): time stamp for starting of program.
-  """
-  print(f"[INFO] {time.time()-t0:6.2f}: {string:s}")
-
 if __name__ == '__main__':
+  import time
   import numpy as np
   import multiprocessing
   from mutual_info_cy import tdmi as TDMI
+  from utils.utils import print_log
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
   arg_default = {'path': 'data_preprocessing_46_region/'}
   parser = ArgumentParser(prog='tdmi_scan',

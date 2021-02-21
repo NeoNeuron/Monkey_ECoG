@@ -10,7 +10,7 @@ import time
 
 if __name__ == '__main__':
   from mutual_info_cy import mutual_info
-  from tdmi_scan_v2 import print_log
+  from utils.utils import print_log
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
   arg_default = {'path': 'data_preprocessing_46_region/'}
   parser = ArgumentParser(prog='tdmi_scan_significant_test',

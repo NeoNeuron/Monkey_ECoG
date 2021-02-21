@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 plt.rcParams['axes.linewidth']=0.5
 plt.rcParams['lines.linewidth']=0.1
-from tdmi_delay_analysis import compute_delay_matrix
+from utils.tdmi import compute_delay_matrix
 
 
 path = 'data_preprocessing_46_region/'

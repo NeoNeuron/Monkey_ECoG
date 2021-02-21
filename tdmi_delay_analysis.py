@@ -2,29 +2,8 @@
 # Author: Kai Chen
 # TDMI delay analysis. plot the delay statistics.
 
-import numpy as np 
-
-def compute_tdmi_full(tdmi_data:np.ndarray):
-    n_channel = tdmi_data.shape[0]
-    n_delay = tdmi_data.shape[2]
-    # complete the tdmi series
-    tdmi_data_full = np.zeros((n_channel, n_channel, n_delay*2-1))
-    tdmi_data_full[:,:,n_delay-1:] = tdmi_data
-    tdmi_data_full[:,:,:n_delay] = np.flip(tdmi_data.transpose([1,0,2]), axis=2)
-    return tdmi_data_full
-
-def compute_delay_matrix(tdmi_data:np.ndarray):
-    tdmi_data_full = compute_tdmi_full(tdmi_data)
-    n_delay = tdmi_data.shape[2]
-    delay_mat = np.argmax(tdmi_data_full, axis=2) - n_delay + 1
-    return delay_mat
-
-def compute_snr_matrix(tdmi_data:np.ndarray):
-    tdmi_data_full = compute_tdmi_full(tdmi_data)
-    snr_mat = (tdmi_data_full.max(2) - tdmi_data_full.mean(2))/tdmi_data_full.std(2)
-    return snr_mat
-
 if __name__ == '__main__':
+    import numpy as np 
     import matplotlib.pyplot as plt 
     def axis_formattor(ax):
         ax.axis('scaled')
@@ -33,6 +12,7 @@ if __name__ == '__main__':
         ax.yaxis.set_visible(False)
         return ax
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+    from utils.tdmi import compute_delay_matrix, compute_snr_matrix
     arg_default = {'path': 'data_preprocessing_46_region/'}
     parser = ArgumentParser(prog='tdmi_delay_analysis',
                             description = "Scan pair-wise maximum delay and SNR\

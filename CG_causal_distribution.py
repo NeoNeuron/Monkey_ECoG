@@ -3,62 +3,18 @@
 # Institute: INS, SJTU
 # Analyze the causal relation calculated from ECoG data.
 
-import numpy as np
-from draw_causal_distribution_v2 import MI_stats
-
-def CG(tdmi_data:np.ndarray, stride:np.ndarray)->np.ndarray:
-    """Compute the coarse-grained average of 
-        each cortical region for tdmi_data.
-
-    Args:
-        tdmi_data (np.ndarray): channel-wise tdmi_data.
-        stride (np.ndarray): stride of channels. 
-            Equal to the `cumsum` of multiplicity.
-
-    Returns:
-        np.ndarray: coarse-grained average of tdmi_data
-    """
-    multiplicity = np.diff(stride).astype(int)
-    n_region = stride.shape[0]-1
-    tdmi_data_cg = np.zeros((n_region, n_region))
-    for i in range(n_region):
-        for j in range(n_region):
-            data_buffer = tdmi_data[stride[i]:stride[i+1],stride[j]:stride[j+1]]
-            if i != j:
-                tdmi_data_cg[i,j]=data_buffer.mean()
-            else:
-                if multiplicity[i] > 1:
-                    tdmi_data_cg[i,j]=np.mean(data_buffer[~np.eye(multiplicity[i], dtype=bool)])
-                else:
-                    tdmi_data_cg[i,j]=data_buffer.mean() # won't be used in ROC.
-    return tdmi_data_cg
-
-def Extract_MI_CG(tdmi_data:np.ndarray, mi_mode:str, stride:np.ndarray)->np.ndarray:
-    """Extract coarse-grained tdmi_data from original tdmi data.
-
-    Args:
-        tdmi_data (np.ndarray): original tdmi data
-        mi_mode (str): mode of mi statistics
-        stride (np.ndarray): stride of channels.
-            Equal to the `cumsum` of multiplicity.
-
-    Returns:
-        np.ndarray: coarse-grained average of tdmi_data.
-    """
-    tdmi_data = MI_stats(tdmi_data, mi_mode)
-    tdmi_data_cg = CG(tdmi_data, stride)
-    return tdmi_data_cg
-
 if __name__ == '__main__':
     import time
-    import matplotlib as mpl 
-    mpl.rcParams['font.size'] = 16
-    mpl.rcParams['axes.labelsize'] = 16
-    mpl.rcParams['xtick.labelsize'] = 16
-    mpl.rcParams['ytick.labelsize'] = 16
-    import matplotlib.pyplot as plt
-    from draw_causal_distribution_v2 import load_data, gen_causal_distribution_figure
-    from tdmi_scan_v2 import print_log
+    import numpy as np
+    import matplotlib.pyplot as plt 
+    plt.rcParams['font.size'] = 16
+    plt.rcParams['axes.labelsize'] = 16
+    plt.rcParams['xtick.labelsize'] = 16
+    plt.rcParams['ytick.labelsize'] = 16
+    from utils.tdmi import Extract_MI_CG
+    from draw_causal_distribution_v2 import load_data
+    from utils.plot import gen_causal_distribution_figure
+    from utils.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'data_preprocessing_46_region/',
                    'tdmi_mode': 'max',

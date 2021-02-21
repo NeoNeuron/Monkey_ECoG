@@ -8,9 +8,9 @@ import numpy as np
 import matplotlib as mpl 
 mpl.rcParams['font.size']=20
 mpl.rcParams['axes.labelsize']=25
-import matplotlib.pyplot as plt
-from plot_auc_threshold import scan_auc_threshold, gen_auc_threshold_figure
-from tdmi_scan_v2 import print_log
+from utils.roc import scan_auc_threshold
+from utils.plot import gen_auc_threshold_figure
+from utils.utils import print_log
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 arg_default = {'path': 'data_preprocessing_46_region/',
                 'order': 6,

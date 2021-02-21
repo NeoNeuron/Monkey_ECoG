@@ -4,9 +4,9 @@
 # Analyze the causal relation calculated from ECoG data.
 
 import numpy as np
-from draw_causal_distribution_v2 import MI_stats
+from utils.tdmi import MI_stats
 
-def CG(tdmi_data:np.ndarray, stride:np.ndarray, multiplicity:np.ndarray=None)->np.ndarray:
+def CG(tdmi_data:np.ndarray, stride:np.ndarray)->np.ndarray:
     """Compute the coarse-grained average of 
         each cortical region for tdmi_data.
 
@@ -14,15 +14,12 @@ def CG(tdmi_data:np.ndarray, stride:np.ndarray, multiplicity:np.ndarray=None)->n
         tdmi_data (np.ndarray): channel-wise tdmi_data.
         stride (np.ndarray): stride of channels. 
             Equal to the `cumsum` of multiplicity.
-        multiplicity (np.ndarray, optional): number of channel
-            in each cortical region. Defaults to None.
 
     Returns:
         np.ndarray: coarse-grained average of tdmi_data
         np.ndarray: dispersion index of coarse-grained averaged tdmi_data 
     """
-    if multiplicity is None:
-        multiplicity = np.diff(stride).astype(int)
+    multiplicity = np.diff(stride).astype(int)
     n_region = stride.shape[0]-1
     tdmi_data_cg = np.zeros((n_region, n_region))
     cg_dispersion = np.zeros_like(tdmi_data_cg)
@@ -43,8 +40,7 @@ def CG(tdmi_data:np.ndarray, stride:np.ndarray, multiplicity:np.ndarray=None)->n
                     tdmi_data_cg[i,j]=data_buffer.mean() # won't be used in ROC.
     return tdmi_data_cg, cg_dispersion, max_mean_ratio
 
-def Extract_MI_CG(tdmi_data:np.ndarray, mi_mode:str, stride:np.ndarray, 
-                  multiplicity:np.ndarray=None)->np.ndarray:
+def Extract_MI_CG(tdmi_data:np.ndarray, mi_mode:str, stride:np.ndarray)->np.ndarray:
     """Extract coarse-grained tdmi_data from original tdmi data.
 
     Args:
@@ -52,15 +48,13 @@ def Extract_MI_CG(tdmi_data:np.ndarray, mi_mode:str, stride:np.ndarray,
         mi_mode (str): mode of mi statistics
         stride (np.ndarray): stride of channels.
             Equal to the `cumsum` of multiplicity.
-        multiplicity (np.ndarray): number of channels
-            in each cortical region. Default to None.
 
     Returns:
         np.ndarray: coarse-grained average of tdmi_data.
         np.ndarray: dispersion index of coarse-grained averaged tdmi_data 
     """
     tdmi_data = MI_stats(tdmi_data, mi_mode)
-    tdmi_data_cg, cg_dispersion, max_mean_ratio = CG(tdmi_data, stride, multiplicity)
+    tdmi_data_cg, cg_dispersion, max_mean_ratio = CG(tdmi_data, stride)
     return tdmi_data_cg, cg_dispersion, max_mean_ratio
 
 if __name__ == '__main__':
@@ -74,8 +68,8 @@ if __name__ == '__main__':
 
     path = 'data_preprocessing_46_region/'
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-    multiplicity = data_package['multiplicity']
     stride = data_package['stride']
+    multiplicity = np.diff(stride).astype(int)
     n_region = multiplicity.shape[0]
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
@@ -91,7 +85,7 @@ if __name__ == '__main__':
     for band in filter_pool:
         # load data
         tdmi_data = load_data(path, band)
-        _, cg_dispersion, max_mean_ratio = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
+        _, cg_dispersion, max_mean_ratio = Extract_MI_CG(tdmi_data, tdmi_mode, stride)
 
         # tdmi_data_flatten = tdmi_data_cg[cg_mask]
         # log_tdmi_data = np.log10(tdmi_data_flatten)
