@@ -44,9 +44,12 @@ adj_weight_flatten = adj_weight[cg_mask]
 tdmi_data = np.load(args.path + 'tdmi_data.npz', allow_pickle=True)
 tdmi_data_flatten = {}
 for band in filter_pool:
-    # load data for target band
-    tdmi_data_cg = Extract_MI_CG(tdmi_data[band], args.tdmi_mode, stride)
-    tdmi_data_flatten[band] = tdmi_data_cg[cg_mask]
+    if band in tdmi_data.keys():
+        # load data for target band
+        tdmi_data_cg = Extract_MI_CG(tdmi_data[band], args.tdmi_mode, stride)
+        tdmi_data_flatten[band] = tdmi_data_cg[cg_mask]
+    else:
+        tdmi_data_flatten[band] = None
     
 fig = gen_mi_s_figure(tdmi_data_flatten, adj_weight_flatten)
 

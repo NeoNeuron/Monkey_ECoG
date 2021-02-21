@@ -44,9 +44,12 @@ adj_weight_flatten = adj_weight[cg_mask]
 gc_data = np.load(args.path + f'gc_order_{args.order:d}.npz', allow_pickle=True)
 gc_data_flatten = {}
 for band in filter_pool:
-    gc_data_cg = CG(gc_data[band], stride)
-    gc_data_cg[gc_data_cg<=0] = 1e-5
-    gc_data_flatten[band] = gc_data_cg[cg_mask]
+    if band in gc_data.keys():
+        gc_data_cg = CG(gc_data[band], stride)
+        gc_data_cg[gc_data_cg<=0] = 1e-5
+        gc_data_flatten[band] = gc_data_cg[cg_mask]
+    else:
+        gc_data_flatten[band] = None
 
 fig = gen_mi_s_figure(gc_data_flatten, adj_weight_flatten)
 

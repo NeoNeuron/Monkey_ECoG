@@ -29,10 +29,13 @@ def gen_auc_threshold_figure(aucs:dict, w_thresholds:list)->plt.Figure:
     ax = ax.reshape((8,))
     idx = 0
     for band, auc in aucs.items():
-        # plot dependence of AUC w.r.t w_threshold value
-        ax[idx].semilogx(w_thresholds, auc, '-*', color='navy')
-        ax[idx].grid(ls='--')
-        ax[idx].set_title(band)
+        if auc is None:
+            ax[idx].set_visible(False)
+        else:
+            # plot dependence of AUC w.r.t w_threshold value
+            ax[idx].semilogx(w_thresholds, auc, '-*', color='navy')
+            ax[idx].grid(ls='--')
+            ax[idx].set_title(band)
         idx += 1
 
     [ax[i].set_ylabel('AUC') for i in (0,4)]
@@ -89,12 +92,15 @@ if __name__ == '__main__':
     aucs = {}
     opt_threshold = {}
     for band in filter_pool:
-        tdmi_data_flatten = MI_stats(tdmi_data[band], args.tdmi_mode)
-        tdmi_data_flatten = tdmi_data_flatten[~np.eye(stride[-1], dtype=bool)]
-        if args.is_interarea:
-            tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
-        
-        aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, weight_flatten, w_thresholds)
+        if band in tdmi_data.keys():
+            tdmi_data_flatten = MI_stats(tdmi_data[band], args.tdmi_mode)
+            tdmi_data_flatten = tdmi_data_flatten[~np.eye(stride[-1], dtype=bool)]
+            if args.is_interarea:
+                tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
+            
+            aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, weight_flatten, w_thresholds)
+        else:
+            aucs[band], opt_threshold[band] = None, None
     
     fig = gen_auc_threshold_figure(aucs, w_thresholds)
 

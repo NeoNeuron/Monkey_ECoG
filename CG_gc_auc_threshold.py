@@ -49,10 +49,13 @@ gc_data = np.load(args.path + f'gc_order_{args.order:d}.npz', allow_pickle=True)
 aucs = {}
 opt_threshold = {}
 for band in filter_pool:
-    gc_data_cg = CG(gc_data[band], stride)
-    gc_data_flatten = gc_data_cg[cg_mask]
-    gc_data_flatten[gc_data_flatten<=0] = 1e-5
-    aucs[band], opt_threshold[band] = scan_auc_threshold(gc_data_flatten, adj_weight_flatten, w_thresholds)
+    if band in gc_data.keys():
+        gc_data_cg = CG(gc_data[band], stride)
+        gc_data_flatten = gc_data_cg[cg_mask]
+        gc_data_flatten[gc_data_flatten<=0] = 1e-5
+        aucs[band], opt_threshold[band] = scan_auc_threshold(gc_data_flatten, adj_weight_flatten, w_thresholds)
+    else:
+        aucs[band], opt_threshold[band] = None, None
 
 fig = gen_auc_threshold_figure(aucs, w_thresholds)
 

@@ -50,9 +50,12 @@ tdmi_data = np.load(args.path+'tdmi_data.npz', allow_pickle=True)
 aucs = {}
 opt_threshold = {}
 for band in filter_pool:
-    tdmi_data_flatten = Extract_MI_CG(tdmi_data[band], args.tdmi_mode, stride)
-    tdmi_data_flatten = tdmi_data_flatten[cg_mask]
-    aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, adj_weight_flatten, w_thresholds)
+    if band in tdmi_data.keys():
+        tdmi_data_flatten = Extract_MI_CG(tdmi_data[band], args.tdmi_mode, stride)
+        tdmi_data_flatten = tdmi_data_flatten[cg_mask]
+        aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, adj_weight_flatten, w_thresholds)
+    else:
+        aucs[band], opt_threshold[band] = None, None
 
 fig = gen_auc_threshold_figure(aucs, w_thresholds)
 

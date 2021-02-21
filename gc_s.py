@@ -50,10 +50,13 @@ if __name__ == '__main__':
 
     gc_data_flatten = {}
     for band in filter_pool:
-        gc_data_flatten[band] = gc_data[band][~np.eye(stride[-1], dtype=bool)]
-        gc_data_flatten[band][gc_data_flatten[band]<=0] = 1e-5
-        if args.is_interarea:
-            gc_data_flatten[band] = gc_data_flatten[band][interarea_mask]
+        if band in gc_data.keys():
+            gc_data_flatten[band] = gc_data[band][~np.eye(stride[-1], dtype=bool)]
+            gc_data_flatten[band][gc_data_flatten[band]<=0] = 1e-5
+            if args.is_interarea:
+                gc_data_flatten[band] = gc_data_flatten[band][interarea_mask]
+        else:
+            gc_data_flatten[band] = None
 
     fig = gen_mi_s_figure(gc_data_flatten, weight_flatten)
 

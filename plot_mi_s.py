@@ -27,30 +27,33 @@ def gen_mi_s_figure(tdmi_data_flatten:dict, weight_flatten:np.ndarray)->plt.Figu
     ax = ax.reshape((8,))
     idx = 0
     for band, tdmi_flatten in tdmi_data_flatten.items():
-        log_tdmi_data = np.log10(tdmi_flatten)
+        if tdmi_flatten is None:
+            ax[idx].set_visible(False)
+        else:
+            log_tdmi_data = np.log10(tdmi_flatten)
 
-        answer = weight_flatten.copy()
-        answer[answer==0]=1e-7
-        log_answer = np.log10(answer)
-        answer_edges = np.linspace(-6, 1, num = 15)
-        # average data
-        log_tdmi_data_mean = np.zeros(len(answer_edges)-1)
-        for i in range(len(answer_edges)-1):
-            mask = (log_answer >= answer_edges[i]) & (log_answer < answer_edges[i+1])
-            if mask.sum() == 0:
-                log_tdmi_data_mean[i] = np.nan
-            else:
-                log_tdmi_data_mean[i] = log_tdmi_data[mask].mean()
-        pval = np.polyfit(answer_edges[:-1][~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
-        ax[idx].plot(answer_edges[:-1], log_tdmi_data_mean, 'k.', markersize=15, label='TDMI mean')
-        ax[idx].plot(answer_edges[:-1], np.polyval(pval, answer_edges[:-1]), 'r', label='Linear Fitting')
-        ticks = [-5, -3, -1]
-        labels = ['$10^{%d}$'%item for item in ticks]
-        ax[idx].set_xticks(ticks)
-        ax[idx].set_xticklabels(labels)
-        ax[idx].set_title(f'{band:s} ($r$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval)**0.5:5.3f})')
-        ax[idx].legend(fontsize=15)
-        ax[idx].grid(ls='--')
+            answer = weight_flatten.copy()
+            answer[answer==0]=1e-7
+            log_answer = np.log10(answer)
+            answer_edges = np.linspace(-6, 1, num = 15)
+            # average data
+            log_tdmi_data_mean = np.zeros(len(answer_edges)-1)
+            for i in range(len(answer_edges)-1):
+                mask = (log_answer >= answer_edges[i]) & (log_answer < answer_edges[i+1])
+                if mask.sum() == 0:
+                    log_tdmi_data_mean[i] = np.nan
+                else:
+                    log_tdmi_data_mean[i] = log_tdmi_data[mask].mean()
+            pval = np.polyfit(answer_edges[:-1][~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
+            ax[idx].plot(answer_edges[:-1], log_tdmi_data_mean, 'k.', markersize=15, label='TDMI mean')
+            ax[idx].plot(answer_edges[:-1], np.polyval(pval, answer_edges[:-1]), 'r', label='Linear Fitting')
+            ticks = [-5, -3, -1]
+            labels = ['$10^{%d}$'%item for item in ticks]
+            ax[idx].set_xticks(ticks)
+            ax[idx].set_xticklabels(labels)
+            ax[idx].set_title(f'{band:s} ($r$ = {Linear_R2(answer_edges[:-1], log_tdmi_data_mean, pval)**0.5:5.3f})')
+            ax[idx].legend(fontsize=15)
+            ax[idx].grid(ls='--')
         idx += 1
 
     # make last subfigure invisible
@@ -101,10 +104,13 @@ if __name__ == '__main__':
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
     tdmi_data_flatten = {}
     for band in filter_pool:
-        tdmi_data_flatten[band] = MI_stats(tdmi_data[band], args.tdmi_mode)
-        tdmi_data_flatten[band] = tdmi_data_flatten[band][~np.eye(stride[-1], dtype=bool)]
-        if args.is_interarea:
-            tdmi_data_flatten[band] = tdmi_data_flatten[band][interarea_mask]
+        if band in tdmi_data.keys():
+            tdmi_data_flatten[band] = MI_stats(tdmi_data[band], args.tdmi_mode)
+            tdmi_data_flatten[band] = tdmi_data_flatten[band][~np.eye(stride[-1], dtype=bool)]
+            if args.is_interarea:
+                tdmi_data_flatten[band] = tdmi_data_flatten[band][interarea_mask]
+        else:
+            tdmi_data_flatten[band] = None
 
     fig = gen_mi_s_figure(tdmi_data_flatten, weight_flatten)
 
