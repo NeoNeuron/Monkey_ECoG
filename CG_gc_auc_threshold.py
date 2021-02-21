@@ -4,71 +4,62 @@
 #   Coarse grain causal analysis across cortical regions
 #   Plot AUC vs. answer threshold.
 
+import time
 import numpy as np
 import matplotlib as mpl 
 mpl.rcParams['font.size']=20
 mpl.rcParams['axes.labelsize']=25
 import matplotlib.pyplot as plt
-from draw_causal_distribution_v2 import ROC_curve, Youden_Index, AUC
-from gc_analysis import load_data
 from CG_gc_causal import CG
+from plot_auc_threshold import scan_auc_threshold, gen_auc_threshold_figure
+from tdmi_scan_v2 import print_log
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+arg_default = {'path': 'data_preprocessing_46_region/',
+                'order': 6,
+                }
+parser = ArgumentParser(prog='CG_gc_auc_threshold',
+                        description = "Generate figure for analysis of causality.",
+                        formatter_class=ArgumentDefaultsHelpFormatter)
+parser.add_argument('path', default=arg_default['path'], nargs='?',
+                    type = str, 
+                    help = "path of working directory."
+                    )
+parser.add_argument('order', default=arg_default['order'], nargs='?',
+                    type = int,
+                    help = "order of regression model in GC."
+                    )
+args = parser.parse_args()
 
-path = 'data_preprocessing_46_region/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-multiplicity = data_package['multiplicity']
+start = time.time()
+data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
+multiplicity = np.diff(stride).astype(int)
 
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-
-order = 10
-
-fig, ax = plt.subplots(2,4,figsize=(20,10), sharey=True)
-ax = ax.reshape((8,))
 w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 # create adj_weight_flatten by excluding 
 #   auto-gc in region with single channel
 adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
 cg_mask = ~np.diag(multiplicity == 1).astype(bool)
 adj_weight_flatten = adj_weight[cg_mask]
+# load gc_data
+gc_data = np.load(args.path + f'gc_order_{args.order:d}.npz', allow_pickle=True)
 
-optimal_threshold = {}
-for idx, band in enumerate(filter_pool):
-    # 10 order is too high for theta band
-    if band == 'theta':
-        order = 8
-    else:
-        order = 10
-    # load data for target band
-    gc_data = load_data(path, band, order)
-    gc_data_cg = CG(gc_data, stride, multiplicity)
-
+aucs = {}
+opt_threshold = {}
+for band in filter_pool:
+    gc_data_cg = CG(gc_data[band], stride)
     gc_data_flatten = gc_data_cg[cg_mask]
     gc_data_flatten[gc_data_flatten<=0] = 1e-5
-    log_gc_data = np.log10(gc_data_flatten)
-    log_gc_range = [log_gc_data.min(), log_gc_data.max()]
+    aucs[band], opt_threshold[band] = scan_auc_threshold(gc_data_flatten, adj_weight_flatten, w_thresholds)
 
-    aucs = np.zeros_like(w_thresholds)
-    thresholds = np.linspace(*log_gc_range, 100)
-    opt_th = np.zeros_like(w_thresholds)
-    for iidx, threshold in enumerate(w_thresholds):
-        answer = (adj_weight_flatten>threshold).astype(bool).flatten()
-        fpr, tpr = ROC_curve(answer, log_gc_data, thresholds)
-        opt_th[iidx] = thresholds[Youden_Index(fpr, tpr)]
-        aucs[iidx] = AUC(fpr, tpr)
-    ax[idx].semilogx(w_thresholds, aucs, '-*', color='navy')
-    ax[idx].set_title(band)
-    optimal_threshold[band] = opt_th
-    ax[idx].grid(ls='--')
+fig = gen_auc_threshold_figure(aucs, w_thresholds)
 
 # save optimal threshold computed by Youden Index
-np.savez(path + f'opt_threshold_gc_{order:d}.npz', **optimal_threshold)
+np.savez(args.path + f'opt_threshold_cg_gc_order_{args.order:d}.npz', **opt_threshold)
 
-[ax[i].set_ylabel('AUC') for i in (0,4)]
-[ax[i].set_xlabel('Threshold value') for i in (4,5,6)]
-
-# make last subfigure invisible
-ax[-1].set_visible(False)
-
-plt.tight_layout()
-plt.savefig(path + f'cg_auc-threshold_gc_{order:d}.png')
+fname = f'cg_auc-threshold_gc_{args.order:d}.png'
+fig.savefig(args.path + fname)
+print_log(f'Figure save to {args.path+fname:s}.', start)
+plt.savefig(args.path + f'cg_auc-threshold_gc_{args.order:d}.png')

@@ -3,71 +3,72 @@
 # Institute: INS, SJTU
 # Plot AUC vs. answer threshold, GC version.
 
+import time
 import numpy as np
 import matplotlib as mpl 
 mpl.rcParams['font.size']=20
 mpl.rcParams['axes.labelsize']=25
 import matplotlib.pyplot as plt
-from draw_causal_distribution_v2 import ROC_curve, AUC
-from gc_analysis import load_data
+from plot_auc_threshold import scan_auc_threshold, gen_auc_threshold_figure
+from tdmi_scan_v2 import print_log
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+arg_default = {'path': 'data_preprocessing_46_region/',
+                'order': 6,
+                'is_interarea': False,
+                }
+parser = ArgumentParser(prog='gc_auc_threshold',
+                        description = "Generate figure for analysis of causality.",
+                        formatter_class=ArgumentDefaultsHelpFormatter)
+parser.add_argument('path', default=arg_default['path'], nargs='?',
+                    type = str, 
+                    help = "path of working directory."
+                    )
+parser.add_argument('order', default=arg_default['order'], nargs='?',
+                    type = int,
+                    help = "order of regression model in GC."
+                    )
+parser.add_argument('is_interarea', default=arg_default['is_interarea'], nargs='?', 
+                    type=bool, 
+                    help = "inter-area flag."
+                    )
+args = parser.parse_args()
 
-path = 'data_preprocessing_46_region/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+start = time.time()
+data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
+weight = data_package['weight']
+weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
 
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-
-order = 10
-is_interarea = False  # is inter area or not
-
-fig, ax = plt.subplots(2,4,figsize=(20,10), sharey=True)
-ax = ax.reshape((8,))
+# setup interarea mask
+if args.is_interarea:
+    interarea_mask = (weight_flatten != 1.5)
+    weight_flatten = weight_flatten[interarea_mask]
 w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
-for idx, band in enumerate(filter_pool):
-    # 10 order is too high for theta band
-    if band == 'theta':
-        order = 8
-    else:
-        order = 10
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+gc_data = np.load(args.path + f'gc_order_{args.order:d}.npz', allow_pickle=True)
+
+aucs = {}
+opt_threshold = {}
+for band in filter_pool:
     # load data for target band
-    gc_data = load_data(path, band, order)
-    gc_data_flatten = gc_data[~np.eye(stride[-1], dtype=bool)]
+    gc_data_flatten = gc_data[band][~np.eye(stride[-1], dtype=bool)]
     gc_data_flatten[gc_data_flatten<=0] = 1e-5
+    if args.is_interarea:
+        gc_data_flatten = gc_data_flatten[interarea_mask]
 
-    # setup interarea mask
-    weight = data_package['weight']
-    weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
-    if is_interarea:
-        interarea_mask = (weight_flatten != 1.5)
-        weight_flatten = weight_flatten[interarea_mask]
-        log_gc_data = np.log10(gc_data_flatten[interarea_mask])
-    else:
-        log_gc_data = np.log10(gc_data_flatten)
-    log_gc_range = [log_gc_data.min(), log_gc_data.max()]
+    aucs[band], opt_threshold[band] = scan_auc_threshold(gc_data_flatten, weight_flatten, w_thresholds)
+    
+fig = gen_auc_threshold_figure(aucs, w_thresholds)
 
-    # compute ROC curves for different w_threshold values
-    aucs = np.zeros_like(w_thresholds)
-    roc_thresholds = np.linspace(log_gc_range[0],log_gc_range[1],100)
-    for iidx, threshold in enumerate(w_thresholds):
-        answer = weight_flatten.copy()
-        answer = (answer>threshold).astype(bool)
-        fpr, tpr = ROC_curve(answer, log_gc_data, roc_thresholds)
-        aucs[iidx] = AUC(fpr, tpr)
-
-    # plot dependence of AUC w.r.t w_threshold value
-    ax[idx].semilogx(w_thresholds, aucs, '-*', color='navy')
-    ax[idx].set_title(band)
-    ax[idx].grid(ls='--')
-
-
-[ax[i].set_ylabel('AUC') for i in (0,4)]
-[ax[i].set_xlabel('Threshold value') for i in (4,5,6)]
-
-# make last subfigure invisible
-ax[-1].set_visible(False)
-
-plt.tight_layout()
-if is_interarea:
-    plt.savefig(path + f'gc_auc-threshold_interarea_{order:d}.png')
+# save optimal threshold computed by Youden Index
+if args.is_interarea:
+    np.savez(args.path + f'opt_threshold_channel_interarea_gc_order_{args.order:d}.npz', **opt_threshold)
 else:
-    plt.savefig(path + f'gc_auc-threshold_{order:d}.png')
+    np.savez(args.path + f'opt_threshold_channel_gc_order_{args.order:d}.npz', **opt_threshold)
+
+if args.is_interarea:
+    fname = f'gc_auc-threshold_interarea_{args.order:d}.png'
+else:
+    fname = f'gc_auc-threshold_{args.order:d}.png'
+fig.savefig(args.path + fname)
+print_log(f'Figure save to {args.path+fname:s}.', start)

@@ -4,6 +4,7 @@
 # Analyze the causal relation calculated from ECoG data.
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 # define fitting function
 def Gaussian(x, a, mu, sigma):
@@ -118,125 +119,172 @@ def load_data(path:str, band:str='raw', shuffle:bool=False):
     Returns:
         np.ndarray: tdmi_data and tdmi_data_shuffle(if shuffle==True).
     """
-    try:
-        tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_long_total.npy', allow_pickle=True)
-    except:
-        tdmi_data = np.load(path + 'data_series_'+band+'_tdmi_total.npy', allow_pickle=True)
+    tdmi_data = np.load(path + 'tdmi_data.npz', allow_pickle=True)[band]
     if shuffle:
-        tdmi_data_shuffle = np.load(path + 'data_series_'+band+'_tdmi_shuffle.npy', allow_pickle=True)
+        tdmi_data_shuffle = np.load(path + 'tdmi_data_shuffle.npz', allow_pickle=True)[band]
 
     if shuffle:
         return tdmi_data, tdmi_data_shuffle
     else:
         return tdmi_data
 
+def gen_causal_distribution_figure(tdmi_flatten:np.ndarray, 
+                                   weight_flatten:np.ndarray,
+                                   tdmi_threshold:float, 
+                                   )->plt.Figure:
+    """Generated figure for analysis of causal distributions.
+
+    Args:
+        tdmi_flatten (np.ndarray): flattened data for target tdmi statistics.
+        weight_flatten (np.ndarray): flattened data for true connectome.
+        tdmi_threshold (float): significance value of tdmi statistics.
+
+    Returns:
+        plt.Figure: matplotlib.figure.Figure
+    """
+    log_tdmi_data = np.log10(tdmi_flatten)
+    log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
+
+    # calculate histogram
+    (counts, edges) = np.histogram(log_tdmi_data, bins=100, density=True)
+
+    # create figure canvas
+    fig, ax = plt.subplots(2,4,figsize=(20,10))
+
+    ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
+    ax[0,0].axvline(np.log10(tdmi_threshold), color='cyan', label='SI')
+    # UNCOMMENT to create double Gaussian fitting of TDMI PDF
+    # from scipy.optimize import curve_fit
+    # try:
+    #     popt, _ = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
+    #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[0],popt[2],popt[4]), 'ro', markersize = 4, label=r'$1^{st}$ Gaussian fit')
+    #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[1],popt[3],popt[5]), 'bo', markersize = 4, label=r'$2^{nd}$ Gaussian fit')
+    # except:
+    #     print(f'WARNING: Failed fitting the {band:s} band case.')
+    #     pass
+    ax[0,0].set_xlabel('$log_{10}(Value)$')
+    ax[0,0].set_ylabel('Density')
+    ax[0,0].legend(fontsize=13, loc=2)
+
+    weight_set = np.unique(weight_flatten)
+    log_tdmi_data_mean = np.array([np.mean(log_tdmi_data[weight_flatten==key]) for key in weight_set])
+    weight_set[weight_set==0]=1e-6
+    pval = np.polyfit(np.log10(weight_set), log_tdmi_data_mean, deg=1)
+    ax[1,0].plot(np.log10(weight_flatten+1e-8), log_tdmi_data.flatten(), 'k.', label='TDMI samples')
+    ax[1,0].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
+    ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
+    ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
+    ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
+    ax[1,0].legend(fontsize=15)
+
+    # Draw ROC curves
+    threshold_options = [1e-1, 5e-3, 1e-4]
+    opt_threshold = np.zeros(len(threshold_options))
+    for idx, threshold in enumerate(threshold_options):
+        answer = weight_flatten.copy()
+        ax[0,idx+1].semilogy(np.sort(answer))
+        ax[0,idx+1].set_xlabel('Ranked connectivity strength')
+        ax[0,idx+1].set_ylabel('Connectivity Strength')
+        ax[0,idx+1].axhline(threshold, color='r', ls = '--')
+        ax[0,idx+1].set_title(f'Threshold = {threshold:3.2e}')
+
+        # Plot ROC curve
+        answer = (answer>threshold).astype(bool)
+        thresholds = np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)
+        fpr, tpr = ROC_curve(answer, log_tdmi_data, thresholds)
+        Youden_index = Youden_Index(fpr, tpr)
+        opt_threshold[idx] = thresholds[Youden_index]
+
+        ax[1,idx+1].plot(fpr, tpr, 'navy')
+        ax[1,idx+1].set_xlabel('False positive rate')
+        ax[1,idx+1].set_ylabel('True positive rate')
+        ax[1,idx+1].plot(range(2),range(2), '--', color='orange')
+        ax[1,idx+1].set_xlim(0,1)
+        ax[1,idx+1].set_ylim(0,1)
+        ax[1,idx+1].set_title(f'AUC = {AUC(fpr, tpr):5.3f}')
+
+    ax[0,0].axvline(opt_threshold.mean(), color='orange', label='opt_threshold')
+    ax[0,0].legend(fontsize=13, loc=2)
+
+    plt.tight_layout()
+    return fig
+
 if __name__ == '__main__':
+    import time
     import matplotlib as mpl
     mpl.rcParams['font.size'] = 16
     mpl.rcParams['axes.labelsize'] = 16
     mpl.rcParams['xtick.labelsize'] = 16
     mpl.rcParams['ytick.labelsize'] = 16
     import matplotlib.pyplot as plt
+    from tdmi_scan_v2 import print_log
+    from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+    arg_default = {'path': 'data_preprocessing_46_region/',
+                   'tdmi_mode': 'max',
+                   'is_interarea': False,
+                   'filters': ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw'],
+                   }
+    parser = ArgumentParser(prog='draw_causal_distribution',
+                            description = "Generate figure for analysis of causality.",
+                            formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('path', default=arg_default['path'], nargs='?',
+                        type = str, 
+                        help = "path of working directory."
+                        )
+    parser.add_argument('tdmi_mode', default=arg_default['tdmi_mode'], nargs='?',
+                        type = str, choices=['max', 'sum'], 
+                        help = "TDMI mode."
+                        )
+    parser.add_argument('is_interarea', default=arg_default['is_interarea'], nargs='?', 
+                        type=bool, 
+                        help = "inter-area flag."
+                        )
+    parser.add_argument('--filters', default=arg_default['filters'], nargs='*', 
+                        type=str, 
+                        help = "list of filtering band."
+                        )
+    args = parser.parse_args()
 
-    path = 'data_preprocessing_46_region/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-    multiplicity = data_package['multiplicity']
+
+    start = time.time()
+    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
+    # prepare weight_flatten
+    weight = data_package['weight']
+    weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
+    if args.is_interarea:
+        interarea_mask = (weight_flatten != 1.5)
+        weight_flatten = weight_flatten[interarea_mask]
 
-    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-
-    tdmi_mode = 'sum'     # or 'max'
-    is_interarea = False  # is inter area or not
-
-    for band in filter_pool:
+    for band in args.filters:
         # load data for target band
-        tdmi_data, tdmi_data_shuffle = load_data(path, band, shuffle=True)
-        tdmi_data = MI_stats(tdmi_data, tdmi_mode)
+        tdmi_data, tdmi_data_shuffle = load_data(args.path, band, shuffle=True)
+
+        tdmi_data = MI_stats(tdmi_data, args.tdmi_mode)
         tdmi_data_flatten = tdmi_data[~np.eye(stride[-1], dtype=bool)]
 
-        # prepare weight_flatten
-        weight = data_package['weight']
-        weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
-
         # setup interarea mask
-        if is_interarea:
-            interarea_mask = (weight_flatten != 1.5)
-            weight_flatten = weight_flatten[interarea_mask]
-            log_tdmi_data = np.log10(tdmi_data_flatten[interarea_mask])
-        else:
-            log_tdmi_data = np.log10(tdmi_data_flatten)
-        log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
-
-        # calculate histogram
-        (counts, edges) = np.histogram(log_tdmi_data, bins=100, density=True)
-
-        # create figure canvas
-        fig, ax = plt.subplots(2,4,figsize=(20,10))
+        if args.is_interarea:
+            tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
 
         SI_value = tdmi_data_shuffle[~np.eye(stride[-1], dtype=bool)].mean()
-        if tdmi_mode == 'sum':
+        if args.tdmi_mode == 'sum':
             SI_value *= 10
-        ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
-        ax[0,0].axvline(np.log10(SI_value), color='cyan', label='SI')
-        # UNCOMMENT to create double Gaussian fitting of TDMI PDF
-        # from scipy.optimize import curve_fit
-        # try:
-        #     popt, _ = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
-        #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[0],popt[2],popt[4]), 'ro', markersize = 4, label=r'$1^{st}$ Gaussian fit')
-        #     ax[0,0].plot(edges[1:], Gaussian(edges[1:], popt[1],popt[3],popt[5]), 'bo', markersize = 4, label=r'$2^{nd}$ Gaussian fit')
-        # except:
-        #     print(f'WARNING: Failed fitting the {band:s} band case.')
-        #     pass
-        ax[0,0].set_xlabel('$log_{10}(Value)$')
-        ax[0,0].set_ylabel('Density')
-        ax[0,0].legend(fontsize=13, loc=2)
+        fig = gen_causal_distribution_figure(tdmi_data_flatten, 
+                                             weight_flatten,
+                                             SI_value)
 
-        weight_set = np.unique(weight_flatten)
-        log_tdmi_data_mean = np.array([np.mean(log_tdmi_data[weight_flatten==key]) for key in weight_set])
-        weight_set[weight_set==0]=1e-6
-        pval = np.polyfit(np.log10(weight_set), log_tdmi_data_mean, deg=1)
-        ax[1,0].plot(np.log10(weight_flatten+1e-8), log_tdmi_data.flatten(), 'k.', label='TDMI samples')
-        ax[1,0].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
-        ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
-        if tdmi_mode == 'sum':
-            ax[1,0].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
-        elif tdmi_mode == 'max':
-            ax[1,0].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
-        ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
-        ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
-        ax[1,0].legend(fontsize=15)
-
-        # Draw ROC curves
-        threshold_options = [1e-1, 5e-3, 1e-4]
-        opt_threshold = np.zeros(len(threshold_options))
-        for idx, threshold in enumerate(threshold_options):
-            answer = weight_flatten.copy()
-            ax[0,idx+1].semilogy(np.sort(answer))
-            ax[0,idx+1].set_xlabel('Ranked connectivity strength')
-            ax[0,idx+1].set_ylabel('Connectivity Strength')
-            ax[0,idx+1].axhline(threshold, color='r', ls = '--')
-            ax[0,idx+1].set_title(f'Threshold = {threshold:3.2e}')
-
-            # Plot ROC curve
-            answer = (answer>threshold).astype(bool)
-            thresholds = np.linspace(log_tdmi_range[0],log_tdmi_range[1],100)
-            fpr, tpr = ROC_curve(answer, log_tdmi_data, thresholds)
-            Youden_index = Youden_Index(fpr, tpr)
-            opt_threshold[idx] = thresholds[Youden_index]
-
-            ax[1,idx+1].plot(fpr, tpr, 'navy')
-            ax[1,idx+1].set_xlabel('False positive rate')
-            ax[1,idx+1].set_ylabel('True positive rate')
-            ax[1,idx+1].plot(range(2),range(2), '--', color='orange')
-            ax[1,idx+1].set_xlim(0,1)
-            ax[1,idx+1].set_ylim(0,1)
-            ax[1,idx+1].set_title(f'AUC = {AUC(fpr, tpr):5.3f}')
-
-        ax[0,0].axvline(opt_threshold.mean(), color='orange', label='opt_threshold')
-        ax[0,0].legend(fontsize=13, loc=2)
-
+        if args.tdmi_mode == 'sum':
+            fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
+        elif args.tdmi_mode == 'max':
+            fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
         plt.tight_layout()
-        if is_interarea:
-            plt.savefig(path + 'channel_'+band+'_interarea_analysis_'+tdmi_mode+'.png')
+        print_log(f"Figure {band:s} generated.", start)
+
+        if args.is_interarea:
+            fname = f'channel_{band:s}_interarea_analysis_{args.tdmi_mode:s}.png'
         else:
-            plt.savefig(path + 'channel_'+band+'_analysis_'+tdmi_mode+'.png')
+            fname = f'channel_{band:s}_analysis_{args.tdmi_mode:s}.png'
+        fig.savefig(args.path + fname)
+        print_log(f'Figure save to {args.path+fname:s}.', start)
+        plt.close(fig)

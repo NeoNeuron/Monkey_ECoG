@@ -3,7 +3,7 @@
 # Author: Kai Chen
 # Institute: INS, SJTU
 # Description: Parallelly calculating TDMI from filtered ECoG data. Return an matrix of
-#              accumulative tdmi with order p. By default, p=10.
+#              maximum tdmi.
 
 import time
 
@@ -20,26 +20,36 @@ if __name__ == '__main__':
   import numpy as np
   import multiprocessing
   from mutual_info_cy import tdmi as TDMI
+  from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+  arg_default = {'path': 'data_preprocessing_46_region/'}
+  parser = ArgumentParser(prog='tdmi_scan',
+                          description = "Scan pair-wise time\
+                                         delayed mutual information",
+                          formatter_class=ArgumentDefaultsHelpFormatter)
+  parser.add_argument('path', default=arg_default['path'], nargs='?',
+                      type = str, 
+                      help = "path of working directory."
+                      )
+  args = parser.parse_args()
   # load data
-  path = 'data_preprocessing_46_region/'
-  data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-
-  multiplicity = data_package['multiplicity']
+  data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
   stride = data_package['stride']
 
   #channel index
-  def ScanTDMI(band:str='raw', delay_len:int=10, pn:int=None)->None:
+  def ScanTDMI(band:str='raw', delay_len:int=10, pn:int=None)->np.ndarray:
     """Scan channel-wise TDMI for target band.
 
     Args:
         band (str, optional): band to scan. Defaults to 'raw'.
         delay_len (int, optional): number of time delay to be scanned. Defaults to 10.
         pn (int, optional): number of processes for multiprocessing. Defaults to None.
+
+    Returns:
+        np.ndarray: 3D array of tdmi data.
     """
     N = stride[-1]
     mi_data = np.zeros((N, N, delay_len))
     key = 'data_series_'+band
-    fname = f'{key:s}_tdmi_total.npy'
     for i in range(N):
       p = multiprocessing.Pool(pn)
       result = [p.apply_async(func = TDMI,
@@ -53,12 +63,16 @@ if __name__ == '__main__':
       for res in result:
         mi_data[i,j] = res.get()
         j += 1
-    np.save(path + fname, mi_data)
+    return mi_data
 
   start = time.time()
   filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+  tdmi_data = {}
   for band in filter_pool:
-    ScanTDMI(band, 41)
+    tdmi_data[band] = ScanTDMI(band, 41)
     print_log(f"Finish processing {band:s} data", start)
+  fname = 'tdmi_data.npz'
+  np.savez(args.path + fname, **tdmi_data)
   finish = time.time()
+  print_log(f'Pickled data save to {args.path+fname:s}.', start)
   print_log(f'totally time cost {finish-start:5.2f} s.', start)

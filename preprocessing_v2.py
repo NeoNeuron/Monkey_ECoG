@@ -14,6 +14,18 @@ mpl.rcParams['ytick.labelsize'] = 16
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
 import os
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+
+arg_default = {'path': 'data_preprocessing_46_region/'}
+parser = ArgumentParser(prog='preprocessing_data',
+                        description = "Preprocess EcoG time series,\
+                                       and pickle processed data.",
+                        formatter_class=ArgumentDefaultsHelpFormatter)
+parser.add_argument('path', default=arg_default['path'], nargs='?',
+                    type = str, 
+                    help = "path of working directory."
+                    )
+args = parser.parse_args()
 
 #  band filter 
 #  delta: 1-4 Hz
@@ -37,9 +49,8 @@ band_freq = {'delta': [1,4],
 # filter target band
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
 
-path = 'data_preprocessing_46_region/'
-if not os.path.isdir(path):
-    os.makedirs(path)
+if not os.path.isdir(args.path):
+    os.makedirs(args.path)
 
 # load raw data
 data_path = 'ECoG data-ChenYuHan/'
@@ -57,7 +68,6 @@ for i in range(num_region):
 multiplicity = np.zeros(num_region, dtype=int)
 for i, item in enumerate(data_series):
     multiplicity[i] = item.shape[1]
-data_package['multiplicity'] = multiplicity
 stride = np.hstack((0, np.cumsum(multiplicity)))
 data_package['stride'] = stride
 
@@ -88,9 +98,9 @@ for band in filter_pool:
         data_filtered[:,idx] = filter(data_series[:,idx], band, 1000)
     data_package['data_series_'+band] = data_filtered
 
-np.savez(path + 'preprocessed_data.npz', **data_package)
+np.savez(args.path + 'preprocessed_data.npz', **data_package)
 
-data_package = np.load(path+'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load(args.path+'preprocessed_data.npz', allow_pickle=True)
 
 # Plot traces and power spectrums for original EcoG and filtered ones
 from scipy.ndimage.filters import gaussian_filter1d
@@ -112,7 +122,7 @@ ax[1].set_ylabel('Spectrum Intensity')
 ax[1].set_title('Power Spectrum')
 ax[1].set_ylim(0.5e1,1e6)
 plt.tight_layout()
-plt.savefig(path +'data_series_raw_signal.png')
+plt.savefig(args.path +'data_series_raw_signal.png')
 
 fig, ax = plt.subplots(len(filter_pool),2, figsize=(20,len(filter_pool)*3))
 for idx, band in enumerate(filter_pool):
@@ -135,5 +145,5 @@ for idx, band in enumerate(filter_pool):
         ax[idx, 1].set_title('Power Spectrum')
         ax[idx, 1].legend(loc=1, fontsize=10)
 plt.tight_layout()
-plt.savefig(path + 'filtered_data_pdf.png')
+plt.savefig(args.path + 'filtered_data_pdf.png')
 

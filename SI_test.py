@@ -2,8 +2,7 @@
 # coding: utf-8
 # Author: Kai Chen
 # Institute: INS, SJTU
-# Description: Parallelly calculating TDMI from filtered ECoG data. Return an matrix of
-#              accumulative tdmi with order p. By default, p=10.
+# Description: Parallelly calculating TDMI from shuffled ECoG data. 
 
 import numpy as np
 import multiprocessing
@@ -12,12 +11,19 @@ import time
 if __name__ == '__main__':
   from mutual_info_cy import mutual_info
   from tdmi_scan_v2 import print_log
+  from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+  arg_default = {'path': 'data_preprocessing_46_region/'}
+  parser = ArgumentParser(prog='tdmi_scan_significant_test',
+                          description = "Scan shuffled mutual information",
+                          formatter_class=ArgumentDefaultsHelpFormatter)
+  parser.add_argument('path', default=arg_default['path'], nargs='?',
+                      type = str, 
+                      help = "path of working directory."
+                      )
+  args = parser.parse_args()
   t0 = time.time()
   # load data
-  path = 'data_preprocessing_46_region/'
-  data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-
-  multiplicity = data_package['multiplicity']
+  data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
   stride = data_package['stride']
   filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
   data_dict = {}
@@ -36,7 +42,6 @@ if __name__ == '__main__':
   #channel index
   def ScanTDMI(band:str='raw', pn:int=None)->None:
     key = 'data_series_'+band
-    fname = f'{key:s}_tdmi_shuffle.npy'
     N = stride[-1]
     mi_data = np.zeros((N, N))
     for i in range(N):
@@ -50,10 +55,14 @@ if __name__ == '__main__':
       for res in result:
         mi_data[i,j] = res.get()
         j += 1
-    np.save(path + fname, mi_data)
+    return mi_data
 
+  tdmi_data = {}
   for band in filter_pool:
-    ScanTDMI(band)
+    tdmi_data[band] = ScanTDMI(band)
     print_log(f"Finish processing {band:s} data", t0)
+  fname = 'tdmi_data_shuffle.npz'
+  np.savez(args.path + fname, **tdmi_data)
   finish = time.time()
+  print_log(f'Pickled data save to {args.path+fname:s}.', t0)
   print_log(f'totally time cost {finish-t0:5.2f} s.', t0)
