@@ -5,21 +5,25 @@
 
 if __name__ == '__main__':
     import numpy as np
-    import matplotlib as mpl 
     import matplotlib.pyplot as plt
     from mpl_toolkits.axes_grid1 import make_axes_locatable
     from draw_causal_distribution_v2 import load_data
-    from CG_causal_distribution import Extract_MI_CG
+    from utils.tdmi import Extract_MI_CG
+    from cluster import get_cluster_id, get_sorted_mat
 
     path = 'data_preprocessing_46_region/'
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
     adj_mat = data_package['adj_mat']
-    multiplicity = data_package['multiplicity']
     stride = data_package['stride']
+    multiplicity = np.diff(stride).astype(int)
+
+    adj_mat_sort = adj_mat.copy()
+    adj_mat_sort[adj_mat_sort<5e-3] = 1e-6
+    sort_id = get_cluster_id(adj_mat_sort)
 
     filter_pool = ['raw', 'delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
 
-    tdmi_mode = 'sum'  # or 'max'
+    tdmi_mode = 'max'  # or 'max'
 
     # create adj_weight_flatten by excluding 
     #   auto-tdmi in region with single channel
@@ -38,7 +42,9 @@ if __name__ == '__main__':
     for idx, band in enumerate(filter_pool):
         # plot true adjacent matrix
         if idx == 0:
-            pax = ax[idx, 0].imshow(np.log10(adj_mat+1e-6))
+            adj_mat_sort = np.log10(adj_mat+1e-6) 
+            adj_mat_sort = get_sorted_mat(adj_mat_sort, sort_id)
+            pax = ax[idx, 0].imshow(adj_mat_sort)
             ax[idx, 0].axis('scaled')
             divider = make_axes_locatable(ax[idx, 0])
             cax = divider.append_axes("left", size="5%", pad=0.05)
@@ -50,7 +56,7 @@ if __name__ == '__main__':
 
         # load tdmi data for target band
         tdmi_data = load_data(path, band)
-        tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
+        tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride)
         tdmi_data_cg = np.log10(tdmi_data_cg)
 
         # plot reconstructed connectome
@@ -63,6 +69,7 @@ if __name__ == '__main__':
             tdmi_data_cg_copy = tdmi_data_cg.copy()
             tdmi_data_cg_copy[tdmi_data_cg_copy<threshold] = lb
 
+            tdmi_data_cg_copy = get_sorted_mat(tdmi_data_cg_copy, sort_id)
             pax1 = ax[idx, iidx+1].imshow(tdmi_data_cg_copy)
             ax[idx, iidx+1].axis('scaled')
             ax[idx, iidx+1].xaxis.set_visible(False)

@@ -5,16 +5,13 @@
 
 if __name__ == '__main__':
     import numpy as np
-    import matplotlib as mpl 
     import matplotlib.pyplot as plt
     from mpl_toolkits.axes_grid1 import make_axes_locatable
-    from draw_causal_distribution_v2 import load_data
-    from CG_causal_distribution import Extract_MI_CG
+    from utils.tdmi import Extract_MI_CG
 
     path = 'data_preprocessing_46_region/'
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
     adj_mat = data_package['adj_mat']
-    multiplicity = data_package['multiplicity']
     stride = data_package['stride']
 
     filter_pool = ['raw', 'delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
@@ -41,13 +38,13 @@ if __name__ == '__main__':
         ax[0, idx].yaxis.set_visible(False)
     
     optimal_threshold = np.load(path+f'opt_threshold_{tdmi_mode:s}.npz', allow_pickle=True)
+    tdmi_data = np.load(path + 'tdmi_data.npz', allow_pickle=True)
     for idx, band in enumerate(filter_pool):
         # load shuffled tdmi data for target band
-        tdmi_data = load_data(path, band)
         thresholds = optimal_threshold[band][1:-1]
         print(thresholds)
         
-        tdmi_data_cg = Extract_MI_CG(tdmi_data, tdmi_mode, stride, multiplicity)
+        tdmi_data_cg = Extract_MI_CG(tdmi_data[band], tdmi_mode, stride)
         tdmi_data_cg = np.log10(tdmi_data_cg)
 
         # plot reconstructed connectome
