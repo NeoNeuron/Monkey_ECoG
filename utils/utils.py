@@ -76,10 +76,10 @@ def CG(tdmi_data:np.ndarray, stride:np.ndarray)->np.ndarray:
         for j in range(n_region):
             data_buffer = tdmi_data[stride[i]:stride[i+1],stride[j]:stride[j+1]]
             if i != j:
-                tdmi_data_cg[i,j]=data_buffer.mean()
+                tdmi_data_cg[i,j]=np.nanmean(data_buffer)
             else:
                 if multiplicity[i] > 1:
-                    tdmi_data_cg[i,j]=np.mean(data_buffer[~np.eye(multiplicity[i], dtype=bool)])
+                    tdmi_data_cg[i,j]=np.nanmean(data_buffer[~np.eye(multiplicity[i], dtype=bool)])
                 else:
-                    tdmi_data_cg[i,j]=data_buffer.mean() # won't be used in ROC.
+                    tdmi_data_cg[i,j]=np.nanmean(data_buffer) # won't be used in ROC.
     return tdmi_data_cg
