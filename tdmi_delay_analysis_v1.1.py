@@ -3,10 +3,9 @@
 # TDMI delay analysis. plot the delay statistics.
 # plot histogram of delays
 
-import os
 import numpy as np 
 import matplotlib.pyplot as plt 
-from tdmi_delay_analysis_v1 import get_delay_matrix
+from utils.tdmi import get_delay_matrix
 
 if __name__ == '__main__':
     path = "data_preprocessing_46_region/"

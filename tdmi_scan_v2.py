@@ -65,7 +65,7 @@ if __name__ == '__main__':
     tdmi_data[band] = ScanTDMI(data_package['data_series_'+band], 41)
     # save result to temp file.
     fname = f'tdmi_{band:s}.npy'
-    np.savez(args.path + fname, tdmi_data[band])
+    np.save(args.path + fname, tdmi_data[band])
     print_log(f"Finish processing {band:s} data, temp data save to {args.path+fname:s}.", start)
 
   # unify all data files
