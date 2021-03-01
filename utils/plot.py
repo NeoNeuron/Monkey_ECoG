@@ -50,7 +50,7 @@ def gen_causal_distribution_figure(tdmi_flatten:np.ndarray,
     ax[1,0].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
     ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
     ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
-    ax[1,0].set_title(f'Fitting Slop = {pval[0]:5.3f}')
+    ax[1,0].set_title(f'Fitness : r = {Linear_R2(np.log10(weight_set), log_tdmi_data_mean, pval)**0.5:5.3f}')
     ax[1,0].legend(fontsize=15)
 
     # Draw ROC curves
@@ -101,6 +101,7 @@ def gen_auc_threshold_figure(aucs:dict, w_thresholds:list)->plt.Figure:
 
     [ax[i].set_ylabel('AUC') for i in (0,4)]
     [ax[i].set_xlabel('Threshold value') for i in (4,5,6)]
+    ax[0].set_ylim(0.5, 0.9)
 
     # make last subfigure invisible
     ax[-1].set_visible(False)
@@ -120,7 +121,7 @@ def gen_mi_s_figure(tdmi_data_flatten:dict, weight_flatten:dict)->plt.Figure:
             answer = weight_flatten[band].copy()
             answer[answer==0]=1e-7
             log_answer = np.log10(answer)
-            answer_edges = np.linspace(-6, 1, num = 15)
+            answer_edges = np.linspace(-6, 1, num = 100)
             # average data
             log_tdmi_data_mean = np.zeros(len(answer_edges)-1)
             for i in range(len(answer_edges)-1):
@@ -132,7 +133,7 @@ def gen_mi_s_figure(tdmi_data_flatten:dict, weight_flatten:dict)->plt.Figure:
             pval = np.polyfit(answer_edges[:-1][~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
             ax[idx].plot(answer_edges[:-1], log_tdmi_data_mean, 'k.', markersize=15, label='TDMI mean')
             ax[idx].plot(answer_edges[:-1], np.polyval(pval, answer_edges[:-1]), 'r', label='Linear Fitting')
-            ticks = [-5, -3, -1]
+            ticks = [-6, -4, -2, 0]
             labels = ['$10^{%d}$'%item for item in ticks]
             ax[idx].set_xticks(ticks)
             ax[idx].set_xticklabels(labels)

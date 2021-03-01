@@ -81,5 +81,5 @@ def CG(tdmi_data:np.ndarray, stride:np.ndarray)->np.ndarray:
                 if multiplicity[i] > 1:
                     tdmi_data_cg[i,j]=np.nanmean(data_buffer[~np.eye(multiplicity[i], dtype=bool)])
                 else:
-                    tdmi_data_cg[i,j]=np.nanmean(data_buffer) # won't be used in ROC.
+                    tdmi_data_cg[i,j]=np.nan # won't be used in ROC.
     return tdmi_data_cg
