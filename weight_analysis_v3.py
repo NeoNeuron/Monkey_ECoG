@@ -78,6 +78,7 @@ if __name__ == '__main__':
         "## $w_{ij} > 0$ ",
     ]
     with open(path + 'weight_analysis_v3.md', 'w') as ofile:
+        roc_data = np.zeros((5,7,5,))
         for weight_mask, idx in zip(
             [
                 weight == 1e-6,
@@ -89,38 +90,38 @@ if __name__ == '__main__':
             range(5)
         ):
 
+            print(title_set[idx], file=ofile)
+            print('| band | TP | FP | FN | TN | Corr |', file = ofile)
+            print('|------|----|----|----|----|------|', file = ofile)
             sorted_id = get_cluster_id(weight_mask)
 
             fig, ax = plt.subplots(4,2, figsize=(6,12))
 
-            tdmi_data_max = {}
             tdmi_mask = {}
-            for band in filter_pool:
+            for iidx, band in enumerate(filter_pool):
                 # compute TDMI statistics
                 tdmi_data_band = MI_stats(tdmi_data[band], 'max')
-                tdmi_data_max[band] = tdmi_data_band.copy()
                 if idx+1 == tdmi_sep[band].shape[0]:
-                    tdmi_mask[band] = (tdmi_data_max[band] > tdmi_sep[band][1])*(tdmi_data_max[band] <= tdmi_sep[band][-1])
+                    tdmi_mask[band] = (tdmi_data_band > tdmi_sep[band][1])*(tdmi_data_band <= tdmi_sep[band][-1])
                 else:
-                    tdmi_mask[band] = (tdmi_data_max[band] > tdmi_sep[band][idx])*(tdmi_data_max[band] <= tdmi_sep[band][idx+1])
+                    tdmi_mask[band] = (tdmi_data_band > tdmi_sep[band][idx])*(tdmi_data_band <= tdmi_sep[band][idx+1])
+                TP, FP, FN, TN = ROC_matrix(weight_mask, tdmi_mask[band]*snr_mask[band])
+                CORR = np.corrcoef(weight_mask.flatten(), (tdmi_mask[band]*snr_mask[band]).flatten())[0,1]
+                if np.isnan(CORR):
+                    CORR = 0.
+                print(f'| {band:s} | {TP:d} | {FP:d} | {FN:d} | {TN:d} | {CORR:6.3f} |', file=ofile)
+                roc_data[idx,iidx,:] = [TP, FP, FN, TN, CORR]
 
+            # plot figure
             plt_unit2(ax[0,0], weight_mask, sorted_id)
             ax[0,0].set_title('Weight Matrix')
             indices = [(1,0),(2,0),(3,0),(1,1),(2,1),(3,1),(0,1),]
-            print(title_set[idx], file=ofile)
-            print('| band | TP | FP | FN | TN | Corr |', file = ofile)
-            print('|------|----|----|----|----|------|', file = ofile)
             union_mask = np.zeros_like(weight, dtype=bool)
             for index, band in zip(indices, filter_pool):
                 plt_unit2(ax[index], tdmi_mask[band]*snr_mask[band], sorted_id)
                 if band != 'raw':
                     union_mask = ~((~union_mask)*(~(tdmi_mask[band]*snr_mask[band])))
                 ax[index].set_title(band)
-                TP, FP, FN, TN = ROC_matrix(weight_mask, tdmi_mask[band]*snr_mask[band])
-                CORR = np.corrcoef(weight_mask.flatten(), (tdmi_mask[band]*snr_mask[band]).flatten())[0,1]
-                if np.isnan(CORR):
-                    CORR = 0.
-                print(f'| {band:s} | {TP:d} | {FP:d} | {FN:d} | {TN:d} | {CORR:6.3f} |', file=ofile)
             CORR = np.corrcoef(weight_mask.flatten(), union_mask.flatten())[0,1]
             print(f'**CORR = {CORR:6.3f}**', file=ofile)
             [axi.invert_yaxis() for axi in ax.flatten()]
@@ -129,3 +130,4 @@ if __name__ == '__main__':
             plt.tight_layout()
             plt.savefig(path + f'weight_analysis_v3_{idx:d}.png')
             plt.close()
+        np.save(path + 'weight_analysis_v3.npy', roc_data)
