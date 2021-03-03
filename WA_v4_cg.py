@@ -1,10 +1,10 @@
-# Author: Kai Chen
-# Description: clustering analysis of commonly activated area
-#   for differet frequency band.
+#
+# ! Author: Kai Chen
 # * Key Notion:
 # *   - weight matrix masked by weight threshold;
 # *   - TDMI recon matrix masked by corresponding TDMI threshold;
 # *   - All normalized to 0-1 valued matrix;
+# *   - plot statistics of reconstructed edges in different weight range across different frequency band;
 from utils.tdmi import MI_stats
 from weight_analysis_v3 import ROC_matrix
 from utils.utils import CG
@@ -15,15 +15,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['axes.linewidth'] = 0.5
 plt.rcParams['lines.linewidth'] = 0.1
-
-
-def plt_unit2(axi, mat, sorted_id=None):
-    if sorted_id is not None:
-        buffer = get_sorted_mat(mat, sorted_id)
-        axi.pcolormesh(buffer, cmap=plt.cm.gray)
-    else:
-        axi.pcolormesh(mat, cmap=plt.cm.gray)
-
 
 path = 'tdmi_snr_analysis/'
 data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
@@ -42,7 +33,7 @@ filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
 delay_mat = {}
 snr_mat = {}
-seperator = [-6, -4, -2, 1]
+seperator = [-6, -5, -4, -3, -2, -1, 0, 1]
 for band in filter_pool:
     delay_mat[band] = compute_delay_matrix(tdmi_data[band])
     snr_mat[band] = compute_snr_matrix(tdmi_data[band])
@@ -69,24 +60,33 @@ for band in filter_pool:
     tdmi_sep[band] = np.hstack((0, tdmi_sep[band]))
 
 title_set = [
-    "## $w_{ij}=0$ ",
-    "## $0 < w_{ij} \leq 10^{-4}$ ",
-    "## $10^{-4} < w_{ij} \leq 10^{-2}$ ",
-    "## $w_{ij} > 10^{-2}$ ",
-    "## $w_{ij} > 0$ ",
+    "# $w_{ij}=0$ ",
+    "# $0 < w_{ij} \leq 10^{-5}$ ",
+    "# $10^{-5} < w_{ij} \leq 10^{-4}$ ",
+    "# $10^{-4} < w_{ij} \leq 10^{-3}$ ",
+    "# $10^{-3} < w_{ij} \leq 10^{-2}$ ",
+    "# $10^{-2} < w_{ij} \leq 10^{-1}$ ",
+    "# $10^{-1} < w_{ij} \leq 10^{0}$ ",
+    "# $w_{ij} > 10^{0}$ ",
+    "# $w_{ij} > 0$ ",
 ]
 tdmi_mask_total = {}
-with open(path + 'weight_analysis_v3_cg.md', 'w') as ofile:
-    roc_data = np.zeros((5, 7, 5,))
+with open(path + 'weight_analysis_v4_cg.md', 'w') as ofile:
+    roc_data = np.zeros((9, 7, 5,))
+    fig, ax = plt.subplots(1, 9, figsize=(26, 3))
     for weight_mask, idx in zip(
         [
             weight == 1e-6,
-            (weight <= 1e-4)*(weight > 1e-6),
-            (weight > 1e-4)*(weight <= 1e-2),
-            weight > 1e-2,
+            (weight > 1e-6)*(weight <= 1e-5),
+            (weight > 1e-5)*(weight <= 1e-4),
+            (weight > 1e-4)*(weight <= 1e-3),
+            (weight > 1e-3)*(weight <= 1e-2),
+            (weight > 1e-2)*(weight <= 1e-1),
+            (weight > 1e-1)*(weight <= 1e0),
+            weight > 1e0,
             weight > 1e-6,
         ],
-        range(5)
+        range(9)
     ):
 
         print(title_set[idx], file=ofile)
@@ -94,7 +94,6 @@ with open(path + 'weight_analysis_v3_cg.md', 'w') as ofile:
         print('|------|----|----|----|----|------|', file=ofile)
         sorted_id = get_cluster_id(weight_mask)
 
-        fig, ax = plt.subplots(4, 2, figsize=(6, 12))
 
         tdmi_mask = {}
         for iidx, band in enumerate(filter_pool):
@@ -124,23 +123,17 @@ with open(path + 'weight_analysis_v3_cg.md', 'w') as ofile:
         tdmi_mask_total[title_set[idx]] = tdmi_mask
 
         # plot figure
-        plt_unit2(ax[0, 0], weight_mask, sorted_id)
-        ax[0, 0].set_title('Weight Matrix')
-        indices = [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1), (0, 1), ]
-        union_mask = np.zeros_like(weight, dtype=bool)
-        for index, band in zip(indices, filter_pool):
-            plt_unit2(ax[index], tdmi_mask[band], sorted_id)
-            if band != 'raw':
-                union_mask = ~((~union_mask)*(~tdmi_mask[band]))
-            ax[index].set_title(band)
-        CORR = np.corrcoef(weight_mask.flatten(), union_mask.flatten())[0, 1]
-        print(f'**CORR = {CORR:6.3f}**', file=ofile)
-        [axi.invert_yaxis() for axi in ax.flatten()]
-        [axi.axis('scaled') for axi in ax.flatten()]
+        ax[idx].plot
+        tdmi_sum = np.array([tdmi_mask_total[title_set[idx]][key] for key in filter_pool[:-1]])
+        # tdmi_sum[:, ~weight_mask] = 0  # ! Uncomment for double filter
+        ax[idx].bar(range(6), height=tdmi_sum.sum(1).sum(1), tick_label=filter_pool[:-1])
+        ax[idx].set_xticklabels(filter_pool[:-1], rotation=45)
+        ax[idx].set_title(title_set[idx].strip('#'))
 
-        plt.tight_layout()
-        plt.savefig(path + f'weight_analysis_v3_{idx:d}_cg.png')
-        plt.close()
-    np.save(path + 'roc_weight_analysis_v3_cg.npz', roc_data)
-with open(path + 'weight_analysis_v3_cg.pkl', 'wb') as f:
+    plt.tight_layout()
+    plt.savefig(path + f'weight_analysis_v4_cg.png')
+    plt.close()
+    np.save(path + 'roc_weight_analysis_v4_cg.npz', roc_data)
+
+with open(path + 'weight_analysis_v4_cg.pkl', 'wb') as f:
     pickle.dump(tdmi_mask_total, f)

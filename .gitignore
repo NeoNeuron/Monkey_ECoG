@@ -18,3 +18,5 @@ literatures
 *.pptx
 *.txt
 *.so
+*.csv
+*.pkl
