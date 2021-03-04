@@ -48,7 +48,7 @@ if __name__ == '__main__':
     tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
     delay_mat = {}
     snr_mat = {}
-    seperator = [-6, -5, -4, -3 -2, -1, 0]
+    seperator = [-6, -5, -4, -3, -2, -1, 0]
     for band in filter_pool:
         delay_mat[band] = compute_delay_matrix(tdmi_data[band])
         snr_mat[band] = compute_snr_matrix(tdmi_data[band])
@@ -90,7 +90,7 @@ if __name__ == '__main__':
             print('|------|----|----|----|----|------|', file=ofile)
             sorted_id = get_cluster_id(weight_mask)
 
-            fig, ax = plt.subplots(4, 2, figsize=(6, 12))
+            fig, ax = plt.subplots(4, 2, figsize=(5, 12))
 
             tdmi_mask = {}
             for iidx, band in enumerate(filter_pool):

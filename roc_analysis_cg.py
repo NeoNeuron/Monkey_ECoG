@@ -17,8 +17,8 @@ title_set = [
 
 # Calculate TP FP FN TN Corr TPR FPR FNR TNR PPV 
 roc_data = np.load(path + 'weight_analysis_v3_cg.npy', allow_pickle=True)
-roc_processed = np.zeros((5, 7, 6))
-for i in range(5):
+roc_processed = np.zeros((len(title_set), 7, 6))
+for i in range(len(title_set)):
     roc_processed[i,:,0] = roc_data[i,:,0]/(roc_data[i,:,0] + roc_data[i,:,2])
     roc_processed[i,:,1] = roc_data[i,:,1]/(roc_data[i,:,1] + roc_data[i,:,3])
     roc_processed[i,:,2] = roc_data[i,:,2]/(roc_data[i,:,0] + roc_data[i,:,2])

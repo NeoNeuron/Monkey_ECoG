@@ -71,7 +71,7 @@ title_set = [
     "# $w_{ij} > 0$ ",
 ]
 tdmi_mask_total = {}
-with open(path + 'weight_analysis_v4_cg.md', 'w') as ofile:
+with open(path + 'WA_v4_cg.md', 'w') as ofile:
     roc_data = np.zeros((9, 7, 5,))
     fig, ax = plt.subplots(1, 9, figsize=(26, 3))
     for weight_mask, idx in zip(
@@ -131,9 +131,9 @@ with open(path + 'weight_analysis_v4_cg.md', 'w') as ofile:
         ax[idx].set_title(title_set[idx].strip('#'))
 
     plt.tight_layout()
-    plt.savefig(path + f'weight_analysis_v4_cg.png')
+    plt.savefig(path + f'WA_v4_cg.png')
     plt.close()
-    np.save(path + 'roc_weight_analysis_v4_cg.npz', roc_data)
+    np.save(path + 'roc_WA_v4_cg.npy', roc_data)
 
-with open(path + 'weight_analysis_v4_cg.pkl', 'wb') as f:
+with open(path + 'WA_v4_cg.pkl', 'wb') as f:
     pickle.dump(tdmi_mask_total, f)
