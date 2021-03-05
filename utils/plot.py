@@ -27,7 +27,7 @@ def gen_causal_distribution_figure(tdmi_flatten:np.ndarray,
     fig, ax = plt.subplots(2,4,figsize=(20,10))
 
     ax[0,0].plot(edges[1:], counts, '-*k', label='Raw')
-    ax[0,0].axvline(np.log10(tdmi_threshold), color='cyan', label='SI')
+    # ax[0,0].axvline(np.log10(tdmi_threshold), color='cyan', label='SI')
     # UNCOMMENT to create double Gaussian fitting of TDMI PDF
     # from scipy.optimize import curve_fit
     # from .utils import Gaussian, Double_Gaussian
@@ -40,7 +40,7 @@ def gen_causal_distribution_figure(tdmi_flatten:np.ndarray,
     #     pass
     ax[0,0].set_xlabel('$log_{10}(Value)$')
     ax[0,0].set_ylabel('Density')
-    ax[0,0].legend(fontsize=13, loc=2)
+    ax[0,0].legend(fontsize=13, loc=1)
 
     weight_set = np.unique(weight_flatten)
     log_tdmi_data_mean = np.array([np.mean(log_tdmi_data[weight_flatten==key]) for key in weight_set])
@@ -80,7 +80,7 @@ def gen_causal_distribution_figure(tdmi_flatten:np.ndarray,
         ax[1,idx+1].set_title(f'AUC = {AUC(fpr, tpr):5.3f}')
 
     ax[0,0].axvline(opt_threshold.mean(), color='orange', label='opt_threshold')
-    ax[0,0].legend(fontsize=13, loc=2)
+    ax[0,0].legend(fontsize=13, loc=1)
 
     plt.tight_layout()
     return fig

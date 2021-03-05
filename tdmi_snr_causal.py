@@ -12,10 +12,11 @@ if __name__ == '__main__':
     plt.rcParams['xtick.labelsize'] = 16
     plt.rcParams['ytick.labelsize'] = 16
     from draw_causal_distribution_v2 import load_data
-    from utils.tdmi import MI_stats, compute_snr_matrix, get_sparsity_threshold
+    from utils.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix, get_sparsity_threshold
     from utils.plot import gen_causal_distribution_figure
     from utils.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+    import pickle
     arg_default = {
         'path': 'tdmi_snr_analysis/',
         'tdmi_mode': 'max',
@@ -57,36 +58,36 @@ if __name__ == '__main__':
     stride = data_package['stride']
     # prepare weight_flatten
     weight = data_package['weight']
-    snr_th = {
-        'raw'        :5.0,
-        'delta'      :4.3,
-        'theta'      :4.5,
-        'alpha'      :4.,
-        'beta'       :5.,
-        'gamma'      :11,
-        'high_gamma' :11,
-    }
+    with open(args.path+'snr_th.pkl', 'rb') as f:
+        snr_th = pickle.load(f)
+
     for band in args.filters:
         # load data for target band
         tdmi_data, tdmi_data_shuffle = load_data(args.path, band, shuffle=True)
 
         # generate snr mask
         snr_mat = compute_snr_matrix(tdmi_data)
-        # th_val = get_sparsity_threshold(snr_mat, p = 0.2)
+        noise_matrix = compute_noise_matrix(tdmi_data)
+        # th_val = get_sparsity_threshold(snr_mat, p = 0.5)
         # snr_mask = snr_mat >= th_val
         snr_mask = snr_mat >= snr_th[band]
 
         tdmi_data = MI_stats(tdmi_data, args.tdmi_mode)
         # apply snr mask
-        tdmi_data_flatten = tdmi_data[(~np.eye(stride[-1], dtype=bool))*snr_mask]
-        weight_flatten = weight[(~np.eye(stride[-1], dtype=bool))*snr_mask]
+        tdmi_data_flatten = tdmi_data.copy()
+        tdmi_data_flatten[~snr_mask] = noise_matrix[~snr_mask]
+        tdmi_data_flatten = tdmi_data_flatten[~np.eye(stride[-1], dtype=bool)]
+        # weight_flatten = weight.copy()
+        # weight_flatten[~snr_mask] = 0
+        # weight_flatten = weight_flatten[~np.eye(stride[-1], dtype=bool)]
+        weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
         # setup interarea mask
         if args.is_interarea:
             interarea_mask = (weight_flatten != 1.5)
             weight_flatten = weight_flatten[interarea_mask]
             tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
 
-        SI_value = tdmi_data_shuffle[(~np.eye(stride[-1], dtype=bool))*snr_mask].mean()
+        SI_value = tdmi_data_shuffle[~np.eye(stride[-1], dtype=bool)].mean()
         if args.tdmi_mode == 'sum':
             SI_value *= 10
         fig = gen_causal_distribution_figure(

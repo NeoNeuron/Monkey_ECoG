@@ -12,11 +12,12 @@ if __name__ == '__main__':
     plt.rcParams['xtick.labelsize'] = 16
     plt.rcParams['ytick.labelsize'] = 16
     from utils.tdmi import MI_stats 
-    from utils.tdmi import compute_snr_matrix
+    from utils.tdmi import compute_snr_matrix, compute_noise_matrix, get_sparsity_threshold
     from draw_causal_distribution_v2 import load_data
     from utils.plot import gen_causal_distribution_figure
     from utils.utils import CG, print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+    import pickle
     arg_default = {
         'path': 'tdmi_snr_analysis/',
         'tdmi_mode': 'max',
@@ -51,15 +52,8 @@ if __name__ == '__main__':
     n_region = multiplicity.shape[0]
 
     # manually set snr threshold
-    snr_th = {
-        'raw'        :5.0,
-        'delta'      :4.3,
-        'theta'      :4.5,
-        'alpha'      :4.,
-        'beta'       :5.,
-        'gamma'      :11,
-        'high_gamma' :11,
-    }
+    with open(args.path+'snr_th.pkl', 'rb') as f:
+        snr_th = pickle.load(f)
 
     # create adj_weight_flatten by excluding 
     #   auto-tdmi in region with single channel
@@ -74,13 +68,14 @@ if __name__ == '__main__':
 
         # generate SNR mask
         snr_mat = compute_snr_matrix(tdmi_data)
+        noise_matrix = compute_noise_matrix(tdmi_data)
             # th_val = get_sparsity_threshold(snr_mat, p = 0.2)
             # snr_mask = snr_mat >= th_val
         snr_mask = snr_mat >= snr_th[band]
         # compute TDMI statistics
         tdmi_data = MI_stats(tdmi_data, args.tdmi_mode)
         # set filtered entities as numpy.nan
-        tdmi_data[~snr_mask] = np.nan
+        tdmi_data[~snr_mask] = noise_matrix[~snr_mask]
         # compute coarse-grain average
         tdmi_data_cg = CG(tdmi_data, stride)
         # apply cg mask
@@ -88,7 +83,7 @@ if __name__ == '__main__':
         # remove potential np.nan entities
         nan_mask = ~np.isnan(tdmi_data_flatten)
 
-        SI_value = tdmi_data_shuffle[(~np.eye(stride[-1], dtype=bool))*snr_mask].mean()
+        SI_value = tdmi_data_shuffle[(~np.eye(stride[-1], dtype=bool))].mean()
         if args.tdmi_mode == 'sum':
             SI_value *= 10
 
