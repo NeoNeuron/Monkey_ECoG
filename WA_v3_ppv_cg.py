@@ -53,19 +53,18 @@ if __name__ == '__main__':
     with open(path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
 
-    pval = np.load(path+'pval.npz', allow_pickle=True)
+    with open(path+'gap_th.pkl', 'rb') as f:
+        gap_th = pickle.load(f)
 
     snr_mask = {}
-    tdmi_sep = {}
     for band in filter_pool:
         snr_mask[band] = snr_mat[band] > snr_th[band]
-        tdmi_sep[band] = np.array([10**(pval[band][0]*i + pval[band][1]) for i in seperator])
 
     title_set = [
         "## $w_{ij}>10^{%d}$ " % item for item in seperator
     ]
     tdmi_mask_total = {}
-    with open(path + 'WA_v3_cg.md', 'w') as ofile:
+    with open(path + 'WA_v3_ppv_cg.md', 'w') as ofile:
         roc_data = np.zeros((len(seperator), 7, 8,))
         for weight_mask, idx in zip(
             [
@@ -93,7 +92,7 @@ if __name__ == '__main__':
                 # apply cg mask
                 tdmi_data_cg_band[cg_mask] = np.nan
 
-                tdmi_mask[band] = (tdmi_data_cg_band > tdmi_sep[band][idx])
+                tdmi_mask[band] = (tdmi_data_cg_band > gap_th[band])
                 TP, FP, FN, TN = ROC_matrix(weight_mask, tdmi_mask[band])
                 CORR = np.corrcoef(
                     weight_mask.flatten(), 
@@ -127,9 +126,9 @@ if __name__ == '__main__':
             [axi.axis('scaled') for axi in ax.flatten()]
 
             plt.tight_layout()
-            plt.savefig(path + f'WA_v3_{idx:d}_cg.png')
+            plt.savefig(path + f'WA_v3_ppv_{idx:d}_cg.png')
             plt.close()
         
-        np.save(path + 'roc_WA_v3_cg.npy', roc_data)
-    with open(path + 'WA_v3_cg.pkl', 'wb') as f:
+        np.save(path + 'roc_WA_v3_ppv_cg.npy', roc_data)
+    with open(path + 'WA_v3_ppv_cg.pkl', 'wb') as f:
         pickle.dump(tdmi_mask_total, f)
