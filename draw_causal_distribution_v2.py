@@ -16,7 +16,7 @@ def load_data(path:str, band:str='raw', shuffle:bool=False):
     Returns:
         np.ndarray: tdmi_data and tdmi_data_shuffle(if shuffle==True).
     """
-    tdmi_data = np.load(path + 'tdmi_data.npz', allow_pickle=True)[band]
+    tdmi_data = np.load(path + 'tdmi_data_long.npz', allow_pickle=True)[band]
     if shuffle:
         tdmi_data_shuffle = np.load(path + 'tdmi_data_shuffle.npz', allow_pickle=True)[band]
 
@@ -73,23 +73,25 @@ if __name__ == '__main__':
         interarea_mask = (weight_flatten != 1.5)
         weight_flatten = weight_flatten[interarea_mask]
 
+    # load data for target band
+    tdmi_data = np.load(args.path+'tdmi_data_long.npz', allow_pickle=True)
+    tdmi_data_shuffle = np.load(args.path+'tdmi_data_shuffle.npz', allow_pickle=True)
     for band in args.filters:
-        # load data for target band
-        tdmi_data, tdmi_data_shuffle = load_data(args.path, band, shuffle=True)
-
-        tdmi_data = MI_stats(tdmi_data, args.tdmi_mode)
-        tdmi_data_flatten = tdmi_data[~np.eye(stride[-1], dtype=bool)]
+        tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
+        tdmi_data_flatten = tdmi_data_band[~np.eye(stride[-1], dtype=bool)]
 
         # setup interarea mask
         if args.is_interarea:
             tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
 
-        SI_value = tdmi_data_shuffle[~np.eye(stride[-1], dtype=bool)].mean()
+        SI_value = tdmi_data_shuffle[band][~np.eye(stride[-1], dtype=bool)].mean()
         if args.tdmi_mode == 'sum':
             SI_value *= 10
-        fig = gen_causal_distribution_figure(tdmi_data_flatten, 
-                                             weight_flatten,
-                                             SI_value)
+        fig = gen_causal_distribution_figure(
+            tdmi_data_flatten, 
+            weight_flatten,
+            SI_value
+        )
 
         if args.tdmi_mode == 'sum':
             fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')

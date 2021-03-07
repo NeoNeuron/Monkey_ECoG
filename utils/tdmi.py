@@ -67,3 +67,9 @@ def get_sparsity_threshold(mat, p=0.1):
     th_id = np.argmin(np.abs(np.cumsum(counts)/np.sum(counts) + p - 1))
     th_val = mid_tick[th_id]
     return th_val
+
+def find_gap_threshold(tdmi_data_flatten, offset=1000):
+    tdmi_sort = np.sort(tdmi_data_flatten)
+    max_id = np.argmax(np.diff(tdmi_sort)[offset:-offset]) + offset
+    th_val = (tdmi_sort[max_id] + tdmi_sort[max_id+1])/2
+    return th_val

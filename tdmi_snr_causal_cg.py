@@ -12,8 +12,7 @@ if __name__ == '__main__':
     plt.rcParams['xtick.labelsize'] = 16
     plt.rcParams['ytick.labelsize'] = 16
     from utils.tdmi import MI_stats 
-    from utils.tdmi import compute_snr_matrix, compute_noise_matrix, get_sparsity_threshold
-    from draw_causal_distribution_v2 import load_data
+    from utils.tdmi import compute_snr_matrix, compute_noise_matrix
     from utils.plot import gen_causal_distribution_figure
     from utils.utils import CG, print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -62,28 +61,29 @@ if __name__ == '__main__':
     cg_mask = ~np.diag(multiplicity == 1).astype(bool)
     adj_weight_flatten = adj_weight[cg_mask]
 
-    for band in args.filters:
-        # load shuffled tdmi data for target band
-        tdmi_data, tdmi_data_shuffle = load_data(args.path, band, shuffle=True)
+    # load shuffled tdmi data for target band
+    tdmi_data = np.load(args.path+'tdmi_data_long.npz', allow_pickle=True)
+    tdmi_data_shuffle = np.load(args.path+'tdmi_data_shuffle.npz', allow_pickle=True)
 
+    for band in args.filters:
         # generate SNR mask
-        snr_mat = compute_snr_matrix(tdmi_data)
-        noise_matrix = compute_noise_matrix(tdmi_data)
+        snr_mat = compute_snr_matrix(tdmi_data[band])
+        noise_matrix = compute_noise_matrix(tdmi_data[band])
             # th_val = get_sparsity_threshold(snr_mat, p = 0.2)
             # snr_mask = snr_mat >= th_val
         snr_mask = snr_mat >= snr_th[band]
         # compute TDMI statistics
-        tdmi_data = MI_stats(tdmi_data, args.tdmi_mode)
+        tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
         # set filtered entities as numpy.nan
-        tdmi_data[~snr_mask] = noise_matrix[~snr_mask]
+        tdmi_data_band[~snr_mask] = noise_matrix[~snr_mask]
         # compute coarse-grain average
-        tdmi_data_cg = CG(tdmi_data, stride)
+        tdmi_data_cg = CG(tdmi_data_band, stride)
         # apply cg mask
         tdmi_data_flatten = tdmi_data_cg[cg_mask]
         # remove potential np.nan entities
         nan_mask = ~np.isnan(tdmi_data_flatten)
 
-        SI_value = tdmi_data_shuffle[(~np.eye(stride[-1], dtype=bool))].mean()
+        SI_value = tdmi_data_shuffle[band][(~np.eye(stride[-1], dtype=bool))].mean()
         if args.tdmi_mode == 'sum':
             SI_value *= 10
 
@@ -93,13 +93,23 @@ if __name__ == '__main__':
             SI_value,
         )
 
+        from utils.tdmi import find_gap_threshold
+        gap_th = find_gap_threshold(np.log10(tdmi_data_flatten[nan_mask]), 500)
+        fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')
+        fig.get_axes()[4].axhline(gap_th, ls='-', color='royalblue', label='gap')
+        fig.get_axes()[0].legend(fontsize=14)
+        fig.get_axes()[4].legend(fontsize=14)
+
+
         if args.tdmi_mode == 'sum':
             fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
         elif args.tdmi_mode == 'max':
             fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
         fig.get_axes()[4].get_lines()[1].set_color((0,0,0,0))
         handles, labels = fig.get_axes()[4].get_legend_handles_labels()
-        fig.get_axes()[4].legend((handles[0],handles[2]), (labels[0], labels[2]))
+        del handles[1]
+        del labels[1]
+        fig.get_axes()[4].legend(handles, labels ,fontsize=14)
         plt.tight_layout()
         print_log(f"Figure {band:s} generated.", start)
 

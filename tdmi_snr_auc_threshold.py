@@ -10,10 +10,11 @@ if __name__ == '__main__':
     import matplotlib as mpl 
     mpl.rcParams['font.size']=20
     mpl.rcParams['axes.labelsize']=25
-    from utils.tdmi import MI_stats, compute_snr_matrix, get_sparsity_threshold
+    from utils.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix
     from utils.roc import scan_auc_threshold
     from utils.plot import gen_auc_threshold_figure
     from utils.utils import print_log
+    import pickle
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'tdmi_snr_analysis/',
                     'tdmi_mode': 'max',
@@ -43,47 +44,51 @@ if __name__ == '__main__':
     weight = data_package['weight']
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-    w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
-    tdmi_data = np.load(args.path + 'tdmi_data.npz', allow_pickle=True)
+    w_thresholds = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0]
+    tdmi_data = np.load(args.path + 'tdmi_data_long.npz', allow_pickle=True)
     aucs = {}
+    aucs_no_snr = {}
     opt_threshold = {}
-    snr_th = {
-        'raw'        :5.0,
-        'delta'      :4.3,
-        'theta'      :4.3,
-        'alpha'      :4,
-        'beta'       :5.,
-        'gamma'      :11,
-        'high_gamma' :11,
-    }
+    opt_threshold_no_snr = {}
+    with open(args.path+'snr_th.pkl', 'rb') as f:
+        snr_th = pickle.load(f)
     for band in filter_pool:
         if band in tdmi_data.keys():
             tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
+            tdmi_data_flatten_no_snr = tdmi_data_band[(~np.eye(stride[-1], dtype=bool))]
             # generate snr mask
             snr_mat = compute_snr_matrix(tdmi_data[band])
-            # th_val = get_sparsity_threshold(snr_mat, p = 0.5)
-            # snr_mask = snr_mat >= th_val
+            noise_mat = compute_noise_matrix(tdmi_data[band])
             snr_mask = snr_mat >= snr_th[band]
             # apply snr mask
-            weight_flatten = weight[(~np.eye(stride[-1], dtype=bool))*snr_mask]
-            tdmi_data_flatten = tdmi_data_band[(~np.eye(stride[-1], dtype=bool))*snr_mask]
+            tdmi_data_band[~snr_mask] = noise_mat[~snr_mask]
+            tdmi_data_flatten = tdmi_data_band[(~np.eye(stride[-1], dtype=bool))]
+            # flatten weight matrix
+            weight_flatten = weight[(~np.eye(stride[-1], dtype=bool))]
             # setup interarea mask
             if args.is_interarea:
                 interarea_mask = (weight_flatten != 1.5)
                 weight_flatten = weight_flatten[interarea_mask]
+                tdmi_data_flatten_no_snr = tdmi_data_flatten[interarea_mask]
                 tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
             
+            aucs_no_snr[band], opt_threshold_no_snr[band] = scan_auc_threshold(tdmi_data_flatten_no_snr, weight_flatten, w_thresholds)
             aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, weight_flatten, w_thresholds)
         else:
+            aucs_no_snr[band], opt_threshold_no_snr[band] = None, None
             aucs[band], opt_threshold[band] = None, None
     
-    fig = gen_auc_threshold_figure(aucs, w_thresholds)
+    fig = gen_auc_threshold_figure(aucs_no_snr, w_thresholds, labels='No SNR mask')
+    gen_auc_threshold_figure(aucs, w_thresholds, ax=np.array(fig.get_axes()), colors='orange', labels='SNR mask')
+    [axi.legend() for axi in fig.get_axes()[:-1]]
 
     # save optimal threshold computed by Youden Index
     if args.is_interarea:
-        np.savez(args.path + f'opt_threshold_channel_interarea_tdmi_{args.tdmi_mode:s}.npz', **opt_threshold)
+        with open(args.path+f'opt_threshold_channel_interarea_tdmi_{args.tdmi_mode:s}.pkl', 'wb') as f:
+            snr_th = pickle.dump(opt_threshold, f)
     else:
-        np.savez(args.path + f'opt_threshold_channel_tdmi_{args.tdmi_mode:s}.npz', **opt_threshold)
+        with open(args.path+f'opt_threshold_channel_tdmi_{args.tdmi_mode:s}.pkl', 'wb') as f:
+            snr_th = pickle.dump(opt_threshold, f)
 
     if args.is_interarea:
         fname = f'auc-threshold_interarea_{args.tdmi_mode:s}_manual-th.png'

@@ -5,11 +5,12 @@
 
 if __name__ == '__main__':
     import time
+    import pickle
     import numpy as np
     import matplotlib.pyplot as plt
     plt.rcParams['font.size']=15
     plt.rcParams['axes.labelsize'] = 15
-    from utils.tdmi import MI_stats, compute_snr_matrix, get_sparsity_threshold
+    from utils.tdmi import MI_stats, compute_snr_matrix
     from utils.utils import print_log
     from utils.plot import gen_mi_s_figure
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -38,32 +39,25 @@ if __name__ == '__main__':
     data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     weight = data_package['weight']
-    tdmi_data = np.load(args.path + 'tdmi_data.npz', allow_pickle=True)
+    tdmi_data = np.load(args.path + 'tdmi_data_long.npz', allow_pickle=True)
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
     tdmi_data_flatten = {}
     weight_flatten = {}
-    snr_th = {
-        'raw'        :5.0,
-        'delta'      :4.3,
-        'theta'      :4.5,
-        'alpha'      :4,
-        'beta'       :5.,
-        'gamma'      :11,
-        'high_gamma' :11,
-    }
+    snr_mask = {}
+    with open(args.path+'snr_th.pkl', 'rb') as f:
+        snr_th = pickle.load(f)
     for band in filter_pool:
         if band in tdmi_data.keys():
             tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
             # generate snr mask
             snr_mat = compute_snr_matrix(tdmi_data[band])
-            # th_val = get_sparsity_threshold(snr_mat, p = 0.6)
-            # snr_mask = snr_mat >= th_val
-            snr_mask = snr_mat >= snr_th[band]
+            snr_mask[band] = snr_mat >= snr_th[band]
+            snr_mask[band] = snr_mask[band][(~np.eye(stride[-1], dtype=bool))]
 
-            tdmi_data_flatten[band] = tdmi_data_band[(~np.eye(stride[-1], dtype=bool))*snr_mask]
+            tdmi_data_flatten[band] = tdmi_data_band[(~np.eye(stride[-1], dtype=bool))]
             # setup interarea mask
-            weight_flatten[band] = weight[(~np.eye(stride[-1], dtype=bool))*snr_mask]
+            weight_flatten[band] = weight[(~np.eye(stride[-1], dtype=bool))]
             if args.is_interarea:
                 interarea_mask = (weight_flatten[band] != 1.5)
                 weight_flatten[band] = weight_flatten[band][interarea_mask]
@@ -72,7 +66,7 @@ if __name__ == '__main__':
             tdmi_data_flatten[band] = None
             weight_flatten[band] = None
 
-    fig = gen_mi_s_figure(tdmi_data_flatten, weight_flatten)
+    fig = gen_mi_s_figure(tdmi_data_flatten, weight_flatten, snr_mask)
 
     # edit axis labels
     if args.tdmi_mode == 'sum':

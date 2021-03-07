@@ -12,7 +12,7 @@ if __name__ == '__main__':
     plt.rcParams['xtick.labelsize'] = 16
     plt.rcParams['ytick.labelsize'] = 16
     from draw_causal_distribution_v2 import load_data
-    from utils.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix, get_sparsity_threshold
+    from utils.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix
     from utils.plot import gen_causal_distribution_figure
     from utils.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -93,8 +93,16 @@ if __name__ == '__main__':
         fig = gen_causal_distribution_figure(
             tdmi_data_flatten, 
             weight_flatten,
-            SI_value
+            SI_value,
+            snr_mask[~np.eye(stride[-1],dtype=bool)]
         )
+        from utils.tdmi import find_gap_threshold
+        gap_th = find_gap_threshold(np.log10(tdmi_data_flatten))
+        fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')
+        fig.get_axes()[4].axhline(gap_th, ls='-', color='royalblue', label='gap')
+        fig.get_axes()[0].legend(fontsize=12)
+        fig.get_axes()[4].legend(fontsize=12)
+
 
         if args.tdmi_mode == 'sum':
             fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
