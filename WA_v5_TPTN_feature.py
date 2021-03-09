@@ -21,33 +21,34 @@ multiplicity = np.diff(stride).astype(int)
 # load and manipulate weight matrix
 weight = data_package['weight']
 weight[weight == 0] = 1e-6
-# weight[np.eye(weight.shape[0], dtype=bool)] = 1.5
 
 # define filter pool and load tdmi data
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 tdmi_data = np.load(path+'tdmi_data_long.npz', allow_pickle=True)
 tdmi_full = {band : compute_tdmi_full(tdmi_data[band]) for band in filter_pool}
 
-seperator = [-4, -3, -2, -1, 0]
+off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
+
+separator = [-4, -3, -2, -1, 0]
 title_set = [
-    "## $w_{ij}>10^{%d}$ " % item for item in seperator
+    "## $w_{ij}>10^{%d}$ " % item for item in separator
 ]
 
 # load tdmi_mask data
 with open(path+'WA_v3.pkl', 'rb') as f:
     tdmi_mask_total = pickle.load(f)
     
-fig1, ax1 = plt.subplots(7,len(seperator), figsize=(20, 20))
-fig2, ax2 = plt.subplots(7,len(seperator), figsize=(20, 20))
+fig1, ax1 = plt.subplots(7,len(separator), figsize=(20, 20))
+fig2, ax2 = plt.subplots(7,len(separator), figsize=(20, 20))
 n_curve = 100   # number of curves plot in each subplots (randomly chosen)
-for idx, sep in enumerate(seperator):
+for idx, sep in enumerate(separator):
     weight_mask = (weight > 10**sep)
     TP_mask = {band : weight_mask*tdmi_mask_total[title_set[idx]][band] for band in filter_pool}
     TN_mask = {band : (~weight_mask)*(~tdmi_mask_total[title_set[idx]][band]) for band in filter_pool}
     for iidx, band in enumerate(filter_pool):
         if TP_mask[band].sum() > 0:
             delay = np.arange(-tdmi_data[band].shape[2]+1, tdmi_data[band].shape[2])
-            tdmi_full_buffer = tdmi_full[band][TP_mask[band], :]
+            tdmi_full_buffer = tdmi_full[band][TP_mask[band]*off_diag_mask, :]
             if tdmi_full_buffer.shape[0] < n_curve:
                 ax1[iidx, idx].plot(delay, tdmi_full_buffer.T, color='r', alpha=.1, )
             else:
@@ -60,7 +61,7 @@ for idx, sep in enumerate(seperator):
     for iidx, band in enumerate(filter_pool):
         if TN_mask[band].sum() > 0:
             delay = np.arange(-tdmi_data[band].shape[2]+1, tdmi_data[band].shape[2])
-            tdmi_full_buffer = tdmi_full[band][TN_mask[band], :]
+            tdmi_full_buffer = tdmi_full[band][TN_mask[band]*off_diag_mask, :]
             if tdmi_full_buffer.shape[0] < n_curve:
                 ax2[iidx, idx].plot(delay, tdmi_full_buffer.T, color='b', alpha=.1, )
             else:

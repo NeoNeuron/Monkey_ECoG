@@ -5,6 +5,7 @@
 # *   - weight matrix masked by weight threshold; (weight > threshold)
 # *   - TDMI recon matrix masked by corresponding TDMI threshold;
 # *   - All normalized to 0-1 valued matrix;
+# *   - All diagonal elements are excluded.
 from utils.tdmi import MI_stats
 from utils.cluster import get_cluster_id, get_sorted_mat
 from utils.tdmi import compute_delay_matrix, compute_snr_matrix
@@ -28,24 +29,18 @@ if __name__ == '__main__':
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
     weight = data_package['weight']
     weight[weight == 0] = 1e-6
-    stride = data_package['stride']
-    multiplicity = np.diff(stride).astype(int)
-    adj_weight = data_package['adj_mat'] + \
-        np.eye(data_package['adj_mat'].shape[0])*1.5
-    # cg_mask = np.diag(multiplicity == 1).astype(bool)
 
-    # weight[np.eye(weight.shape[0], dtype=bool)] = 1.5
     filter_pool = ['delta', 'theta', 'alpha',
                    'beta', 'gamma', 'high_gamma', 'raw']
     tdmi_data = np.load(path+'tdmi_data_long.npz', allow_pickle=True)
     delay_mat = {}
     snr_mat = {}
-    seperator = [-6, -5, -4, -3, -2, -1, 0]
+    separator = [-6, -5, -4, -3, -2, -1, 0]
     for band in filter_pool:
         delay_mat[band] = compute_delay_matrix(tdmi_data[band])
         snr_mat[band] = compute_snr_matrix(tdmi_data[band])
-        snr_mat[band][np.eye(snr_mat[band].shape[0], dtype=bool)] = 0
 
+    off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
     # manually set snr threshold
     with open(path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
@@ -58,20 +53,20 @@ if __name__ == '__main__':
         snr_mask[band] = snr_mat[band] > snr_th[band]
 
     title_set = [
-        "## $w_{ij}>10^{%d}$ " % item for item in seperator
+        "## $w_{ij}>10^{%d}$ " % item for item in separator
     ]
     tdmi_mask_total = {}
     with open(path + 'WA_v3_roc.md', 'w') as ofile:
-        roc_data = np.zeros((len(seperator), 7, 8,))
+        roc_data = np.zeros((len(separator), 7, 8,))
         for weight_mask, idx in zip(
             [
-                weight > 10**item for item in seperator
+                weight > 10**item for item in separator
             ],
-            range(len(seperator))
+            range(len(separator))
         ):
 
             print(title_set[idx], file=ofile)
-            print(f'p = {weight_mask.sum()/weight_mask.shape[0]/weight_mask.shape[1]:6.3f}', file=ofile)
+            print(f'p = {np.sum(weight_mask[off_diag_mask])/weight_mask[off_diag_mask].shape[0]:6.3f}', file=ofile)
             print('| band | TP | FP | FN | TN | Corr | TPR | FPR | PPV |', file=ofile)
             print('|------|----|----|----|----|------| --- | --- | --- |', file=ofile)
             sorted_id = get_cluster_id(weight_mask)
@@ -84,11 +79,9 @@ if __name__ == '__main__':
                 tdmi_data_band = MI_stats(tdmi_data[band], 'max')
                 tdmi_mask[band] = (tdmi_data_band > opt_th[band][idx])
                 tdmi_mask[band] *= snr_mask[band]   # ! apply snr_mask to tdmi_mask
-                TP, FP, FN, TN = ROC_matrix(weight_mask, tdmi_mask[band])
-                CORR = np.corrcoef(
-                    weight_mask.flatten(), 
-                    tdmi_mask[band].flatten()
-                )[0, 1]
+                tdmi_mask[band][~off_diag_mask] = False
+                TP, FP, FN, TN = ROC_matrix(weight_mask[off_diag_mask], tdmi_mask[band][off_diag_mask])
+                CORR = np.corrcoef(weight_mask[off_diag_mask], tdmi_mask[band][off_diag_mask])[0, 1]
                 if np.isnan(CORR):
                     CORR = 0.
                 print(
@@ -110,8 +103,7 @@ if __name__ == '__main__':
                 ax[index].set_title(band, fontsize=16)
                 ax[index].set_xticklabels([])
                 ax[index].set_yticklabels([])
-            CORR = np.corrcoef(weight_mask.flatten(),
-                               union_mask.flatten())[0, 1]
+            CORR = np.corrcoef(weight_mask[off_diag_mask], union_mask[off_diag_mask])[0, 1]
             print(f'**CORR = {CORR:6.3f}**', file=ofile)
             [axi.invert_yaxis() for axi in ax.flatten()]
             [axi.axis('scaled') for axi in ax.flatten()]
