@@ -15,6 +15,7 @@ if __name__ == '__main__':
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
     weight = data_package['weight']
     weight[weight == 0] = 1e-6
+    off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
 
     filter_pool = ['delta', 'theta', 'alpha',
                    'beta', 'gamma', 'high_gamma', 'raw']
@@ -31,8 +32,7 @@ if __name__ == '__main__':
     p_true = np.zeros_like(separator, dtype=float)
     for idx, sep in enumerate(separator):
         weight_mask = (weight > 10**sep)
-        p_true[idx] = weight_mask.sum()*1.0/weight_mask.shape[0] / \
-            weight_mask.shape[1]
+        p_true[idx] = np.sum(weight_mask[off_diag_mask])*1.0/weight_mask[off_diag_mask].shape[0]
     indices = [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0),
                (1, 1), (1, 2)]
     counter = 0

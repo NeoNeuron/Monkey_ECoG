@@ -54,9 +54,9 @@ if __name__ == '__main__':
 
     start = time.time()
     data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
-    stride = data_package['stride']
     # prepare weight_flatten
     weight = data_package['weight']
+    off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
     with open(args.path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
     
@@ -66,8 +66,6 @@ if __name__ == '__main__':
 
     gap_th_val= {}
     for idx, band in enumerate(args.filters):
-        # load data for target band
-
         # generate snr mask
         snr_mat = compute_snr_matrix(tdmi_data[band])
         noise_matrix = compute_noise_matrix(tdmi_data[band])
@@ -76,9 +74,9 @@ if __name__ == '__main__':
         tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
         # apply snr mask
         tdmi_data_band[~snr_mask] = noise_matrix[~snr_mask]
-        tdmi_data_flatten = tdmi_data_band[~np.eye(stride[-1], dtype=bool)]
+        tdmi_data_flatten = tdmi_data_band[off_diag_mask]
 
-        weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
+        weight_flatten = weight[off_diag_mask]
         # setup interarea mask
         if args.is_interarea:
             interarea_mask = (weight_flatten != 1.5)

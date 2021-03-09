@@ -37,8 +37,8 @@ if __name__ == '__main__':
 
     start = time.time()
     data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
-    stride = data_package['stride']
     weight = data_package['weight']
+    off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
     tdmi_data = np.load(args.path + 'tdmi_data_long.npz', allow_pickle=True)
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
@@ -53,11 +53,11 @@ if __name__ == '__main__':
             # generate snr mask
             snr_mat = compute_snr_matrix(tdmi_data[band])
             snr_mask[band] = snr_mat >= snr_th[band]
-            snr_mask[band] = snr_mask[band][(~np.eye(stride[-1], dtype=bool))]
+            snr_mask[band] = snr_mask[band][off_diag_mask]
 
-            tdmi_data_flatten[band] = tdmi_data_band[(~np.eye(stride[-1], dtype=bool))]
+            tdmi_data_flatten[band] = tdmi_data_band[off_diag_mask]
             # setup interarea mask
-            weight_flatten[band] = weight[(~np.eye(stride[-1], dtype=bool))]
+            weight_flatten[band] = weight[off_diag_mask]
             if args.is_interarea:
                 interarea_mask = (weight_flatten[band] != 1.5)
                 weight_flatten[band] = weight_flatten[band][interarea_mask]

@@ -37,49 +37,43 @@ title_set = [
 # load tdmi_mask data
 with open(path+'WA_v3.pkl', 'rb') as f:
     tdmi_mask_total = pickle.load(f)
+
+TP_mask = {}
+FP_mask = {}
+FN_mask = {}
+TN_mask = {}
+for sep, title in zip(separator, title_set):
+    weight_mask = (weight > 10**sep)
+    TP_mask[title] = {band : weight_mask*tdmi_mask_total[title][band] for band in filter_pool}
+    FP_mask[title] = {band : (~weight_mask)*(tdmi_mask_total[title][band]) for band in filter_pool}
+    FN_mask[title] = {band : (weight_mask)*(~tdmi_mask_total[title][band]) for band in filter_pool}
+    TN_mask[title] = {band : (~weight_mask)*(~tdmi_mask_total[title][band]) for band in filter_pool}
     
 fig1, ax1 = plt.subplots(7,len(separator), figsize=(20, 20))
 fig2, ax2 = plt.subplots(7,len(separator), figsize=(20, 20))
 n_curve = 100   # number of curves plot in each subplots (randomly chosen)
-for idx, sep in enumerate(separator):
-    weight_mask = (weight > 10**sep)
-    TP_mask = {band : weight_mask*tdmi_mask_total[title_set[idx]][band] for band in filter_pool}
-    TN_mask = {band : (~weight_mask)*(~tdmi_mask_total[title_set[idx]][band]) for band in filter_pool}
-    for iidx, band in enumerate(filter_pool):
-        if TP_mask[band].sum() > 0:
-            delay = np.arange(-tdmi_data[band].shape[2]+1, tdmi_data[band].shape[2])
-            tdmi_full_buffer = tdmi_full[band][TP_mask[band]*off_diag_mask, :]
-            if tdmi_full_buffer.shape[0] < n_curve:
-                ax1[iidx, idx].plot(delay, tdmi_full_buffer.T, color='r', alpha=.1, )
-            else:
-                chosen_ids = np.random.choice(np.arange(tdmi_full_buffer.shape[0]), n_curve, replace=False)
-                ax1[iidx, idx].plot(delay, tdmi_full_buffer[chosen_ids,:].T, color='r', alpha=.1, )
-            ax1[iidx, idx].set_xlim(-400,400)
-            # place a text box in upper left in axes coords
-            ax1[iidx, idx].text(0.05, 0.95, f'tau = {tdmi_full[band][TP_mask[band], :].mean(0).argmax()-3000:d} ms', fontsize=14,
-                transform=ax1[iidx, idx].transAxes, verticalalignment='top')
-    for iidx, band in enumerate(filter_pool):
-        if TN_mask[band].sum() > 0:
-            delay = np.arange(-tdmi_data[band].shape[2]+1, tdmi_data[band].shape[2])
-            tdmi_full_buffer = tdmi_full[band][TN_mask[band]*off_diag_mask, :]
-            if tdmi_full_buffer.shape[0] < n_curve:
-                ax2[iidx, idx].plot(delay, tdmi_full_buffer.T, color='b', alpha=.1, )
-            else:
-                chosen_ids = np.random.choice(np.arange(tdmi_full_buffer.shape[0]), n_curve, replace=False)
-                ax2[iidx, idx].plot(delay, tdmi_full_buffer[chosen_ids,:].T, color='b', alpha=.1, )
-            ax2[iidx, idx].set_xlim(-400,400)
-            # place a text box in upper left in axes coords
-            ax2[iidx, idx].text(0.05, 0.95, f'tau = {tdmi_full[band][TN_mask[band], :].mean(0).argmax()-3000:d} ms', fontsize=14,
-                transform=ax2[iidx, idx].transAxes, verticalalignment='top')
-
-    ax1[0, idx].set_title(title_set[idx].strip('#'))
-    ax2[0, idx].set_title(title_set[idx].strip('#'))
-
-[ax1[iidx, 0].set_ylabel(f'{band:s} TDMI (nats)') for iidx, band in enumerate(filter_pool)]
-[ax2[iidx, 0].set_ylabel(f'{band:s} TDMI (nats)') for iidx, band in enumerate(filter_pool)]
-
-plt.tight_layout()
-fig2.savefig(path + f'WA_v5_TN.png')
-plt.close()
-plt.tight_layout()
-fig1.savefig(path + f'WA_v5_TP.png')
+for mask, mask_name, color in zip(
+    (TP_mask, FP_mask, FN_mask, TN_mask), 
+    ('TP', 'FP', 'FN', 'TN'), 
+    ('r', 'y', 'g', 'b')
+):
+    fig, ax = plt.subplots(7,len(separator), figsize=(20, 20))
+    for idx, title in enumerate(title_set):
+        for iidx, band in enumerate(filter_pool):
+            if mask[title][band].sum() > 0:
+                delay = np.arange(-tdmi_data[band].shape[2]+1, tdmi_data[band].shape[2])
+                tdmi_full_buffer = tdmi_full[band][mask[title][band]*off_diag_mask, :]
+                if tdmi_full_buffer.shape[0] < n_curve:
+                    ax[iidx, idx].plot(delay, tdmi_full_buffer.T, color=color, alpha=.1, )
+                else:
+                    chosen_ids = np.random.choice(np.arange(tdmi_full_buffer.shape[0]), n_curve, replace=False)
+                    ax[iidx, idx].plot(delay, tdmi_full_buffer[chosen_ids,:].T, color=color, alpha=.1, )
+                ax[iidx, idx].set_xlim(-400,400)
+                # place a text box in upper left in axes coords
+                ax[iidx, idx].text(0.05, 0.95, f'tau = {tdmi_full[band][mask[title][band], :].mean(0).argmax()-3000:d} ms', fontsize=14,
+                    transform=ax[iidx, idx].transAxes, verticalalignment='top')
+        ax[0, idx].set_title(title.strip('#'))
+    [ax[iidx, 0].set_ylabel(f'{band.upper():s} TDMI (nats)') for iidx, band in enumerate(filter_pool)]
+    plt.tight_layout()
+    fig.savefig(path + f'WA_v5_{mask_name:s}.png')
+    plt.close()

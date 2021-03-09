@@ -55,9 +55,9 @@ if __name__ == '__main__':
 
     start = time.time()
     data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
-    stride = data_package['stride']
     # prepare weight_flatten
     weight = data_package['weight']
+    off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
     with open(args.path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
 
@@ -76,25 +76,25 @@ if __name__ == '__main__':
         # apply snr mask
         tdmi_data_flatten = tdmi_data.copy()
         tdmi_data_flatten[~snr_mask] = noise_matrix[~snr_mask]
-        tdmi_data_flatten = tdmi_data_flatten[~np.eye(stride[-1], dtype=bool)]
+        tdmi_data_flatten = tdmi_data_flatten[off_diag_mask]
         # weight_flatten = weight.copy()
         # weight_flatten[~snr_mask] = 0
-        # weight_flatten = weight_flatten[~np.eye(stride[-1], dtype=bool)]
-        weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
+        # weight_flatten = weight_flatten[off_diag_mask]
+        weight_flatten = weight[off_diag_mask]
         # setup interarea mask
         if args.is_interarea:
             interarea_mask = (weight_flatten != 1.5)
             weight_flatten = weight_flatten[interarea_mask]
             tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
 
-        SI_value = tdmi_data_shuffle[~np.eye(stride[-1], dtype=bool)].mean()
+        SI_value = tdmi_data_shuffle[off_diag_mask].mean()
         if args.tdmi_mode == 'sum':
             SI_value *= 10
         fig = gen_causal_distribution_figure(
             tdmi_data_flatten, 
             weight_flatten,
             SI_value,
-            snr_mask[~np.eye(stride[-1],dtype=bool)]
+            snr_mask[off_diag_mask]
         )
         from utils.tdmi import find_gap_threshold
         gap_th = find_gap_threshold(np.log10(tdmi_data_flatten))

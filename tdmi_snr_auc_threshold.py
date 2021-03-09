@@ -3,10 +3,10 @@
 # Institute: INS, SJTU
 # Plot AUC vs. answer threshold.
 
-import numpy as np
 
 if __name__ == '__main__':
     import time
+    import numpy as np
     import matplotlib as mpl 
     mpl.rcParams['font.size']=20
     mpl.rcParams['axes.labelsize']=25
@@ -40,8 +40,8 @@ if __name__ == '__main__':
     start = time.time()
     # load data
     data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
-    stride = data_package['stride']
     weight = data_package['weight']
+    off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
     w_thresholds = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0]
@@ -55,16 +55,16 @@ if __name__ == '__main__':
     for band in filter_pool:
         if band in tdmi_data.keys():
             tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
-            tdmi_data_flatten_no_snr = tdmi_data_band[(~np.eye(stride[-1], dtype=bool))]
+            tdmi_data_flatten_no_snr = tdmi_data_band[off_diag_mask]
             # generate snr mask
             snr_mat = compute_snr_matrix(tdmi_data[band])
             noise_mat = compute_noise_matrix(tdmi_data[band])
             snr_mask = snr_mat >= snr_th[band]
             # apply snr mask
             tdmi_data_band[~snr_mask] = noise_mat[~snr_mask]
-            tdmi_data_flatten = tdmi_data_band[(~np.eye(stride[-1], dtype=bool))]
+            tdmi_data_flatten = tdmi_data_band[off_diag_mask]
             # flatten weight matrix
-            weight_flatten = weight[(~np.eye(stride[-1], dtype=bool))]
+            weight_flatten = weight[off_diag_mask]
             # setup interarea mask
             if args.is_interarea:
                 interarea_mask = (weight_flatten != 1.5)
