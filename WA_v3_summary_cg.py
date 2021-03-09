@@ -23,39 +23,38 @@ if __name__ == '__main__':
 
     filter_pool = ['delta', 'theta', 'alpha',
                    'beta', 'gamma', 'high_gamma', 'raw']
-    seperator = [-6, -5, -4, -3, -2, -1, 0]
+    separator = [-6, -5, -4, -3, -2, -1, 0]
 
     roc_data = np.load(path+'roc_WA_v3_cg.npy', allow_pickle=True)
     roc_data_ppv = np.load(path+'roc_WA_v3_ppv_cg.npy', allow_pickle=True)
     roc_data_roc = np.load(path+'roc_WA_v3_roc_cg.npy', allow_pickle=True)
 
     title_set = [
-        "## $w_{ij}>10^{%d}$ " % item for item in seperator
+        "## $w_{ij}>10^{%d}$ " % item for item in separator
     ]
     fig, ax = plt.subplots(2, 4, figsize=(12, 6), sharey=True)
-    p_true = np.zeros_like(seperator, dtype=float)
-    for idx, sep in enumerate(seperator):
+    p_true = np.zeros_like(separator, dtype=float)
+    for idx, sep in enumerate(separator):
         weight_mask = (weight > 10**sep)
-        p_true[idx] = weight_mask.sum()*1.0/weight_mask.shape[0] / \
-            weight_mask.shape[1]
+        p_true[idx] = np.sum(weight_mask[~cg_mask])*1.0/weight_mask[~cg_mask].shape[0]
     indices = [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0),
                (1, 1), (1, 2)]
     counter = 0
     for band, idx in zip(filter_pool, indices):
         # plot figure
-        ax[idx].plot(seperator, p_true, '-*',
+        ax[idx].plot(separator, p_true, '-*',
                      markerfacecolor='None', color='r', label='p true')
-        ax[idx].plot(seperator, roc_data[:, counter, -1], '-s',
+        ax[idx].plot(separator, roc_data[:, counter, -1], '-s',
                      markerfacecolor='None', color='orange', label='PPV(mi_th)')
-        ax[idx].plot(seperator, roc_data_ppv[:, counter, -1], '-o',
+        ax[idx].plot(separator, roc_data_ppv[:, counter, -1], '-o',
                      markerfacecolor='None', color='orange', label='PPV(ppv_th)')
-        # ax[idx].plot(seperator, roc_data_roc[:,counter, -1], '-*',
+        # ax[idx].plot(separator, roc_data_roc[:,counter, -1], '-*',
         #              markerfacecolor='None', color='orange', label='PPV(roc_th)')
-        ax[idx].plot(seperator, roc_data[:, counter, -3], '-s',
+        ax[idx].plot(separator, roc_data[:, counter, -3], '-s',
                      markerfacecolor='None', color='navy', label='TPR(mi_th)')
-        ax[idx].plot(seperator, roc_data_ppv[:, counter, -3], '-o',
+        ax[idx].plot(separator, roc_data_ppv[:, counter, -3], '-o',
                      markerfacecolor='None', color='navy', label='TPR(ppv_th)')
-        # ax[idx].plot(seperator, roc_data_roc[:,counter, -3], '-*',
+        # ax[idx].plot(separator, roc_data_roc[:,counter, -3], '-*',
         #              markerfacecolor='None', color='navy', label='TPR(roc_th)')
         ax[idx].grid(ls='--')
         ax[idx].set_title(band)

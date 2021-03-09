@@ -58,8 +58,8 @@ if __name__ == '__main__':
     #   auto-tdmi in region with single channel
     adj_weight = data_package['adj_mat'] + \
         np.eye(data_package['adj_mat'].shape[0])*1.5
-    cg_mask = ~np.diag(multiplicity == 1).astype(bool)
-    adj_weight_flatten = adj_weight[cg_mask]
+    cg_mask = np.diag(multiplicity == 1).astype(bool)
+    adj_weight_flatten = adj_weight[~cg_mask]
 
     # load shuffled tdmi data for target band
     tdmi_data = np.load(args.path+'tdmi_data_long.npz', allow_pickle=True)
@@ -69,32 +69,27 @@ if __name__ == '__main__':
         # generate SNR mask
         snr_mat = compute_snr_matrix(tdmi_data[band])
         noise_matrix = compute_noise_matrix(tdmi_data[band])
-            # th_val = get_sparsity_threshold(snr_mat, p = 0.2)
-            # snr_mask = snr_mat >= th_val
         snr_mask = snr_mat >= snr_th[band]
         # compute TDMI statistics
         tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
-        # set filtered entities as numpy.nan
         tdmi_data_band[~snr_mask] = noise_matrix[~snr_mask]
         # compute coarse-grain average
         tdmi_data_cg = CG(tdmi_data_band, stride)
         # apply cg mask
-        tdmi_data_flatten = tdmi_data_cg[cg_mask]
-        # remove potential np.nan entities
-        nan_mask = ~np.isnan(tdmi_data_flatten)
+        tdmi_data_flatten = tdmi_data_cg[~cg_mask]
 
-        SI_value = tdmi_data_shuffle[band][(~np.eye(stride[-1], dtype=bool))].mean()
+        SI_value = tdmi_data_shuffle[band][~cg_mask].mean()
         if args.tdmi_mode == 'sum':
             SI_value *= 10
 
         fig = gen_causal_distribution_figure(
-            tdmi_data_flatten[nan_mask], 
-            adj_weight_flatten[nan_mask],
+            tdmi_data_flatten, 
+            adj_weight_flatten,
             SI_value,
         )
 
         from utils.tdmi import find_gap_threshold
-        gap_th = find_gap_threshold(np.log10(tdmi_data_flatten[nan_mask]), 500)
+        gap_th = find_gap_threshold(np.log10(tdmi_data_flatten), 500)
         fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[4].axhline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[0].legend(fontsize=14)

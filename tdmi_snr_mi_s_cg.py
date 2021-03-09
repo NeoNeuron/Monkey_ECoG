@@ -4,12 +4,12 @@
 # Plot MI vs. connection strength.
 
 import time
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt 
 plt.rcParams['font.size']=15
 plt.rcParams['axes.labelsize'] = 15
-from utils.tdmi import MI_stats
-from utils.tdmi import compute_snr_matrix
+from utils.tdmi import MI_stats, compute_snr_matrix
 from utils.plot import gen_mi_s_figure
 from utils.utils import CG, print_log
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -41,31 +41,21 @@ multiplicity = np.diff(stride).astype(int)
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 # manually set snr threshold
-snr_th = {
-    'raw'        :5.0,
-    'delta'      :4.3,
-    'theta'      :4.5,
-    'alpha'      :4.,
-    'beta'       :5.,
-    'gamma'      :11,
-    'high_gamma' :11,
-}
-
+with open(args.path+'snr_th.pkl', 'rb') as f:
+    snr_th = pickle.load(f)
 # create adj_weight_flatten by excluding 
 #   auto-tdmi in region with single channel
 adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
-cg_mask = ~np.diag(multiplicity == 1).astype(bool)
-adj_weight_flatten_template = adj_weight[cg_mask]
+cg_mask = np.diag(multiplicity == 1).astype(bool)
+adj_weight_flatten_template = adj_weight[~cg_mask]
 adj_weight_flatten = {band:adj_weight_flatten_template for band in filter_pool}
 
-tdmi_data = np.load(args.path + 'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load(args.path + 'tdmi_data_long.npz', allow_pickle=True)
 tdmi_data_flatten = {}
 for band in filter_pool:
     if band in tdmi_data.keys():
         # generate SNR mask
         snr_mat = compute_snr_matrix(tdmi_data[band])
-            # th_val = get_sparsity_threshold(snr_mat, p = 0.2)
-            # snr_mask = snr_mat >= th_val
         snr_mask = snr_mat >= snr_th[band]
         # compute TDMI statistics
         tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
@@ -74,7 +64,7 @@ for band in filter_pool:
         # compute coarse-grain average
         tdmi_data_cg = CG(tdmi_data_band, stride)
         # apply cg mask
-        tdmi_data_flatten[band] = tdmi_data_cg[cg_mask]
+        tdmi_data_flatten[band] = tdmi_data_cg[~cg_mask]
         # remove potential np.nan entities
         nan_mask = ~np.isnan(tdmi_data_flatten[band])
         # apply nan_mask
@@ -82,6 +72,7 @@ for band in filter_pool:
         adj_weight_flatten[band] = adj_weight_flatten[band][nan_mask]
     else:
         tdmi_data_flatten[band] = None
+        adj_weight_flatten[band] = None
     
 fig = gen_mi_s_figure(tdmi_data_flatten, adj_weight_flatten)
 
