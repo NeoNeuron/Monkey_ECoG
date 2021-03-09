@@ -2,12 +2,13 @@ from utils.tdmi import compute_snr_matrix
 import numpy as np
 from utils.utils import Linear_R2
 
-def linear_fit(tdmi_data_flatten:dict, weight_flatten:dict, snr_mask:dict):
+def linear_fit(tdmi_data_flatten:dict, weight_flatten:dict, snr_mask:dict=None):
     pval = {}
     R2 = {}
     for band in tdmi_data_flatten.keys():
         log_tdmi_data = np.log10(tdmi_data_flatten[band])
-        log_tdmi_data[~snr_mask[band]] = np.nan
+        if snr_mask is not None:
+            log_tdmi_data[~snr_mask[band]] = np.nan
         answer = weight_flatten[band].copy()
         answer[answer==0]=1e-7
         log_answer = np.log10(answer)
@@ -35,14 +36,14 @@ if __name__ == '__main__':
     import pickle
     path = 'tdmi_snr_analysis/'
     data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
-    stride = data_package['stride']
     weight = data_package['weight']
+    off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
     tdmi_data = np.load(path+'tdmi_data_long.npz', allow_pickle=True)
 
     # setup interarea mask
-    weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
+    weight_flatten = weight[off_diag_mask]
     weight_flatten = {band:weight_flatten for band in filter_pool}
     tdmi_data_flatten = {}
     snr_mask = {}
@@ -51,10 +52,10 @@ if __name__ == '__main__':
 
     for band in filter_pool:
         tdmi_data_flatten[band] = MI_stats(tdmi_data[band], 'max')
-        tdmi_data_flatten[band] = tdmi_data_flatten[band][~np.eye(stride[-1], dtype=bool)]
+        tdmi_data_flatten[band] = tdmi_data_flatten[band][off_diag_mask]
         snr_mat = compute_snr_matrix(tdmi_data[band])
         snr_mask[band] = snr_mat >= snr_th[band]
-        snr_mask[band] = snr_mask[band][~np.eye(stride[-1], dtype=bool)]
+        snr_mask[band] = snr_mask[band][off_diag_mask]
 
     pval, R2 = linear_fit(tdmi_data_flatten, weight_flatten, snr_mask)
 

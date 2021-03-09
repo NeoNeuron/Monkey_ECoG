@@ -8,7 +8,7 @@
 # *   - All diagonal elements are excluded.
 from utils.tdmi import MI_stats
 from utils.cluster import get_cluster_id, get_sorted_mat
-from utils.tdmi import compute_delay_matrix, compute_snr_matrix
+from utils.tdmi import compute_snr_matrix
 from utils.roc import ROC_matrix
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,11 +33,9 @@ if __name__ == '__main__':
     filter_pool = ['delta', 'theta', 'alpha',
                    'beta', 'gamma', 'high_gamma', 'raw']
     tdmi_data = np.load(path+'tdmi_data_long.npz', allow_pickle=True)
-    delay_mat = {}
     snr_mat = {}
     separator = [-6, -5, -4, -3, -2, -1, 0]
     for band in filter_pool:
-        delay_mat[band] = compute_delay_matrix(tdmi_data[band])
         snr_mat[band] = compute_snr_matrix(tdmi_data[band])
 
     off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
@@ -77,7 +75,7 @@ if __name__ == '__main__':
             for iidx, band in enumerate(filter_pool):
                 # compute TDMI statistics
                 tdmi_data_band = MI_stats(tdmi_data[band], 'max')
-                tdmi_mask[band] = (tdmi_data_band > opt_th[band][idx])
+                tdmi_mask[band] = (tdmi_data_band > 10**opt_th[band][idx])
                 tdmi_mask[band] *= snr_mask[band]   # ! apply snr_mask to tdmi_mask
                 tdmi_mask[band][~off_diag_mask] = False
                 TP, FP, FN, TN = ROC_matrix(weight_mask[off_diag_mask], tdmi_mask[band][off_diag_mask])
