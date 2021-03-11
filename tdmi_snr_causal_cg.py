@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     # load shuffled tdmi data for target band
     tdmi_data = np.load(args.path+'tdmi_data_long.npz', allow_pickle=True)
-    tdmi_data_shuffle = np.load(args.path+'tdmi_data_shuffle.npz', allow_pickle=True)
+    # tdmi_data_shuffle = np.load(args.path+'tdmi_data_shuffle.npz', allow_pickle=True)
 
     for band in args.filters:
         # generate SNR mask
@@ -78,9 +78,10 @@ if __name__ == '__main__':
         # apply cg mask
         tdmi_data_flatten = tdmi_data_cg[~cg_mask]
 
-        SI_value = tdmi_data_shuffle[band][~cg_mask].mean()
-        if args.tdmi_mode == 'sum':
-            SI_value *= 10
+        SI_value = 0  # disabled
+        # SI_value = tdmi_data_shuffle[band][~cg_mask].mean()
+        # if args.tdmi_mode == 'sum':
+        #     SI_value *= 10
 
         fig = gen_causal_distribution_figure(
             tdmi_data_flatten, 
