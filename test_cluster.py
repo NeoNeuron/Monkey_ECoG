@@ -4,7 +4,7 @@ from utils.cluster import get_cluster_id, get_sorted_mat
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     path = 'data_preprocessing_46_region/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     adj_mat = data_package['adj_mat']
     adj_mat[adj_mat<5e-3] = 1e-6
 

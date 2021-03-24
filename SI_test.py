@@ -12,7 +12,7 @@ if __name__ == '__main__':
   from mutual_info_cy import mutual_info
   from utils.utils import print_log
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-  arg_default = {'path': 'data_preprocessing_46_region/'}
+  arg_default = {'path': 'data/'}
   parser = ArgumentParser(prog='tdmi_scan_significant_test',
                           description = "Scan shuffled mutual information",
                           formatter_class=ArgumentDefaultsHelpFormatter)

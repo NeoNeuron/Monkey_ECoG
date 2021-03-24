@@ -9,10 +9,10 @@ if __name__ == '__main__':
     from mpl_toolkits.axes_grid1 import make_axes_locatable
     from draw_causal_distribution_v2 import load_data
     from utils.tdmi import Extract_MI_CG
-    from cluster import get_cluster_id, get_sorted_mat
+    from utils.cluster import get_cluster_id, get_sorted_mat
 
     path = 'data_preprocessing_46_region/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     adj_mat = data_package['adj_mat']
     stride = data_package['stride']
     multiplicity = np.diff(stride).astype(int)

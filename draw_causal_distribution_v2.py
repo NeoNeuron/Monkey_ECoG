@@ -5,20 +5,19 @@
 
 import numpy as np
 
-def load_data(path:str, band:str='raw', shuffle:bool=False):
+def load_data(band:str='raw', shuffle:bool=False):
     """Load data from files.
 
     Args:
-        path (str): folder path of data.
         band (str, optional): name of target band. 'raw' for unfiltered. Defaults to 'raw'.
         shuffle (bool, optional): True for loading shuffled dataset. Defaults to False.
 
     Returns:
         np.ndarray: tdmi_data and tdmi_data_shuffle(if shuffle==True).
     """
-    tdmi_data = np.load(path + 'tdmi_data_long.npz', allow_pickle=True)[band]
+    tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)[band]
     if shuffle:
-        tdmi_data_shuffle = np.load(path + 'tdmi_data_shuffle.npz', allow_pickle=True)[band]
+        tdmi_data_shuffle = np.load('data/tdmi_data_shuffle.npz', allow_pickle=True)[band]
 
     if shuffle:
         return tdmi_data, tdmi_data_shuffle
@@ -64,7 +63,7 @@ if __name__ == '__main__':
 
 
     start = time.time()
-    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     # prepare weight_flatten
     weight = data_package['weight']
@@ -74,8 +73,8 @@ if __name__ == '__main__':
         weight_flatten = weight_flatten[interarea_mask]
 
     # load data for target band
-    tdmi_data = np.load(args.path+'tdmi_data_long.npz', allow_pickle=True)
-    tdmi_data_shuffle = np.load(args.path+'tdmi_data_shuffle.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
+    tdmi_data_shuffle = np.load('data/tdmi_data_shuffle.npz', allow_pickle=True)
     for band in args.filters:
         tdmi_data_band = MI_stats(tdmi_data[band], args.tdmi_mode)
         tdmi_data_flatten = tdmi_data_band[~np.eye(stride[-1], dtype=bool)]

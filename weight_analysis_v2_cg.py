@@ -31,7 +31,7 @@ def plt_unit2(axi, mat, weight_mask, sorted_id=None):
 
 
 path = 'tdmi_snr_analysis/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
 multiplicity = np.diff(stride).astype(int)
 
@@ -44,7 +44,7 @@ weight[cg_mask] = np.nan
 
 # define filter pool and load tdmi data
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 delay_mat = {}
 snr_mat = {}
 seperator = [-6, -4, -2, 1]

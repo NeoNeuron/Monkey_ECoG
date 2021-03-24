@@ -39,13 +39,13 @@ if __name__ == '__main__':
 
     start = time.time()
     # load data
-    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     weight = data_package['weight']
     off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
     w_thresholds = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0]
-    tdmi_data = np.load(args.path + 'tdmi_data_long.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
     aucs = {}
     aucs_no_snr = {}
     opt_threshold = {}

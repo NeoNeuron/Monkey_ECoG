@@ -5,7 +5,7 @@ from utils.utils import print_log
 import time
 import os
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-arg_default = {'path': 'data_preprocessing_46_region/',
+arg_default = {'path': 'data/',
                'order': 6,
                'shuffle': False,
                }

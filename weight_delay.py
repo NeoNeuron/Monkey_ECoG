@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 from utils.tdmi import compute_snr_matrix, compute_delay_matrix
 
 path = 'tdmi_snr_analysis/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 weight = data_package['weight']
-tdmi_data = np.load(path + 'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 # manually set snr threshold
 snr_th = {
     'raw'        :5.0,

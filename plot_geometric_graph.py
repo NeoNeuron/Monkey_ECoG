@@ -12,7 +12,7 @@ import networkx as nx
 import pickle
 
 path = 'tdmi_snr_analysis/'
-data_package = np.load(path+'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 with open(path + 'WA_v3_cg.pkl', 'rb') as f:
     tdmi_mask_total = pickle.load(f)
 

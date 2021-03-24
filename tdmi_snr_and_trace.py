@@ -8,7 +8,7 @@ from utils.tdmi import *
 import pickle
 
 path = 'tdmi_snr_analysis/'
-data_package = np.load(path+'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
 # prepare weight_flatten
 weight = data_package['weight']
@@ -16,16 +16,16 @@ off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
 with open(path+'snr_th.pkl', 'rb') as f:
     snr_th = pickle.load(f)
 # snr_th = {
-#     'delta'      :2.0,   # 3.5,
-#     'theta'      :5.0,   # 5.0,
-#     'alpha'      :5.0,   # 5.0,
-#     'beta'       :6.5,   # 6.5,
-#     'gamma'      :20,   # 20,
-#     'high_gamma' :20,   # 20,
-#     'raw'        :8.0,   # 8.0,
+#     'delta'      :1.5,   # 3.5,
+#     'theta'      :2.0,   # 5.0,
+#     'alpha'      :2.0,   # 5.0,
+#     'beta'       :3.0,   # 6.5,
+#     'gamma'      :5,   # 20,
+#     'high_gamma' :5,   # 20,
+#     'raw'        :4.0,   # 8.0,
 # }
 
-tdmi_data = np.load(path + 'tdmi_data_long.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 fig, ax = plt.subplots(2, len(filter_pool), figsize=(30,8))
@@ -50,8 +50,8 @@ for i, band in enumerate(filter_pool):
         transform=ax[0, i].transAxes, 
         verticalalignment='top', horizontalalignment='right'
     )
-    snr_mask_1 = snr_matrix <= snr_th[band]*1.2 
-    ax[0,i].plot(delay, tdmi_full[ (snr_mask_1)*off_diag_mask].mean(0), color='r', alpha=.5)
+    snr_mask_1 = snr_matrix <= snr_th[band]*1.5
+    ax[0,i].plot(delay, tdmi_full[(snr_mask*snr_mask_1)*off_diag_mask].mean(0), color='r', alpha=.5)
     ax[0, i].set_xlabel('Time delay (ms)')
     ax[0, i].set_ylabel('Mutual Info (nats)')
     # ax[0, i].set_xlim(-500,500)

@@ -34,7 +34,7 @@ parser.add_argument('is_interarea', default=arg_default['is_interarea'], nargs='
 args = parser.parse_args()
 
 start = time.time()
-data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
 weight = data_package['weight']
 weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]

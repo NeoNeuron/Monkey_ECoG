@@ -12,7 +12,7 @@ plt.rcParams['lines.linewidth'] = 0.5
 
 if __name__ == '__main__':
     path = 'tdmi_snr_analysis/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     weight = data_package['weight']
     weight[weight == 0] = 1e-6
     off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)

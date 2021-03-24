@@ -8,12 +8,12 @@ plt.rcParams['axes.linewidth'] = 0.5
 plt.rcParams['lines.linewidth'] = 0.1
 
 path = 'tdmi_snr_analysis/'
-data_package = np.load(path+'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 weight = data_package['adj_mat']
 off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
 
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 seperator = [-6, -5, -4, -3, -2, -1, 0]
 
 with open(path + 'WA_v3_cg.pkl', 'rb') as f:

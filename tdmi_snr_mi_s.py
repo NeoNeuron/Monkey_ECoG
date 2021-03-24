@@ -36,10 +36,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     weight = data_package['weight']
     off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
-    tdmi_data = np.load(args.path + 'tdmi_data_long.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
     tdmi_data_flatten = {}

@@ -42,7 +42,7 @@ if __name__ == '__main__':
   from utils.utils import print_log
   import os
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-  arg_default = {'path': 'data_preprocessing_46_region/'}
+  arg_default = {'path': 'data/'}
   parser = ArgumentParser(
     prog='tdmi_scan',
     description = "Scan pair-wise time delayed mutual information",

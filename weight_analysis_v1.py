@@ -28,7 +28,7 @@ def plt_unit2(axi, mat, weight_mask, snr_mask, sorted_id=None):
 
 
 path = 'tdmi_snr_analysis/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 weight = data_package['weight']
 weight[weight==0] = 1e-6
 stride = data_package['stride']
@@ -38,7 +38,7 @@ adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*
 
 # weight[np.eye(weight.shape[0], dtype=bool)] = 1.5
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 delay_mat = {}
 snr_mat = {}
 for band in filter_pool:

@@ -16,7 +16,7 @@ from scipy.io import loadmat
 import os
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
-arg_default = {'path': 'data_preprocessing_46_region/'}
+arg_default = {'path': 'data/'}
 parser = ArgumentParser(prog='preprocessing_data',
                         description = "Preprocess EcoG time series,\
                                        and pickle processed data.",
@@ -53,7 +53,7 @@ if not os.path.isdir(args.path):
     os.makedirs(args.path)
 
 # load raw data
-data_path = 'ECoG data-ChenYuHan/'
+data_path = 'ECoG_YuhanChen/'
 data_package = {}
 
 # for each region, data was stored as #(time points) by #(channel)
@@ -100,7 +100,7 @@ for band in filter_pool:
 
 np.savez(args.path + 'preprocessed_data.npz', **data_package)
 
-data_package = np.load(args.path+'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
 
 # Plot traces and power spectrums for original EcoG and filtered ones
 from scipy.ndimage.filters import gaussian_filter1d
@@ -122,7 +122,7 @@ ax[1].set_ylabel('Spectrum Intensity')
 ax[1].set_title('Power Spectrum')
 ax[1].set_ylim(0.5e1,1e6)
 plt.tight_layout()
-plt.savefig(args.path +'data_series_raw_signal.png')
+plt.savefig(args.path + 'data_series_raw_signal.png')
 
 fig, ax = plt.subplots(len(filter_pool),2, figsize=(20,len(filter_pool)*3))
 for idx, band in enumerate(filter_pool):

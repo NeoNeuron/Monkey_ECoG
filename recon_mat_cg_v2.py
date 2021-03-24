@@ -10,7 +10,7 @@ if __name__ == '__main__':
     from utils.tdmi import Extract_MI_CG
 
     path = 'data_preprocessing_46_region/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     adj_mat = data_package['adj_mat']
     stride = data_package['stride']
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         ax[0, idx].yaxis.set_visible(False)
     
     optimal_threshold = np.load(path+f'opt_threshold_{tdmi_mode:s}.npz', allow_pickle=True)
-    tdmi_data = np.load(path + 'tdmi_data.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
     for idx, band in enumerate(filter_pool):
         # load shuffled tdmi data for target band
         thresholds = optimal_threshold[band][1:-1]

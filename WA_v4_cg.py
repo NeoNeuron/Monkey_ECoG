@@ -9,7 +9,7 @@ plt.rcParams['lines.linewidth'] = 0.1
 
 path = 'tdmi_snr_analysis/'
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 seperator = [-6, -5, -4, -3, -2, -1, 0]
 
 with open(path + 'WA_v3_cg.pkl', 'rb') as f:

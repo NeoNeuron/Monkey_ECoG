@@ -26,13 +26,13 @@ def plt_unit2(axi, mat, sorted_id=None):
 if __name__ == '__main__':
     import pickle
     path = 'tdmi_snr_analysis/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     weight = data_package['weight']
     weight[weight == 0] = 1e-6
 
     filter_pool = ['delta', 'theta', 'alpha',
                    'beta', 'gamma', 'high_gamma', 'raw']
-    tdmi_data = np.load(path+'tdmi_data_long.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
     snr_mat = {}
     separator = [-6, -5, -4, -3, -2, -1, 0]
     for band in filter_pool:

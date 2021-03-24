@@ -6,7 +6,7 @@ if __name__ == '__main__':
     import numpy as np
     import pickle
     path = 'tdmi_snr_analysis/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     multiplicity = np.diff(stride).astype(int)
 
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     weight[cg_mask] = np.nan
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-    tdmi_data = np.load(path+'tdmi_data_long.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 
     # setup interarea mask
     weight_flatten = weight[~cg_mask]

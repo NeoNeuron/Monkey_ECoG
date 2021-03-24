@@ -17,7 +17,7 @@ path = f'data_preprocessing_{today.isoformat():s}/'
 if not os.path.isdir(path):
     os.makedirs(path)
 
-data_path = 'ECoG data-ChenYuHan/'
+data_path = 'ECoG_YuhanChen/'
 data_package = {}
 
 data_r = loadmat(data_path+'ECoG_126channel.mat')['data_r_awake']
@@ -44,7 +44,7 @@ data_package['data_r2'] = data_r2
 #  high gamma: 55-100 Hz
 #  Pay specific attention to alpha and high gamma band;
 
-from filter import filter
+from utils.filter import filter
 
 band_freq = {'delta': [1,4],
              'theta':[5,8],

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     weight = data_package['weight']
     # setup interarea mask
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     if args.is_interarea:
         interarea_mask = (weight_flatten != 1.5)
         weight_flatten = weight_flatten[interarea_mask]
-    tdmi_data = np.load(args.path + 'tdmi_data.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 

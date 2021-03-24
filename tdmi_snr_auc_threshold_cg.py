@@ -43,7 +43,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 start = time.time()
-data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
 multiplicity = np.diff(stride).astype(int)
 
@@ -60,7 +60,7 @@ cg_mask = np.diag(multiplicity == 1).astype(bool)
 adj_weight_flatten = adj_weight[~cg_mask]
 
 # load data for target band
-tdmi_data = np.load(args.path+'tdmi_data_long.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 aucs = {}
 aucs_no_snr = {}
 opt_threshold = {}

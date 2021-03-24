@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     start = time.time()
     # load data
-    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     weight = data_package['weight']
     # setup interarea mask
@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
     w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
-    tdmi_data = np.load(args.path + 'tdmi_data.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
     aucs = {}
     opt_threshold = {}
     for band in filter_pool:

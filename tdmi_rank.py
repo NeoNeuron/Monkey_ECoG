@@ -53,7 +53,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     # prepare weight_flatten
     weight = data_package['weight']
     off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     
     fig, ax  = plt.subplots(2,4, figsize=(15,6), sharex=True)
     ax = ax.reshape((-1,))
-    tdmi_data = np.load(args.path+'tdmi_data_long.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 
     gap_th_val= {}
     for idx, band in enumerate(args.filters):
@@ -83,7 +83,7 @@ if __name__ == '__main__':
             weight_flatten = weight_flatten[interarea_mask]
             tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
 
-        gap_th_val[band] = find_gap_threshold(np.log10(tdmi_data_flatten))
+        gap_th_val[band] = find_gap_threshold(np.log10(tdmi_data_flatten), 500)
         ax[idx].plot(np.log10(np.sort(tdmi_data_flatten)), '.', ms=0.1)
         ax[idx].set_xlabel('Ranked TDMI index')
         ax[idx].set_ylabel(r'$\log_{10}$(TDMI value)')

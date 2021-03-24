@@ -38,7 +38,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     multiplicity = np.diff(stride).astype(int)
     n_region = multiplicity.shape[0]
@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     for band in args.filters:
         # load shuffled tdmi data for target band
-        tdmi_data, tdmi_data_shuffle = load_data(args.path, band, shuffle=True)
+        tdmi_data, tdmi_data_shuffle = load_data(band, shuffle=True)
         tdmi_data_cg = Extract_MI_CG(tdmi_data, args.tdmi_mode, stride)
 
         tdmi_data_flatten = tdmi_data_cg[cg_mask]

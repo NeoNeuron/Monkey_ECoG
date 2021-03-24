@@ -4,8 +4,6 @@ GC_MATLAB_PATH="gc_matlab/"
 mkdir -p $GC_MATLAB_PATH
 
 # preprocess data
-python preprocessing_v2.py $GC_MATLAB_PATH
-
 python mat2npy.py $GC_MATLAB_PATH
 
 # Channel-wise Analysis

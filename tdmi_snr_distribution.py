@@ -8,21 +8,21 @@ from utils.tdmi import *
 import pickle
 
 path = 'tdmi_snr_analysis/'
-data_package = np.load(path+'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 # prepare weight_flatten
 weight = data_package['weight']
 weight[np.eye(weight.shape[0], dtype=bool)] = 0
 off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
 snr_th = {
-    'delta'      :3.5,
-    'theta'      :5.0,
-    'alpha'      :5.0,
-    'beta'       :6.5,
-    'gamma'      :20,
-    'high_gamma' :20,
-    'raw'        :8.0,
+    'delta'      :1.5,
+    'theta'      :2.0,
+    'alpha'      :2.0,
+    'beta'       :3.0,
+    'gamma'      :5,  
+    'high_gamma' :5,  
+    'raw'        :4.0,
 }
-tdmi_data = np.load(path + 'tdmi_data_long.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 fig, ax = plt.subplots(len(filter_pool), 5, figsize=(20,20), sharex='row')

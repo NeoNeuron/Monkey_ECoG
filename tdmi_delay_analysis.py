@@ -24,8 +24,8 @@ if __name__ == '__main__':
                         )
     args = parser.parse_args()
 
-    data_package = np.load(args.path+"preprocessed_data.npz", allow_pickle=True)
-    tdmi_data = np.load(args.path+'tdmi_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
+    tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
 

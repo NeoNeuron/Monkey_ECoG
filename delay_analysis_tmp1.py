@@ -6,11 +6,11 @@ from utils.tdmi import compute_delay_matrix
 
 
 path = 'data_preprocessing_46_region/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 weight = data_package['weight']
 weight[np.eye(weight.shape[0], dtype=bool)] = 1.5
 band = 'raw'
-tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 n_delay = tdmi_data[band].shape[2]
 
 delay_mat = compute_delay_matrix(tdmi_data[band])

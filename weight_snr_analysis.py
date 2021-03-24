@@ -9,7 +9,7 @@ from utils.tdmi import compute_delay_matrix, compute_snr_matrix
 from utils.cluster import get_cluster_id, get_sorted_mat
 
 path = 'tdmi_snr_analysis/'
-data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 weight = data_package['weight']
 # weight[weight==0] = 1e-6
 stride = data_package['stride']
@@ -17,7 +17,7 @@ multiplicity = np.diff(stride).astype(int)
 adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
 
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 delay_mat = {}
 snr_mat = {}
 for band in filter_pool:

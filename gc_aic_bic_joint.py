@@ -25,7 +25,7 @@ def compute_AIC_BIC(data_series):
     return AIC, BIC, rank
 
 def get_AICs_BICs(path, force_compute=False):
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     fname_aic = 'gc_aic_joint.npz'
     fname_bic = 'gc_bic_joint.npz'
     fname_rank = 'gc_rank_joint.npz'

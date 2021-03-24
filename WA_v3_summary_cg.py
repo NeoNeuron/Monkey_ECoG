@@ -11,7 +11,7 @@ plt.rcParams['lines.linewidth'] = 0.5
 
 if __name__ == '__main__':
     path = 'tdmi_snr_analysis/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     multiplicity = np.diff(stride).astype(int)
 

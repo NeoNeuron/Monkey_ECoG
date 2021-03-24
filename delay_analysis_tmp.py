@@ -8,7 +8,7 @@ from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
 path = 'data_preprocessing_46_region/'
 band = 'raw'
-tdmi_data = np.load(path+'tdmi_data.npz', allow_pickle=True)
+tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 tdmi_data_full = compute_tdmi_full(tdmi_data[band])
 delay_mat = compute_delay_matrix(tdmi_data[band]) 
 snr_mat = compute_snr_matrix(tdmi_data[band])

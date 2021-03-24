@@ -8,7 +8,7 @@ from draw_causal_distribution_v2 import load_data, MI_stats
 
 path = "data_preprocessing_46_region/"
 path_short = "data_preprocessing_46_region_short/"
-data_package = np.load(path+"preprocessed_data.npz", allow_pickle=True)
+data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
 
 tdmi_mode = 'max'

@@ -4,7 +4,6 @@ GC_PATH="data_preprocessing_46_region/"
 mkdir -p $GC_PATH
 
 # preprocess data
-python preprocessing_v2.py $GC_PATH
 python gc_scan.py $GC_PATH 6 False
 python gc_scan.py $GC_PATH 6 True
 

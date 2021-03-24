@@ -9,7 +9,7 @@ from utils.tdmi import get_delay_matrix
 
 if __name__ == '__main__':
     path = "data_preprocessing_46_region/"
-    data_package = np.load(path+"preprocessed_data.npz", allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     n_channel = data_package['stride'][-1]
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']

@@ -67,7 +67,7 @@ if __name__ == '__main__':
     from draw_causal_distribution_v2 import load_data
 
     path = 'data_preprocessing_46_region/'
-    data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     multiplicity = np.diff(stride).astype(int)
     n_region = multiplicity.shape[0]

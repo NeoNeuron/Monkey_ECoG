@@ -64,7 +64,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
+    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
     stride = data_package['stride']
     # prepare weight_flatten
     weight = data_package['weight']
