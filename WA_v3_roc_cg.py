@@ -52,7 +52,7 @@ if __name__ == '__main__':
     with open(path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
 
-    with open(path+'opt_threshold_cg_tdmi_max.pkl', 'rb') as f:
+    with open(path+'th_roc_tdmi_CG.pkl', 'rb') as f:
         roc_th = pickle.load(f)
 
     snr_mask = {}
@@ -92,7 +92,7 @@ if __name__ == '__main__':
                 # apply cg mask
                 tdmi_data_cg_band[cg_mask] = np.nan
 
-                tdmi_mask[band] = (tdmi_data_cg_band > 10**roc_th[band][idx])
+                tdmi_mask[band] = (tdmi_data_cg_band > roc_th[band][idx])
                 tdmi_mask[band][cg_mask] = False
                 TP, FP, FN, TN = ROC_matrix(weight_mask[~cg_mask], tdmi_mask[band][~cg_mask])
                 CORR = np.corrcoef(weight_mask[~cg_mask], tdmi_mask[band][~cg_mask])[0, 1]

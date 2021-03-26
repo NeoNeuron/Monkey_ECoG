@@ -13,8 +13,7 @@ python tdmi_snr_auc_threshold.py $TDMI_SNR_PATH
 python tdmi_snr_mi_s.py $TDMI_SNR_PATH
 
 # get pval.npz, gap_th.pkl, roc.pkl
-python get_w_threshold.py
-python tdmi_rank.py
+python get_thresholds.py
 
 # reconstruction
 python WA_v3.py
@@ -29,8 +28,7 @@ python tdmi_snr_auc_threshold_cg.py $TDMI_SNR_PATH
 python tdmi_snr_mi_s_cg.py $TDMI_SNR_PATH
 
 # get pval.npz, gap_th.pkl, roc.pkl
-python get_w_threshold_cg.py
-python tdmi_rank_cg.py
+python get_thresholds_CG.py
 
 # reconstruction
 python WA_v3_cg.py

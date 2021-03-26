@@ -52,13 +52,12 @@ if __name__ == '__main__':
     with open(path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
 
-    pval = np.load(path+'pval_cg.npz', allow_pickle=True)
+    with open(path+'th_fit_tdmi_CG.pkl', 'rb') as f:
+        fit_th = pickle.load(f)
 
     snr_mask = {}
-    tdmi_sep = {}
     for band in filter_pool:
         snr_mask[band] = snr_mat[band] > snr_th[band]
-        tdmi_sep[band] = np.array([10**(pval[band][0]*i + pval[band][1]) for i in separator])
 
     title_set = [
         "## $w_{ij}>10^{%d}$ " % item for item in separator
@@ -93,7 +92,7 @@ if __name__ == '__main__':
                 # apply cg mask
                 tdmi_data_cg_band[cg_mask] = np.nan
 
-                tdmi_mask[band] = (tdmi_data_cg_band > tdmi_sep[band][idx])
+                tdmi_mask[band] = (tdmi_data_cg_band > fit_th[band][idx])
                 tdmi_mask[band][cg_mask] = False
                 TP, FP, FN, TN = ROC_matrix(weight_mask[~cg_mask], tdmi_mask[band][~cg_mask])
                 CORR = np.corrcoef(weight_mask[~cg_mask], tdmi_mask[band][~cg_mask])[0, 1]

@@ -36,7 +36,7 @@ data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
 multiplicity = np.diff(stride).astype(int)
 
-w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
+w_thresholds = np.logspace(-6, 0, num=7, base=10)
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 # create adj_weight_flatten by excluding 
@@ -48,19 +48,15 @@ adj_weight_flatten = adj_weight[cg_mask]
 # load data for target band
 tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
 aucs = {}
-opt_threshold = {}
 for band in filter_pool:
     if band in tdmi_data.keys():
         tdmi_data_flatten = Extract_MI_CG(tdmi_data[band], args.tdmi_mode, stride)
         tdmi_data_flatten = tdmi_data_flatten[cg_mask]
-        aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, adj_weight_flatten, w_thresholds)
+        aucs[band], _ = scan_auc_threshold(tdmi_data_flatten, adj_weight_flatten, w_thresholds)
     else:
-        aucs[band], opt_threshold[band] = None, None
+        aucs[band] = None
 
 fig = gen_auc_threshold_figure(aucs, w_thresholds)
-
-# save optimal threshold computed by Youden Index
-np.savez(args.path + f'opt_threshold_cg_tdmi_{args.tdmi_mode:s}.npz', **opt_threshold)
 
 fname = f'cg_auc-threshold_{args.tdmi_mode:s}.png'
 fig.savefig(args.path + fname)

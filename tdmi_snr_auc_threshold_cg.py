@@ -47,7 +47,7 @@ data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 stride = data_package['stride']
 multiplicity = np.diff(stride).astype(int)
 
-w_thresholds = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0]
+w_thresholds = np.logspace(-6, 0, num=7, base=10)
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 
 # manually set snr threshold
@@ -63,8 +63,6 @@ adj_weight_flatten = adj_weight[~cg_mask]
 tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 aucs = {}
 aucs_no_snr = {}
-opt_threshold = {}
-opt_threshold_no_snr = {}
 for band in filter_pool:
     if band in tdmi_data.keys():
         # generate SNR mask
@@ -81,20 +79,19 @@ for band in filter_pool:
         tdmi_data_flatten = tdmi_data_cg[~cg_mask]
         tdmi_data_flatten_no_snr = tdmi_data_cg_no_snr[~cg_mask]
 
-        aucs_no_snr[band], opt_threshold_no_snr[band] = scan_auc_threshold(tdmi_data_flatten_no_snr, adj_weight_flatten, w_thresholds)
-        aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, adj_weight_flatten, w_thresholds)
+        aucs_no_snr[band], _ = scan_auc_threshold(tdmi_data_flatten_no_snr, adj_weight_flatten, w_thresholds)
+        aucs[band], _= scan_auc_threshold(tdmi_data_flatten, adj_weight_flatten, w_thresholds)
     else:
-        aucs_no_snr[band], opt_threshold_no_snr[band] = None, None
-        aucs[band], opt_threshold[band] = None, None
+        aucs_no_snr[band], aucs[band] = None, None
 
 fig = gen_auc_threshold_figure(aucs_no_snr, w_thresholds, labels="No SNR mask")
 gen_auc_threshold_figure(aucs, w_thresholds, ax=np.array(fig.get_axes()), colors='orange', labels="SNR mask")
 [axi.legend() for axi in fig.get_axes()[:-1]]
 
-# save optimal threshold computed by Youden Index
-with open(args.path+f'opt_threshold_cg_tdmi_{args.tdmi_mode:s}.pkl', 'wb') as f:
-    snr_th = pickle.dump(opt_threshold, f)
-
 fname = f'cg_auc-threshold_{args.tdmi_mode:s}_manual-th.png'
 fig.savefig(args.path + fname)
 print_log(f'Figure save to {args.path+fname:s}.', start)
+with open(args.path+f'cg_aucs_{args.tdmi_mode:s}.pkl', 'wb') as f:
+    pickle.dump(aucs_no_snr, f)
+    pickle.dump(aucs, f)
+print_log(f'Figure save to {args.path:s}cg_aucs_{args.tdmi_mode:s}.pkl', start)

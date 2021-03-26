@@ -46,7 +46,7 @@ if __name__ == '__main__':
     with open(path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
 
-    with open(path+'gap_th.pkl', 'rb') as f:
+    with open(path+'th_gap_tdmi.pkl', 'rb') as f:
         gap_th = pickle.load(f)
 
     snr_mask = {}
@@ -78,7 +78,7 @@ if __name__ == '__main__':
             for iidx, band in enumerate(filter_pool):
                 # compute TDMI statistics
                 tdmi_data_band = MI_stats(tdmi_data[band], 'max')
-                tdmi_mask[band] = (tdmi_data_band > 10**gap_th[band])
+                tdmi_mask[band] = (tdmi_data_band > gap_th[band])
                 tdmi_mask[band] *= snr_mask[band]   # ! apply snr_mask to tdmi_mask
                 tdmi_mask[band][~off_diag_mask] = False
                 TP, FP, FN, TN = ROC_matrix(weight_mask[off_diag_mask], tdmi_mask[band][off_diag_mask])

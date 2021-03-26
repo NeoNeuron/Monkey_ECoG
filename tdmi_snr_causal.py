@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     for band in args.filters:
         # load data for target band
-        tdmi_data, tdmi_data_shuffle = load_data(args.path, band, shuffle=True)
+        tdmi_data, tdmi_data_shuffle = load_data(band, shuffle=True)
 
         # generate snr mask
         snr_mat = compute_snr_matrix(tdmi_data)

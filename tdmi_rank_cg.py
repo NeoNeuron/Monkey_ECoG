@@ -61,7 +61,6 @@ if __name__ == '__main__':
     ax = ax.reshape((-1,))
     tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 
-    gap_th_val= {}
     for idx, band in enumerate(args.filters):
         # generate snr mask
         snr_mat = compute_snr_matrix(tdmi_data[band])
@@ -76,13 +75,12 @@ if __name__ == '__main__':
 
         weight_flatten = weight[~cg_mask]
 
-        gap_th_val[band] = find_gap_threshold(np.log10(tdmi_data_flatten), 500)
+        gap_th_val = find_gap_threshold(np.log10(tdmi_data_flatten), 500)
         ax[idx].plot(np.log10(np.sort(tdmi_data_flatten)), '.', ms=0.1)
         ax[idx].set_xlabel('Ranked TDMI index')
         ax[idx].set_ylabel(r'$\log_{10}$(TDMI value)')
         ax[idx].set_title(band)
-        ax[idx].axhline(gap_th_val[band], color='orange')
-        print(gap_th_val[band])
+        ax[idx].axhline(gap_th_val, color='orange')
         # axt=ax[idx].twinx()
         # axt.plot(np.log10(weight_flatten[np.argsort(tdmi_data_flatten)]), '.', color='orange', ms=0.1)
         # axt.set_ylabel(r'$\log_{10}$(weight)')
@@ -93,9 +91,6 @@ if __name__ == '__main__':
     ax[-1].set_ylabel(r'$\log_{10}$(weight)')
     ax[-1].set_title('Weight')
     plt.tight_layout()
-
-    with open(args.path+'gap_th_cg.pkl', 'wb') as f:
-        pickle.dump(gap_th_val, f)
 
     fname = f'cg_tdmi_rank_{args.tdmi_mode:s}_manual-th.png'
     fig.savefig(args.path + fname)

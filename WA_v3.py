@@ -45,13 +45,12 @@ if __name__ == '__main__':
     with open(path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
 
-    pval = np.load(path+'pval.npz', allow_pickle=True)
+    with open(path+'th_fit_tdmi.pkl', 'rb') as f:
+        fit_th = pickle.load(f)
 
     snr_mask = {}
-    tdmi_sep = {}
     for band in filter_pool:
         snr_mask[band] = snr_mat[band] > snr_th[band]
-        tdmi_sep[band] = np.array([10**(pval[band][0]*i + pval[band][1]) for i in separator])
 
     title_set = [
         "## $w_{ij}>10^{%d}$ " % item for item in separator
@@ -77,7 +76,7 @@ if __name__ == '__main__':
             for iidx, band in enumerate(filter_pool):
                 # compute TDMI statistics
                 tdmi_data_band = MI_stats(tdmi_data[band], 'max')
-                tdmi_mask[band] = (tdmi_data_band > tdmi_sep[band][idx])
+                tdmi_mask[band] = (tdmi_data_band > fit_th[band][idx])
                 tdmi_mask[band] *= snr_mask[band]   # ! apply snr_mask to tdmi_mask
                 tdmi_mask[band][~off_diag_mask] = False
                 TP, FP, FN, TN = ROC_matrix(weight_mask[off_diag_mask], tdmi_mask[band][off_diag_mask])

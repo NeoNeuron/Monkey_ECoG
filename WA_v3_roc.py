@@ -43,8 +43,8 @@ if __name__ == '__main__':
     with open(path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
 
-    with open(path+'opt_threshold_channel_tdmi_max.pkl', 'rb') as f:
-        opt_th = pickle.load(f)
+    with open(path+'th_roc_tdmi.pkl', 'rb') as f:
+        roc_th = pickle.load(f)
 
     snr_mask = {}
     for band in filter_pool:
@@ -75,7 +75,7 @@ if __name__ == '__main__':
             for iidx, band in enumerate(filter_pool):
                 # compute TDMI statistics
                 tdmi_data_band = MI_stats(tdmi_data[band], 'max')
-                tdmi_mask[band] = (tdmi_data_band > 10**opt_th[band][idx])
+                tdmi_mask[band] = (tdmi_data_band > roc_th[band][idx])
                 tdmi_mask[band] *= snr_mask[band]   # ! apply snr_mask to tdmi_mask
                 tdmi_mask[band][~off_diag_mask] = False
                 TP, FP, FN, TN = ROC_matrix(weight_mask[off_diag_mask], tdmi_mask[band][off_diag_mask])

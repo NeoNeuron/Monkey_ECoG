@@ -14,13 +14,13 @@ weight = data_package['weight']
 weight[np.eye(weight.shape[0], dtype=bool)] = 0
 off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
 snr_th = {
-    'delta'      :1.5,
-    'theta'      :2.0,
-    'alpha'      :2.0,
-    'beta'       :3.0,
-    'gamma'      :5,  
-    'high_gamma' :5,  
-    'raw'        :4.0,
+    'delta'      :3.5,
+    'theta'      :5.0,
+    'alpha'      :5.0,
+    'beta'       :6.5,
+    'gamma'      :20,  
+    'high_gamma' :20,  
+    'raw'        :8.0,
 }
 tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']

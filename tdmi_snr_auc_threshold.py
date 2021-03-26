@@ -48,8 +48,6 @@ if __name__ == '__main__':
     tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
     aucs = {}
     aucs_no_snr = {}
-    opt_threshold = {}
-    opt_threshold_no_snr = {}
     with open(args.path+'snr_th.pkl', 'rb') as f:
         snr_th = pickle.load(f)
     for band in filter_pool:
@@ -72,23 +70,14 @@ if __name__ == '__main__':
                 tdmi_data_flatten_no_snr = tdmi_data_flatten[interarea_mask]
                 tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
             
-            aucs_no_snr[band], opt_threshold_no_snr[band] = scan_auc_threshold(tdmi_data_flatten_no_snr, weight_flatten, w_thresholds)
-            aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, weight_flatten, w_thresholds)
+            aucs_no_snr[band], _ = scan_auc_threshold(tdmi_data_flatten_no_snr, weight_flatten, w_thresholds)
+            aucs[band], _ = scan_auc_threshold(tdmi_data_flatten, weight_flatten, w_thresholds)
         else:
-            aucs_no_snr[band], opt_threshold_no_snr[band] = None, None
-            aucs[band], opt_threshold[band] = None, None
+            aucs_no_snr[band], aucs[band] = None, None
     
     fig = gen_auc_threshold_figure(aucs_no_snr, w_thresholds, labels='No SNR mask')
     gen_auc_threshold_figure(aucs, w_thresholds, ax=np.array(fig.get_axes()), colors='orange', labels='SNR mask')
     [axi.legend() for axi in fig.get_axes()[:-1]]
-
-    # save optimal threshold computed by Youden Index
-    if args.is_interarea:
-        with open(args.path+f'opt_threshold_channel_interarea_tdmi_{args.tdmi_mode:s}.pkl', 'wb') as f:
-            snr_th = pickle.dump(opt_threshold, f)
-    else:
-        with open(args.path+f'opt_threshold_channel_tdmi_{args.tdmi_mode:s}.pkl', 'wb') as f:
-            snr_th = pickle.dump(opt_threshold, f)
 
     if args.is_interarea:
         fname = f'auc-threshold_interarea_{args.tdmi_mode:s}_manual-th.png'
@@ -96,3 +85,13 @@ if __name__ == '__main__':
         fname = f'auc-threshold_{args.tdmi_mode:s}_manual-th.png'
     fig.savefig(args.path + fname)
     print_log(f'Figure save to {args.path+fname:s}.', start)
+    if args.is_interarea:
+        with open(args.path+f'aucs_interarea_{args.tdmi_mode:s}.pkl', 'wb') as f:
+            pickle.dump(aucs_no_snr, f)
+            pickle.dump(aucs, f)
+        print_log(f'Figure save to {args.path:s}aucs_interarea_{args.tdmi_mode:s}.pkl', start)
+    else:
+        with open(args.path+f'aucs_{args.tdmi_mode:s}.pkl', 'wb') as f:
+            pickle.dump(aucs_no_snr, f)
+            pickle.dump(aucs, f)
+        print_log(f'Figure save to {args.path:s}aucs_{args.tdmi_mode:s}.pkl', start)

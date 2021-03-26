@@ -3,10 +3,10 @@
 # Institute: INS, SJTU
 # Plot AUC vs. answer threshold.
 
-import numpy as np
 
 if __name__ == '__main__':
     import time
+    import numpy as np
     import matplotlib as mpl 
     mpl.rcParams['font.size']=20
     mpl.rcParams['axes.labelsize']=25
@@ -48,10 +48,9 @@ if __name__ == '__main__':
         weight_flatten = weight_flatten[interarea_mask]
 
     filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-    w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
+    w_thresholds = np.logspace(-6, 0, num=7, base=10)
     tdmi_data = np.load('data/tdmi_data.npz', allow_pickle=True)
     aucs = {}
-    opt_threshold = {}
     for band in filter_pool:
         if band in tdmi_data.keys():
             tdmi_data_flatten = MI_stats(tdmi_data[band], args.tdmi_mode)
@@ -59,17 +58,11 @@ if __name__ == '__main__':
             if args.is_interarea:
                 tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
             
-            aucs[band], opt_threshold[band] = scan_auc_threshold(tdmi_data_flatten, weight_flatten, w_thresholds)
+            aucs[band], _ = scan_auc_threshold(tdmi_data_flatten, weight_flatten, w_thresholds)
         else:
-            aucs[band], opt_threshold[band] = None, None
+            aucs[band] = None
     
     fig = gen_auc_threshold_figure(aucs, w_thresholds)
-
-    # save optimal threshold computed by Youden Index
-    if args.is_interarea:
-        np.savez(args.path + f'opt_threshold_channel_interarea_tdmi_{args.tdmi_mode:s}.npz', **opt_threshold)
-    else:
-        np.savez(args.path + f'opt_threshold_channel_tdmi_{args.tdmi_mode:s}.npz', **opt_threshold)
 
     if args.is_interarea:
         fname = f'auc-threshold_interarea_{args.tdmi_mode:s}.png'
