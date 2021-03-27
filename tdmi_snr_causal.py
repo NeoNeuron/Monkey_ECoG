@@ -15,6 +15,7 @@ if __name__ == '__main__':
     from utils.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix
     from utils.plot import gen_causal_distribution_figure
     from utils.utils import print_log
+    from utils.binary_threshold import find_gap_threshold
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     import pickle
     arg_default = {
@@ -96,7 +97,6 @@ if __name__ == '__main__':
             SI_value,
             snr_mask[off_diag_mask]
         )
-        from utils.tdmi import find_gap_threshold
         gap_th = find_gap_threshold(np.log10(tdmi_data_flatten))
         fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[4].axhline(gap_th, ls='-', color='royalblue', label='gap')

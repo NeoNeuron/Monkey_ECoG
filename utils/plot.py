@@ -56,11 +56,16 @@ def gen_causal_distribution_figure(tdmi_flatten:np.ndarray,
     pval = np.polyfit(np.log10(weight_set)[~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
     # pval = np.polyfit(np.log10(weight_flatten+1e-6)[~np.isnan(log_tdmi_data_buffer)], log_tdmi_data_buffer[~np.isnan(log_tdmi_data_buffer)], deg=1)
     ax[1,0].plot(np.log10(weight_flatten+1e-6), log_tdmi_data.flatten(), 'k.', label='TDMI samples')
+    ax[1,0].plot(np.log10(weight_flatten+1e-6), log_tdmi_data_buffer, 'b.', label='TDMI (above SNR th)')
     ax[1,0].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
     ax[1,0].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
     ax[1,0].set_xlabel(r'$log_{10}$(Connectivity Strength)')
-    ax[1,0].set_title(f'Fitness : r = {Linear_R2(np.log10(weight_set), log_tdmi_data_mean, pval)**0.5:5.3f}')
-    # ax[1,0].set_title(f'Fitness : r = {Linear_R2(np.log10(weight_flatten+1e-6), log_tdmi_data_buffer, pval)**0.5:5.3f}')
+    weight_flatten_buffer = weight_flatten.copy()
+    weight_flatten_buffer[weight_flatten_buffer==0] = np.nan
+    ax[1,0].set_title('Fitness(mean) : r = %5.3f,\n Fitness : r = %5.3f' % 
+        (Linear_R2(np.log10(weight_set), log_tdmi_data_mean, pval)**0.5,Linear_R2(np.log10(weight_flatten_buffer), log_tdmi_data_buffer, pval)**0.5),
+        fontsize=16
+    )
     ax[1,0].legend(fontsize=15)
 
     # Draw ROC curves

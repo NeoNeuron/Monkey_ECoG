@@ -89,7 +89,7 @@ if __name__ == '__main__':
             SI_value,
         )
 
-        from utils.tdmi import find_gap_threshold
+        from utils.binary_threshold import find_gap_threshold
         gap_th = find_gap_threshold(np.log10(tdmi_data_flatten), 500)
         fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[4].axhline(gap_th, ls='-', color='royalblue', label='gap')

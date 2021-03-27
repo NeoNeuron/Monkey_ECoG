@@ -52,7 +52,7 @@ def Linear_R2(x:np.ndarray, y:np.ndarray, pval:np.ndarray)->float:
     Returns:
         float: R square value
     """
-    mask = ~np.isnan(y) # filter out nan
+    mask = (~np.isnan(x))*(~np.isnan(y)) # filter out nan
     y_predict = x[mask]*pval[0]+pval[1]
     R = np.corrcoef(y[mask], y_predict)[0,1]
     return R**2

@@ -13,7 +13,7 @@ if __name__ == '__main__':
     # plt.rcParams['ytick.labelsize'] = 16
     from utils.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix
     from utils.utils import CG, print_log
-    from utils.tdmi import find_gap_threshold
+    from utils.binary_threshold import find_gap_threshold
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     import pickle
     arg_default = {
