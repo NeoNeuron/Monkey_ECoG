@@ -8,12 +8,12 @@ python tdmi_snr_distribution.py
 python tdmi_snr_and_trace.py
 
 # Channel-wise Analysis
-python tdmi_snr_causal.py $TDMI_SNR_PATH
-python tdmi_snr_auc_threshold.py $TDMI_SNR_PATH
-python tdmi_snr_mi_s.py $TDMI_SNR_PATH
+python ch_overview_mi_snr.py $TDMI_PATH
+python ch_auc_th_mi_snr.py $TDMI_PATH
+python ch_fit_mi_snr.py $TDMI_PATH
 
 # get pval.npz, gap_th.pkl, roc.pkl
-python get_thresholds.py
+python ch_get_thresholds.py
 
 # reconstruction
 python WA_v3.py
@@ -23,12 +23,12 @@ python WA_v3_summary.py
 python WA_v5_TPTN_feature.py
 
 # Coarse-Grain Analysis
-python tdmi_snr_causal_cg.py $TDMI_SNR_PATH
-python tdmi_snr_auc_threshold_cg.py $TDMI_SNR_PATH
-python tdmi_snr_mi_s_cg.py $TDMI_SNR_PATH
+python cg_overview_mi_snr.py $TDMI_PATH
+python cg_auc_th_mi_snr.py $TDMI_PATH
+python cg_fit_mi_snr.py $TDMI_PATH
 
 # get pval.npz, gap_th.pkl, roc.pkl
-python get_thresholds_CG.py
+python cg_get_thresholds.py
 
 # reconstruction
 python WA_v3_cg.py
