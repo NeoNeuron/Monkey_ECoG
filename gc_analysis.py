@@ -3,29 +3,6 @@
 # Institute: INS, SJTU
 # Analyze the causal relation calculated from ECoG data.
 
-import numpy as np
-
-def load_data(path:str, band:str='raw', order:int=10, shuffle:bool=False):
-    """Load data from files.
-
-    Args:
-        path (str): folder path of data.
-        band (str, optional): name of target band. 'raw' for unfiltered. Defaults to 'raw'.
-        order (int, optional): order of regression.
-        shuffle (bool, optional): True for loading shuffled dataset. Defaults to False.
-
-    Returns:
-        np.ndarray: gc_data and gc_data_shuffle(if shuffle==True).
-    """
-    gc_data = np.load(path + f'gc_order_{order:d}.npz', allow_pickle=True)[band]
-    if shuffle:
-        gc_data_shuffle = np.load(path + f'gc_shuffled_order_{order:d}.npz', allow_pickle=True)[band]
-
-    if shuffle:
-        return gc_data, gc_data_shuffle
-    else:
-        return gc_data
-
 if __name__ == '__main__':
     import time
     import matplotlib as mpl
@@ -34,6 +11,7 @@ if __name__ == '__main__':
     mpl.rcParams['xtick.labelsize'] = 16
     mpl.rcParams['ytick.labelsize'] = 16
     import matplotlib.pyplot as plt
+    from utils.core import EcogGC
     from utils.plot import gen_causal_distribution_figure
     from utils.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -57,40 +35,22 @@ if __name__ == '__main__':
                         type=bool, 
                         help = "inter-area flag."
                         )
-    parser.add_argument('--filters', default=arg_default['filters'], nargs='*', 
-                        type=str, 
-                        help = "list of filtering band."
-                        )
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-    stride = data_package['stride']
-    # prepare weight_flatten
-    weight = data_package['weight']
-    weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
-    # setup interarea mask
-    if args.is_interarea:
-        interarea_mask = (weight_flatten != 1.5)
-        weight_flatten = weight_flatten[interarea_mask]
-
-    for band in args.filters:
-        # load data for target band
-        gc_data, gc_data_shuffle = load_data(args.path, band, args.order, shuffle=True)
-        # gc_data = load_data(args.path, band, args.order, shuffle=False)
-        gc_data_flatten = gc_data[~np.eye(stride[-1], dtype=bool)]
-        gc_data_flatten[gc_data_flatten<=0] = 1e-5
-
-
+    # Load SC and FC data
+    # ==================================================
+    data = EcogGC()
+    data.init_data()
+    sc, fc = data.get_sc_fc('ch')
+    # ==================================================
+    for band in data.filters:
         if args.is_interarea:
-            gc_data_flatten = gc_data_flatten[interarea_mask]
+            interarea_mask = (sc[band] != 1.5)
+            sc[band] = sc[band][interarea_mask]
+            fc[band] = fc[band][interarea_mask]
 
-        SI_value = gc_data_shuffle[~np.eye(stride[-1], dtype=bool)]
-        SI_value[SI_value<=0] = 0
-        SI_value = SI_value.mean()
-        fig = gen_causal_distribution_figure(gc_data_flatten, 
-                                             weight_flatten,
-                                             SI_value)
+        fig = gen_causal_distribution_figure(fc[band], sc[band], None)
 
         fig.get_axes()[4].set_ylabel(r'$log_{10}\left(GC\right)$')
         handles, labels = fig.get_axes()[4].get_legend_handles_labels()

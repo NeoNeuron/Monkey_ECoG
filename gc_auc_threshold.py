@@ -4,10 +4,12 @@
 # Plot AUC vs. answer threshold, GC version.
 
 import time
+import pickle
 import numpy as np
 import matplotlib as mpl 
 mpl.rcParams['font.size']=20
 mpl.rcParams['axes.labelsize']=25
+from utils.core import EcogGC
 from utils.roc import scan_auc_threshold
 from utils.plot import gen_auc_threshold_figure
 from utils.utils import print_log
@@ -34,32 +36,22 @@ parser.add_argument('is_interarea', default=arg_default['is_interarea'], nargs='
 args = parser.parse_args()
 
 start = time.time()
-data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-stride = data_package['stride']
-weight = data_package['weight']
-weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
-
-# setup interarea mask
-if args.is_interarea:
-    interarea_mask = (weight_flatten != 1.5)
-    weight_flatten = weight_flatten[interarea_mask]
-w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-gc_data = np.load(args.path + f'gc_order_{args.order:d}.npz', allow_pickle=True)
+# Load SC and FC data
+# ==================================================
+data = EcogGC()
+data.init_data()
+sc, fc = data.get_sc_fc('ch')
+# ==================================================
+w_thresholds = np.logspace(-6, 0, num=7, base=10)
 
 aucs = {}
 opt_threshold = {}
-for band in filter_pool:
-    if band in gc_data.keys():
-        # load data for target band
-        gc_data_flatten = gc_data[band][~np.eye(stride[-1], dtype=bool)]
-        gc_data_flatten[gc_data_flatten<=0] = 1e-5
-        if args.is_interarea:
-            gc_data_flatten = gc_data_flatten[interarea_mask]
-
-        aucs[band], opt_threshold[band] = scan_auc_threshold(gc_data_flatten, weight_flatten, w_thresholds)
-    else:
-        aucs[band], opt_threshold[band] = None, None
+for band in data.filters:
+    if args.is_interarea:
+        interarea_mask = (sc[band] != 1.5)
+        sc[band] = sc[band][interarea_mask]
+        fc[band] = fc[band][interarea_mask]
+    aucs[band], opt_threshold[band] = scan_auc_threshold(fc[band], sc[band], w_thresholds)
     
 fig = gen_auc_threshold_figure(aucs, w_thresholds)
 
@@ -75,3 +67,12 @@ else:
     fname = f'gc_auc-threshold_{args.order:d}.png'
 fig.savefig(args.path + fname)
 print_log(f'Figure save to {args.path+fname:s}.', start)
+
+if args.is_interarea:
+    with open(args.path+f'gc_aucs_interarea_order_{args.order:d}.pkl', 'wb') as f:
+        pickle.dump(aucs, f)
+    print_log(f'Figure save to {args.path:s}gc_aucs_interarea_order_{args.order:d}.pkl', start)
+else:
+    with open(args.path+f'gc_aucs_order_{args.order:d}.pkl', 'wb') as f:
+        pickle.dump(aucs, f)
+    print_log(f'Figure save to {args.path:s}gc_aucs_order_{args.order:d}.pkl', start)

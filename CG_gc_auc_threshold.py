@@ -6,10 +6,12 @@
 
 import time
 import numpy as np
+import pickle
 import matplotlib.pyplot as plt
 plt.rcParams['font.size']=20
 plt.rcParams['axes.labelsize']=25
-from utils.utils import CG, print_log
+from utils.core import EcogGC
+from utils.utils import print_log
 from utils.roc import scan_auc_threshold
 from utils.plot import gen_auc_threshold_figure
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -30,31 +32,18 @@ parser.add_argument('order', default=arg_default['order'], nargs='?',
 args = parser.parse_args()
 
 start = time.time()
-data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-stride = data_package['stride']
-multiplicity = np.diff(stride).astype(int)
+# Load SC and FC data
+# ==================================================
+data = EcogGC()
+data.init_data()
+sc, fc = data.get_sc_fc('cg')
+# ==================================================
 
-w_thresholds = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-
-# create adj_weight_flatten by excluding 
-#   auto-gc in region with single channel
-adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
-cg_mask = ~np.diag(multiplicity == 1).astype(bool)
-adj_weight_flatten = adj_weight[cg_mask]
-# load gc_data
-gc_data = np.load(args.path + f'gc_order_{args.order:d}.npz', allow_pickle=True)
-
+w_thresholds = np.logspace(-6, 0, num=7, base=10)
 aucs = {}
 opt_threshold = {}
-for band in filter_pool:
-    if band in gc_data.keys():
-        gc_data_cg = CG(gc_data[band], stride)
-        gc_data_flatten = gc_data_cg[cg_mask]
-        gc_data_flatten[gc_data_flatten<=0] = 1e-5
-        aucs[band], opt_threshold[band] = scan_auc_threshold(gc_data_flatten, adj_weight_flatten, w_thresholds)
-    else:
-        aucs[band], opt_threshold[band] = None, None
+for band in data.filters:
+    aucs[band], opt_threshold[band] = scan_auc_threshold(fc[band], sc[band], w_thresholds)
 
 fig = gen_auc_threshold_figure(aucs, w_thresholds)
 
@@ -65,3 +54,6 @@ fname = f'cg_auc-threshold_gc_{args.order:d}.png'
 fig.savefig(args.path + fname)
 print_log(f'Figure save to {args.path+fname:s}.', start)
 plt.savefig(args.path + f'cg_auc-threshold_gc_{args.order:d}.png')
+with open(args.path+f'cg_aucs_gc_order_{args.order:d}.pkl', 'wb') as f:
+    pickle.dump(aucs, f)
+print_log(f'Figure save to {args.path:s}cg_aucs_gc_order_{args.order:d}.pkl', start)

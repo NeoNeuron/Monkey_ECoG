@@ -9,6 +9,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt 
     plt.rcParams['font.size']=15
     plt.rcParams['axes.labelsize'] = 15
+    from utils.core import EcogGC
     from utils.plot import gen_mi_s_figure
     from utils.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -34,30 +35,19 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-    stride = data_package['stride']
-    weight = data_package['weight']
-    weight_flatten = weight[~np.eye(stride[-1], dtype=bool)]
-    # setup interarea mask
+    # Load SC and FC data
+    # ==================================================
+    data = EcogGC()
+    data.init_data()
+    sc, fc = data.get_sc_fc('ch')
+    # ==================================================
     if args.is_interarea:
-        interarea_mask = (weight_flatten != 1.5)
-        weight_flatten = weight_flatten[interarea_mask]
-    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+        for band in data.filters:
+            interarea_mask = (sc[band] != 1.5)
+            sc[band] = sc[band][interarea_mask]
+            fc[band] = fc[band][interarea_mask]
 
-    weight_flatten = {band:weight_flatten for band in filter_pool}
-    gc_data = np.load(args.path + f'gc_order_{args.order:d}.npz', allow_pickle=True)
-
-    gc_data_flatten = {}
-    for band in filter_pool:
-        if band in gc_data.keys():
-            gc_data_flatten[band] = gc_data[band][~np.eye(stride[-1], dtype=bool)]
-            gc_data_flatten[band][gc_data_flatten[band]<=0] = 1e-5
-            if args.is_interarea:
-                gc_data_flatten[band] = gc_data_flatten[band][interarea_mask]
-        else:
-            gc_data_flatten[band] = None
-
-    fig = gen_mi_s_figure(gc_data_flatten, weight_flatten)
+    fig = gen_mi_s_figure(fc, sc)
 
     # edit axis labels
     for ax in fig.get_axes():

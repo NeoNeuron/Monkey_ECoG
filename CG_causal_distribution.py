@@ -11,8 +11,7 @@ if __name__ == '__main__':
     plt.rcParams['axes.labelsize'] = 16
     plt.rcParams['xtick.labelsize'] = 16
     plt.rcParams['ytick.labelsize'] = 16
-    from utils.tdmi import Extract_MI_CG
-    from draw_causal_distribution_v2 import load_data
+    from utils.core import EcogTDMI
     from utils.plot import gen_causal_distribution_figure
     from utils.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -27,55 +26,27 @@ if __name__ == '__main__':
                         type = str, 
                         help = "path of working directory."
                         )
-    parser.add_argument('tdmi_mode', default=arg_default['tdmi_mode'], nargs='?',
-                        type = str, choices=['max', 'sum'], 
-                        help = "TDMI mode."
-                        )
-    parser.add_argument('--filters', default=arg_default['filters'], nargs='*', 
-                        type=str, 
-                        help = "list of filtering band."
-                        )
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-    stride = data_package['stride']
-    multiplicity = np.diff(stride).astype(int)
-    n_region = multiplicity.shape[0]
+    # Load SC and FC data
+    # ==================================================
+    data = EcogTDMI('data/')
+    data.init_data()
+    sc, fc = data.get_sc_fc('cg')
+    # ==================================================
 
-    # create adj_weight_flatten by excluding 
-    #   auto-tdmi in region with single channel
-    adj_weight = data_package['adj_mat'] + np.eye(data_package['adj_mat'].shape[0])*1.5
-    cg_mask = ~np.diag(multiplicity == 1).astype(bool)
-    adj_weight_flatten = adj_weight[cg_mask]
+    for band in data.filters:
+        fig = gen_causal_distribution_figure(fc[band], sc[band], None)
 
-    for band in args.filters:
-        # load shuffled tdmi data for target band
-        tdmi_data, tdmi_data_shuffle = load_data(band, shuffle=True)
-        tdmi_data_cg = Extract_MI_CG(tdmi_data, args.tdmi_mode, stride)
-
-        tdmi_data_flatten = tdmi_data_cg[cg_mask]
-
-        SI_value = tdmi_data_shuffle[~np.eye(stride[-1], dtype=bool)].mean()
-        if args.tdmi_mode == 'sum':
-            SI_value *= 10
-
-        fig = gen_causal_distribution_figure(tdmi_data_flatten, 
-                                             adj_weight_flatten,
-                                             SI_value,
-                                             )
-
-        if args.tdmi_mode == 'sum':
-            fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
-        elif args.tdmi_mode == 'max':
-            fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
+        fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
         fig.get_axes()[4].get_lines()[1].set_color((0,0,0,0))
         handles, labels = fig.get_axes()[4].get_legend_handles_labels()
         fig.get_axes()[4].legend((handles[0],handles[2]), (labels[0], labels[2]))
         plt.tight_layout()
         print_log(f"Figure {band:s} generated.", start)
 
-        fname = f'cg_{band:s}_analysis_{args.tdmi_mode:s}.png'
+        fname = f'cg_{band:s}_analysis.png'
         fig.savefig(args.path + fname)
         print_log(f'Figure save to {args.path+fname:s}.', start)
         plt.close(fig)

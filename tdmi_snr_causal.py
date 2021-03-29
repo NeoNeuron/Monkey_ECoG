@@ -11,18 +11,14 @@ if __name__ == '__main__':
     plt.rcParams['axes.labelsize'] = 16
     plt.rcParams['xtick.labelsize'] = 16
     plt.rcParams['ytick.labelsize'] = 16
-    from draw_causal_distribution_v2 import load_data
-    from utils.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix
+    from utils.core import EcogTDMI
     from utils.plot import gen_causal_distribution_figure
     from utils.utils import print_log
     from utils.binary_threshold import find_gap_threshold
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-    import pickle
     arg_default = {
         'path': 'tdmi_snr_analysis/',
-        'tdmi_mode': 'max',
         'is_interarea': False,
-        'filters': ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw'],
     }
     parser = ArgumentParser(
         prog='tdmi_snr_causal',
@@ -35,86 +31,48 @@ if __name__ == '__main__':
         help = "path of working directory."
     )
     parser.add_argument(
-        'tdmi_mode', 
-        default=arg_default['tdmi_mode'], nargs='?',
-        type = str, choices=['max', 'sum'], 
-        help = "TDMI mode."
-    )
-    parser.add_argument(
         'is_interarea', 
         default=arg_default['is_interarea'], nargs='?', 
         type=bool, 
         help = "inter-area flag."
     )
-    parser.add_argument(
-        '--filters', 
-        default=arg_default['filters'], nargs='*', 
-        type=str, 
-        help = "list of filtering band."
-    )
+   
     args = parser.parse_args()
 
     start = time.time()
-    data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-    # prepare weight_flatten
-    weight = data_package['weight']
-    off_diag_mask = ~np.eye(weight.shape[0], dtype=bool)
-    with open(args.path+'snr_th.pkl', 'rb') as f:
-        snr_th = pickle.load(f)
 
-    for band in args.filters:
-        # load data for target band
-        tdmi_data, tdmi_data_shuffle = load_data(band, shuffle=True)
-
-        # generate snr mask
-        snr_mat = compute_snr_matrix(tdmi_data)
-        noise_matrix = compute_noise_matrix(tdmi_data)
-        # th_val = get_sparsity_threshold(snr_mat, p = 0.5)
-        # snr_mask = snr_mat >= th_val
-        snr_mask = snr_mat >= snr_th[band]
-
-        tdmi_data = MI_stats(tdmi_data, args.tdmi_mode)
-        # apply snr mask
-        tdmi_data_flatten = tdmi_data.copy()
-        tdmi_data_flatten[~snr_mask] = noise_matrix[~snr_mask]
-        tdmi_data_flatten = tdmi_data_flatten[off_diag_mask]
-        # weight_flatten = weight.copy()
-        # weight_flatten[~snr_mask] = 0
-        # weight_flatten = weight_flatten[off_diag_mask]
-        weight_flatten = weight[off_diag_mask]
+    # Load SC and FC data
+    # ==================================================
+    data = EcogTDMI('data/')
+    data.init_data(args.path)
+    sc, fc = data.get_sc_fc('ch')
+    # ==================================================
+    
+    for band in data.filters:
         # setup interarea mask
         if args.is_interarea:
-            interarea_mask = (weight_flatten != 1.5)
-            weight_flatten = weight_flatten[interarea_mask]
-            tdmi_data_flatten = tdmi_data_flatten[interarea_mask]
-
-        SI_value = tdmi_data_shuffle[off_diag_mask].mean()
-        if args.tdmi_mode == 'sum':
-            SI_value *= 10
+            interarea_mask = (sc[band] != 1.5)
+            weight_flatten = sc[band][interarea_mask]
+            fc[band] = fc[band][interarea_mask]
         fig = gen_causal_distribution_figure(
-            tdmi_data_flatten, 
-            weight_flatten,
-            SI_value,
-            snr_mask[off_diag_mask]
+            fc[band], sc[band], tdmi_threshold=None,
+            snr_mask=data.snr_mask[band][data.roi_mask]
         )
-        gap_th = find_gap_threshold(np.log10(tdmi_data_flatten))
+        gap_th = find_gap_threshold(np.log10(fc[band]))
         fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[4].axhline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[0].legend(fontsize=12)
         fig.get_axes()[4].legend(fontsize=12)
 
 
-        if args.tdmi_mode == 'sum':
-            fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\sum TDMI\right)$')
-        elif args.tdmi_mode == 'max':
-            fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
+        fig.get_axes()[4].set_ylabel(r'$log_{10}\left(\max (TDMI)\right)$')
         plt.tight_layout()
         print_log(f"Figure {band:s} generated.", start)
 
         if args.is_interarea:
-            fname = f'channel_{band:s}_interarea_analysis_{args.tdmi_mode:s}_manual-th.png'
+            fname = f'channel_{band:s}_interarea_analysis_manual-th.png'
         else:
-            fname = f'channel_{band:s}_analysis_{args.tdmi_mode:s}_manual-th.png'
+            fname = f'channel_{band:s}_analysis_manual-th.png'
         fig.savefig(args.path + fname)
         print_log(f'Figure save to {args.path+fname:s}.', start)
         plt.close(fig)
