@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .roc import ROC_curve, AUC, Youden_Index
 from .utils import Linear_R2
+from .cluster import get_cluster_id, get_sorted_mat
 
 def gen_causal_distribution_figure(tdmi_flatten:np.ndarray, 
                                    weight_flatten:np.ndarray,
@@ -171,3 +172,80 @@ def gen_mi_s_figure(tdmi_data_flatten:dict, weight_flatten:dict, snr_mask:dict=N
 
     plt.tight_layout()
     return fig
+
+def gen_binary_recon_figure(tdmi_mask:dict, weight_mask:np.ndarray, roi_mask:np.ndarray):
+    """Generate figure for all bands with respect to same weight_mask.
+
+    Args:
+        tdmi_mask (dict): dictionary for all bands of binary FCs.
+        weight_mask (np.ndarray): binary SCs.
+        roi_mask (np.ndarray): coordinate mask for SC and FCs in original adj matrix.
+    """
+    def _plt_unit2(axi, mat, mask, sorted_id=None):
+        mat_buffer = np.zeros_like(mask, dtype=bool)
+        mat_buffer[mask] = mat
+        if sorted_id is not None:
+            buffer = get_sorted_mat(mat_buffer, sorted_id)
+            axi.pcolormesh(buffer, cmap=plt.cm.gray)
+        else:
+            axi.pcolormesh(mat_buffer, cmap=plt.cm.gray)
+
+    # plot figure
+    fig, ax = plt.subplots(4, 2, figsize=(6, 12))
+    plt_buffer_mat = np.zeros_like(roi_mask, dtype=bool)
+    plt_buffer_mat[roi_mask] = weight_mask
+    sorted_id = get_cluster_id(plt_buffer_mat)
+    _plt_unit2(ax[0, 0], weight_mask, roi_mask, sorted_id)
+    ax[0, 0].set_title('Weight Matrix')
+    ax[0, 0].set_xticklabels([])
+    indices = {
+        'delta' : (1, 0),
+        'theta' : (2, 0), 
+        'alpha' : (3, 0),
+        'beta'  : (1, 1),
+        'gamma' : (2, 1),
+        'high_gamma' : (3, 1),
+        'raw'   : (0, 1)
+    }
+    for band, index in indices.items():
+        _plt_unit2(ax[index], tdmi_mask[band], roi_mask, sorted_id)
+        ax[index].set_title(band, fontsize=16)
+        ax[index].set_xticklabels([])
+        ax[index].set_yticklabels([])
+    [axi.invert_yaxis() for axi in ax.flatten()]
+    [axi.axis('scaled') for axi in ax.flatten()]
+    return fig
+
+def plot_ppv_curves(fnames:str, figname:str):
+    fig, ax = plt.subplots(2, 4, figsize=(12, 6), sharey=True)
+    separator = [-6, -5, -4, -3, -2, -1, 0]
+    filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+    indices = [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2)]
+    colors = ['r','royalblue','orange']
+    labels = [r'PPV(th$_{fit}$)', r'PPV(th$_{gap}$)', r'PPV(th$_{roc}$)']
+
+    for fname, color, label in zip(fnames, colors, labels):
+        roc_data = np.load(fname, allow_pickle=True)
+        for i, index in enumerate(indices):
+            ax[index].plot(separator, 100*roc_data[:, i, -1], '-o',
+                        markersize=2, markerfacecolor='None', color=color, label=label)
+            # ax[index].plot(separator, 100*roc_data[:, i, -3], '-s',
+            #              markerfacecolor='None', color=color, label='TPR'+label)
+
+    for i, index in enumerate(indices):
+        ax[index].plot(separator, 100*(roc_data[:,i, 0]+roc_data[:,i,2])/roc_data[:,i,0:4].sum(1),
+                     '-o', markersize=2, markerfacecolor='None', color='k', label='p true')
+        ax[index].grid(ls='--')
+        ax[index].set_title(filters[i])
+
+    # plot legend in the empty subplot
+    handles, labels = ax[0, 0].get_legend_handles_labels()
+    ax[-1, -1].legend(handles, labels, loc=1, fontsize=16)
+    ax[-1, -1].axis('off')
+
+    [ax[i, 0].set_ylabel('Percentage(%)',fontsize=16) for i in (0, 1)]
+    [ax[-1, i].set_xlabel(r'$\log_{10}$(Weight thresholding)',fontsize=12) for i in [0, 1, 2]]
+
+    plt.tight_layout()
+    plt.savefig(figname)
+    plt.close()
