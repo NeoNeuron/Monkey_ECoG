@@ -8,16 +8,18 @@ python gc_scan.py $GC_PATH 6 False
 python gc_scan.py $GC_PATH 6 True
 
 # Channel-wise Analysis
-python gc_analysis.py $GC_PATH 6
-python gc_analysis.py $GC_PATH 6 True
-python gc_auc_threshold.py $GC_PATH 6
-python gc_auc_threshold.py $GC_PATH 6 True
-python gc_s.py $GC_PATH 6
-python gc_s.py $GC_PATH 6 True
+python ch_overview_gc.py $GC_PATH 6
+python ch_aud_th_gc.py $GC_PATH 6
+python ch_fit_gc.py $GC_PATH 6
+
+# interarea
+python ch_overview_gc.py $GC_PATH 6 True
+python ch_aud_th_gc.py $GC_PATH 6 True
+python ch_fit_gc.py $GC_PATH 6 True
 
 # Coarse-Grain Analysis
-python CG_gc_causal.py $GC_PATH 6
-python CG_gc_auc_threshold.py $GC_PATH 6
-python CG_gc_s.py $GC_PATH 6
+python cg_overview_gc.py $GC_PATH 6
+python cg_aud_th_gc.py $GC_PATH 6
+python cg_fit_gc.py $GC_PATH 6
 
 echo "[INFO]: processing done!"

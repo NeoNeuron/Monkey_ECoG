@@ -4,7 +4,6 @@
 # *   - weight matrix masked by weight threshold; (weight > threshold)
 # *   - FC recon matrix masked by 3 types of FC thresholding mask;
 # *   - All normalized to 0-1 valued matrix;
-from utils.core import EcogTDMI
 import numpy as np
 
 def gen_bin_recon(weight, fc, fc_th):
@@ -13,25 +12,26 @@ def gen_bin_recon(weight, fc, fc_th):
     fc_mask = {}
     for band in fc.keys():
         if isinstance(fc_th[band], np.ndarray):
-            fc_mask[band] = np.array([(fc[band] > fc_th_i) for fc_th_i in fc_th[band]])
+            fc_mask[band] = np.array([(fc[band] >= fc_th_i) for fc_th_i in fc_th[band]])
         else:
-            fc_mask[band] = (fc[band] > fc_th[band])
+            fc_mask[band] = (fc[band] >= fc_th[band])
     return sc_mask, fc_mask
 
 if __name__ == '__main__':
+    from utils.core import EcogGC
     import pickle
     path = 'tdmi_snr_analysis/'
     # Load SC and FC data
     # ==================================================
-    data = EcogTDMI('data/')
-    data.init_data(path)
-    sc, fc = data.get_sc_fc('cg')
-    roi_mask = data.roi_mask.copy() # ! excute aftesc_fc_sc_fc()
+    data = EcogGC('data/')
+    data.init_data() # for binary reconstruction, no need for SNR masking
+    sc, fc = data.get_sc_fc('ch')
+    roi_mask = data.roi_mask.copy() # ! excute after get_snr_mask()
     # ==================================================
     weight = sc[data.filters[0]].copy()
 
-    ifnames = ['th_fit_tdmi_CG.pkl', 'th_roc_tdmi_CG.pkl', 'th_gap_tdmi_CG.pkl']
-    ofnames = ['recon_fit_tdmi_CG.pkl', 'recon_roc_tdmi_CG.pkl', 'recon_gap_tdmi_CG.pkl']
+    ifnames = ['th_fit_gc.pkl', 'th_roc_gc.pkl', 'th_gap_gc.pkl']
+    ofnames = ['recon_fit_gc.pkl', 'recon_roc_gc.pkl', 'recon_gap_gc.pkl']
     for ifname, ofname in zip(ifnames, ofnames):
         with open(path+ifname, 'rb') as f:
             fc_th = pickle.load(f)

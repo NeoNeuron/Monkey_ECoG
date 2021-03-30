@@ -46,6 +46,7 @@ if __name__ == '__main__':
     data = EcogTDMI('data/')
     data.init_data(args.path)
     sc, fc = data.get_sc_fc('ch')
+    snr_mask = data.get_snr_mask(args.path)
     # ==================================================
     
     for band in data.filters:
@@ -56,7 +57,7 @@ if __name__ == '__main__':
             fc[band] = fc[band][interarea_mask]
         fig = gen_causal_distribution_figure(
             fc[band], sc[band], tdmi_threshold=None,
-            snr_mask=data.snr_mask[band][data.roi_mask]
+            snr_mask=snr_mask[band]
         )
         gap_th = find_gap_threshold(np.log10(fc[band]))
         fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')

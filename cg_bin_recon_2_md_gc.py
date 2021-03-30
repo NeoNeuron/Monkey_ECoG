@@ -10,7 +10,7 @@ if __name__ == '__main__':
     path = 'tdmi_snr_analysis/'
     # Load SC and FC data
     # ==================================================
-    fnames = ['recon_fit_tdmi_CG.pkl', 'recon_roc_tdmi_CG.pkl', 'recon_gap_tdmi_CG.pkl']
+    fnames = ['recon_fit_gc_CG.pkl', 'recon_roc_gc_CG.pkl', 'recon_gap_gc_CG.pkl']
     # ==================================================
 
     for fname in fnames:

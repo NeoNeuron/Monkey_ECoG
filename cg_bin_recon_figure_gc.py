@@ -1,20 +1,24 @@
 # Author: Kai Chen
-# Description: Convert binary reconstruction results to markdown format.
+# Description: Plot binary reconstruction of adjacent matrix.
 # * Key Notion:
 # *   - weight matrix masked by weight threshold; (weight > threshold)
 # *   - FC recon matrix masked by 3 types of FC thresholding mask;
 # *   - All normalized to 0-1 valued matrix;
+import matplotlib.pyplot as plt
+plt.rcParams['axes.linewidth'] = 0.5
+plt.rcParams['lines.linewidth'] = 0.1
+
 if __name__ == '__main__':
     import pickle
-    from utils.utils import pkl2md
+    from ch_bin_recon_figure import gen_figures
     path = 'tdmi_snr_analysis/'
-    # Load SC and FC data
     # ==================================================
-    fnames = ['recon_fit_tdmi_CG.pkl', 'recon_roc_tdmi_CG.pkl', 'recon_gap_tdmi_CG.pkl']
+    fnames = ['recon_fit_gc_CG.pkl', 'recon_roc_gc_CG.pkl', 'recon_gap_gc_CG.pkl']
     # ==================================================
 
     for fname in fnames:
         with open(path+fname, 'rb') as f:
             sc_mask = pickle.load(f)
             fc_mask = pickle.load(f)
-            pkl2md(path + fname.replace('pkl', 'md'), sc_mask, fc_mask)
+            roi_mask = pickle.load(f)
+            gen_figures(path + fname, sc_mask, fc_mask, roi_mask)

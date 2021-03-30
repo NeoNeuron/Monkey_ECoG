@@ -26,6 +26,12 @@ if __name__ == '__main__':
                         type = str, 
                         help = "path of working directory."
                         )
+    parser.add_argument(
+        'is_interarea', 
+        default=arg_default['is_interarea'], nargs='?', 
+        type=bool, 
+        help = "inter-area flag."
+    )
     args = parser.parse_args()
 
     start = time.time()

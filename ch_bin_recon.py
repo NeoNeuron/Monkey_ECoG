@@ -7,10 +7,11 @@
 from utils.core import EcogTDMI
 import numpy as np
 
-def gen_bin_recon(weight, fc_th, snr_mask):
+def gen_bin_recon(weight, fc, fc_th, snr_mask):
+    w_thresholds = np.logspace(-6, 0, num=7, base=10)
     sc_mask = [weight > w_th for w_th in w_thresholds]
     fc_mask = {}
-    for band in data.filters:
+    for band in fc.keys():
         if isinstance(fc_th[band], np.ndarray):
             fc_mask[band] = np.array([(fc[band] >= fc_th_i) * snr_mask[band] for fc_th_i in fc_th[band]])
         else:
@@ -30,14 +31,12 @@ if __name__ == '__main__':
     # ==================================================
     weight = sc[data.filters[0]].copy()
 
-    w_thresholds = np.logspace(-6, 0, num=7, base=10)
-
     ifnames = ['th_fit_tdmi.pkl', 'th_roc_tdmi.pkl', 'th_gap_tdmi.pkl']
     ofnames = ['recon_fit_tdmi.pkl', 'recon_roc_tdmi.pkl', 'recon_gap_tdmi.pkl']
     for ifname, ofname in zip(ifnames, ofnames):
         with open(path+ifname, 'rb') as f:
             fc_th = pickle.load(f)
-        sc_mask, fc_mask = gen_bin_recon(weight, fc_th, snr_mask)
+        sc_mask, fc_mask = gen_bin_recon(weight, fc, fc_th, snr_mask)
         with open(path + ofname, 'wb') as f:
             pickle.dump(sc_mask, f)
             pickle.dump(fc_mask, f)

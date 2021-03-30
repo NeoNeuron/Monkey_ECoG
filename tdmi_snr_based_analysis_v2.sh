@@ -16,11 +16,10 @@ python ch_fit_mi_snr.py $TDMI_PATH
 python ch_get_thresholds.py
 
 # reconstruction
-python WA_v3.py
-python WA_v3_ppv.py
-python WA_v3_roc.py
-python WA_v3_summary.py
-python WA_v5_TPTN_feature.py
+python ch_bin_recon.py
+python ch_bin_recon_2_md.py
+python ch_bin_recon_ppv.py
+python ch_bin_recon_figure.py
 
 # Coarse-Grain Analysis
 python cg_overview_mi_snr.py $TDMI_PATH
@@ -31,12 +30,12 @@ python cg_fit_mi_snr.py $TDMI_PATH
 python cg_get_thresholds.py
 
 # reconstruction
-python WA_v3_cg.py
-python WA_v3_ppv_cg.py
-python WA_v3_roc_cg.py
-python WA_v3_summary_cg.py
+python cg_bin_recon.py
+python cg_bin_recon_2_md.py
+python cg_bin_recon_ppv.py
+python cg_bin_recon_figure.py
 
 # plot geometric graph
-python plot_geometric_graph.py
+# python plot_geometric_graph.py
 
 echo "[INFO]: processing done!"
