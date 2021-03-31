@@ -4,7 +4,7 @@ TDMI_SNR_PATH="tdmi_snr_analysis/"
 mkdir -p $TDMI_SNR_PATH
 
 # determine SNR threshold
-python tdmi_snr_distribution.py
+# python tdmi_snr_distribution.py
 python tdmi_snr_and_trace.py
 
 # Channel-wise Analysis
@@ -21,6 +21,9 @@ python ch_bin_recon_2_md.py
 python ch_bin_recon_ppv.py
 python ch_bin_recon_figure.py
 
+# other analysis
+python ch_fc_rank_mi.py
+
 # Coarse-Grain Analysis
 python cg_overview_mi_snr.py $TDMI_PATH
 python cg_auc_th_mi_snr.py $TDMI_PATH
@@ -34,6 +37,9 @@ python cg_bin_recon.py
 python cg_bin_recon_2_md.py
 python cg_bin_recon_ppv.py
 python cg_bin_recon_figure.py
+
+# other analysis
+python cg_fc_rank_mi.py
 
 # plot geometric graph
 # python plot_geometric_graph.py

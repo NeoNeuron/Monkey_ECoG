@@ -55,7 +55,7 @@ if __name__ == '__main__':
             sc[band] = sc[band][interarea_mask]
             fc[band] = fc[band][interarea_mask]
 
-        gap_th_val = find_gap_threshold(np.log10(fc[band]), 500)
+        gap_th_val = find_gap_threshold(np.log10(fc[band]), 1500)
         ax[idx].plot(np.log10(np.sort(fc[band])), '.', ms=0.1)
         ax[idx].set_xlabel('Ranked TDMI index')
         ax[idx].set_ylabel(r'$\log_{10}$(TDMI value)')

@@ -35,14 +35,14 @@ if __name__ == '__main__':
     # ==================================================
     data = EcogTDMI('data/')
     data.init_data(args.path)
-    sc, fc = data.get_sc_fc('ch')
+    sc, fc = data.get_sc_fc('cg')
     # ==================================================
     
     fig, ax  = plt.subplots(2,4, figsize=(15,6), sharex=True)
     ax = ax.reshape((-1,))
 
     for idx, band in enumerate(data.filters):
-        gap_th_val = find_gap_threshold(np.log10(fc[band]), 500)
+        gap_th_val = find_gap_threshold(np.log10(fc[band]), 400)
         ax[idx].plot(np.log10(np.sort(fc[band])), '.', ms=0.1)
         ax[idx].set_xlabel('Ranked TDMI index')
         ax[idx].set_ylabel(r'$\log_{10}$(TDMI value)')
