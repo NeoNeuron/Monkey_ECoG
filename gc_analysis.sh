@@ -9,12 +9,12 @@ python gc_scan.py $GC_PATH 6 True
 
 # Channel-wise Analysis
 python ch_overview_gc.py $GC_PATH 6
-python ch_aud_th_gc.py $GC_PATH 6
+python ch_auc_th_gc.py $GC_PATH 6
 python ch_fit_gc.py $GC_PATH 6
 
 # interarea
 python ch_overview_gc.py $GC_PATH 6 True
-python ch_aud_th_gc.py $GC_PATH 6 True
+python ch_auc_th_gc.py $GC_PATH 6 True
 python ch_fit_gc.py $GC_PATH 6 True
 
 # Coarse-Grain Analysis
