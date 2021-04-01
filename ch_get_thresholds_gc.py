@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     w_thresholds = np.logspace(-6, 0, num=7, base=10)
     fit_th = get_fit_threshold(sc, fc, w_thresholds)
-    gap_th = get_gap_threshold(fc, 1000)
+    gap_th = get_gap_threshold(fc)
     roc_th = get_roc_threshold(sc, fc, w_thresholds)
 
     suffix = '_gc'
