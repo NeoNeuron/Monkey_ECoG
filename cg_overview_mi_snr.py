@@ -43,7 +43,7 @@ if __name__ == '__main__':
     for band in data.filters:
         fig = gen_causal_distribution_figure(fc[band], sc[band], None)
 
-        gap_th = find_gap_threshold(np.log10(fc[band]), 500)
+        gap_th,_ = find_gap_threshold(np.log10(fc[band]))
         fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[4].axhline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[0].legend(fontsize=14)

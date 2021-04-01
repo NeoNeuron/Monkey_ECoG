@@ -59,7 +59,7 @@ if __name__ == '__main__':
             fc[band], sc[band], tdmi_threshold=None,
             snr_mask=snr_mask[band]
         )
-        gap_th = find_gap_threshold(np.log10(fc[band]))
+        gap_th, _ = find_gap_threshold(np.log10(fc[band]))
         fig.get_axes()[0].axvline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[4].axhline(gap_th, ls='-', color='royalblue', label='gap')
         fig.get_axes()[0].legend(fontsize=12)

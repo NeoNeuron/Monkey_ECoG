@@ -55,15 +55,16 @@ if __name__ == '__main__':
             sc[band] = sc[band][interarea_mask]
             fc[band] = fc[band][interarea_mask]
 
-        gap_th_val = find_gap_threshold(np.log10(fc[band]), 1000)
+        gap_th_val, gap_th_label = find_gap_threshold(np.log10(fc[band]))
         ax[idx].plot(np.log10(np.sort(fc[band])), '.', ms=0.1)
         ax[idx].set_xlabel('Ranked GC index')
         ax[idx].set_ylabel(r'$\log_{10}$(GC value)')
         ax[idx].set_title(band)
-        ax[idx].axhline(gap_th_val, color='orange')
+        ax[idx].axhline(gap_th_val, color='orange', label=gap_th_label)
         # axt=ax[idx].twinx()
         # axt.plot(np.log10(sc[np.argsort(fc[band])]), '.', color='orange', ms=0.1)
         # axt.set_ylabel(r'$\log_{10}$(weight)')
+        ax[idx].legend()
         print_log(f"Figure {band:s} generated.", start)
 
     ax[-1].plot(np.log10(np.sort(sc[band])), '.', color='orange', ms=0.1)
@@ -73,9 +74,9 @@ if __name__ == '__main__':
     plt.tight_layout()
 
     if args.is_interarea:
-        fname = f'ch_gc_rank_interarea_manual-th.png'
+        fname = f'ch_gc_rank_interarea.png'
     else:
-        fname = f'ch_gc_rank_manual-th.png'
+        fname = f'ch_gc_rank.png'
     fig.savefig(args.path + fname)
     print_log(f'Figure save to {args.path+fname:s}.', start)
     plt.close(fig)
