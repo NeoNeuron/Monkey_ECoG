@@ -67,18 +67,18 @@ if __name__ == '__main__':
     [axi.legend() for axi in fig.get_axes()[:-1]]
 
     if args.is_interarea:
-        fname = f'auc-threshold_interarea_manual-th.png'
+        fname = f'ch_auc-threshold_interarea_snr.png'
     else:
-        fname = f'auc-threshold_manual-th.png'
+        fname = f'ch_auc-threshold_snr.png'
     fig.savefig(args.path + fname)
     print_log(f'Figure save to {args.path+fname:s}.', start)
     if args.is_interarea:
-        with open(args.path+f'aucs_interarea.pkl', 'wb') as f:
+        with open(args.path+f'ch_aucs_interarea.pkl', 'wb') as f:
             pickle.dump(aucs_no_snr, f)
             pickle.dump(aucs, f)
-        print_log(f'Figure save to {args.path:s}aucs_interarea.pkl', start)
+        print_log(f'Figure save to {args.path:s}ch_aucs_interarea.pkl', start)
     else:
-        with open(args.path+f'aucs.pkl', 'wb') as f:
+        with open(args.path+f'ch_aucs.pkl', 'wb') as f:
             pickle.dump(aucs_no_snr, f)
             pickle.dump(aucs, f)
-        print_log(f'Figure save to {args.path:s}aucs.pkl', start)
+        print_log(f'Figure save to {args.path:s}ch_aucs.pkl', start)

@@ -41,6 +41,6 @@ fig = gen_mi_s_figure(fc, sc)
 [fig.get_axes()[i].set_xlabel('Weight') for i in (4,5,6)]
 plt.tight_layout()
 
-fname = f'cg_mi-s_manual-th.png'
+fname = f'cg_mi-s_snr.png'
 fig.savefig(args.path + fname)
 print_log(f'Figure save to {args.path+fname:s}.', start)

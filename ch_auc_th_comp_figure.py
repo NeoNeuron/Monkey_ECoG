@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     start = time.time()
     w_thresholds = np.logspace(-6, 0, num=7, base=10)
-    with open(args.path + 'aucs.pkl', 'rb') as f:
+    with open(args.path + 'ch_aucs.pkl', 'rb') as f:
         aucs_tdmi = pickle.load(f)
     with open(args.path + 'gc_aucs_order_6.pkl', 'rb') as f:
         aucs_gc = pickle.load(f)

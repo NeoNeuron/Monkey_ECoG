@@ -54,9 +54,9 @@ if __name__ == '__main__':
         print_log(f"Figure {band:s} generated.", start)
 
         if args.is_interarea:
-            fname = f'channel_{band:s}_interarea_analysis.png'
+            fname = f'ch_{band:s}_interarea_analysis.png'
         else:
-            fname = f'channel_{band:s}_analysis.png'
+            fname = f'ch_{band:s}_analysis.png'
         fig.savefig(args.path + fname)
         print_log(f'Figure save to {args.path+fname:s}.', start)
         plt.close(fig)

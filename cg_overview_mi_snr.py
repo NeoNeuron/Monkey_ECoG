@@ -62,7 +62,7 @@ if __name__ == '__main__':
         plt.tight_layout()
         print_log(f"Figure {band:s} generated.", start)
 
-        fname = f'cg_{band:s}_analysis_manual-th.png'
+        fname = f'cg_{band:s}_analysis_snr.png'
         fig.savefig(args.path + fname)
         print_log(f'Figure save to {args.path+fname:s}.', start)
         plt.close(fig)

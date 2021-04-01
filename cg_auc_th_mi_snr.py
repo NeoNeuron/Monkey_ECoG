@@ -57,7 +57,7 @@ fig = gen_auc_threshold_figure(aucs_no_snr, w_thresholds, labels="No SNR mask")
 gen_auc_threshold_figure(aucs, w_thresholds, ax=np.array(fig.get_axes()), colors='orange', labels="SNR mask")
 [axi.legend() for axi in fig.get_axes()[:-1]]
 
-fname = f'cg_auc-threshold_manual-th.png'
+fname = f'cg_auc-threshold_snr.png'
 fig.savefig(args.path + fname)
 print_log(f'Figure save to {args.path+fname:s}.', start)
 with open(args.path+f'cg_aucs.pkl', 'wb') as f:
