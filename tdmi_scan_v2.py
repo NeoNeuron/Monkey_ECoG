@@ -32,7 +32,7 @@ def ScanTDMI(data_series:np.ndarray, delay_len:int=10, pn:int=None)->np.ndarray:
     p.join()
     j = 0
     for res in result:
-      mi_data[i,j] = res.get()
+      mi_data[j,i] = res.get()
       j += 1
   return mi_data
 

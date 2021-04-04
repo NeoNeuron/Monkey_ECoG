@@ -1,5 +1,4 @@
 import numpy as np
-from .utils import CG
 
 def MI_stats(tdmi_data:np.ndarray, mi_mode:str)->np.ndarray:
     """Calculate the statistics of MI from TDMI data series.
@@ -20,22 +19,6 @@ def MI_stats(tdmi_data:np.ndarray, mi_mode:str)->np.ndarray:
         return tdmi_data.max(2)
     else:
         raise RuntimeError('Invalid mi mode.')
-
-def Extract_MI_CG(tdmi_data:np.ndarray, mi_mode:str, stride:np.ndarray)->np.ndarray:
-    """Extract coarse-grained tdmi_data from original tdmi data.
-
-    Args:
-        tdmi_data (np.ndarray): original tdmi data
-        mi_mode (str): mode of mi statistics
-        stride (np.ndarray): stride of channels.
-            Equal to the `cumsum` of multiplicity.
-
-    Returns:
-        np.ndarray: coarse-grained average of tdmi_data.
-    """
-    tdmi_data = MI_stats(tdmi_data, mi_mode)
-    tdmi_data_cg = CG(tdmi_data, stride)
-    return tdmi_data_cg
 
 def compute_tdmi_full(tdmi_data:np.ndarray):
     # complete the tdmi series
