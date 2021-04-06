@@ -42,7 +42,10 @@ if __name__ == '__main__':
   from utils.utils import print_log
   import os
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-  arg_default = {'path': 'data/'}
+  arg_default = {
+    'path': 'data/',
+    'dfname': 'tdmi_data.npz'
+  }
   parser = ArgumentParser(
     prog='tdmi_scan',
     description = "Scan pair-wise time delayed mutual information",
@@ -53,25 +56,28 @@ if __name__ == '__main__':
     nargs='?', type = str, 
     help = "path of working directory."
     )
+  parser.add_argument(
+    'dfname', default=arg_default['dfname'],
+    nargs='?', type = str, 
+    help = "filename of ouput data file."
+    )
   args = parser.parse_args()
   # load data
   data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
-  stride = data_package['stride']
 
   start = time.time()
   filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
   tdmi_data = {}
   for band in filter_pool:
-    tdmi_data[band] = ScanTDMI(data_package['data_series_'+band], 41)
+    tdmi_data[band] = ScanTDMI(data_package['data_series_'+band], 3001)
     # save result to temp file.
-    fname = f'tdmi_{band:s}.npy'
+    fname = args.dfname.replace('.npz', f'_{band:s}.npy')
     np.save(args.path + fname, tdmi_data[band])
     print_log(f"Finish processing {band:s} data, temp data save to {args.path+fname:s}.", start)
 
   # unify all data files
-  fname = 'tdmi_data.npz'
-  np.savez(args.path + fname, **tdmi_data)
-  print_log(f'Pickled data save to {args.path+fname:s}.', start)
+  np.savez(args.path + args.dfname, **tdmi_data)
+  print_log(f'Pickled data save to {args.path+args.dfname:s}.', start)
   # remove temp data files
   for band in filter_pool:
     os.remove(args.path + f'tdmi_{band:s}.npy')
