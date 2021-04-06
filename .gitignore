@@ -3,6 +3,7 @@
 literatures
 .vscode
 .ipynb_checkpoints
+tdmi_snr_analysis
 
 # ignore file types
 *.npy

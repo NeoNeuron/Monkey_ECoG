@@ -5,7 +5,6 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 from matplotlib import cm, colors
-from draw_causal_distribution_v2 import load_data
 
 def plot_tdmi(ax, i, j, color, yaxis_type='linear'):
     if i>=j:
@@ -26,12 +25,13 @@ weight_log = np.log10(weight+1e-6)
 weight_color = weight_log/weight_log.max()
 weight_color = (weight_color-weight_color.min())/(weight_color.max()-weight_color.min())
 my_colors = cm.Oranges(weight_color, alpha=0.5)
+tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 
 
 yaxis_type = 'linear'
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 for band in filter_pool:
-    data = load_data(path, band)
+    data = tdmi_data[band].copy()
     data_mean = data.mean(2)
 
     fig, ax = plt.subplots(1,1,figsize=(5,3), dpi=300)
