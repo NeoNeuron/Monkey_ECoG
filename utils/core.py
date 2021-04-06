@@ -90,5 +90,16 @@ class EcogGC(EcogData):
 
     def init_data(self):
         for band in self.filters:
-            self.fc[band] = self.gc_data[band]
+            self.fc[band] = self.gc_data[band].copy()
             self.fc[band][self.fc[band]<=0] = 1e-5
+
+class EcogCC(EcogData):
+    def __init__(self, path:str='data/'):
+        super().__init__(path)
+        self.cc_data = np.load(path+'cc.npz', allow_pickle=True)
+        self.adj_mat = (self.adj_mat + self.adj_mat.T)/2
+        self.weight = (self.weight + self.weight.T)/2
+
+    def init_data(self):
+        for band in self.filters:
+            self.fc[band] = np.abs(self.cc_data[band])
