@@ -80,6 +80,7 @@ if __name__ == '__main__':
   print_log(f'Pickled data save to {args.path+args.dfname:s}.', start)
   # remove temp data files
   for band in filter_pool:
-    os.remove(args.path + f'tdmi_{band:s}.npy')
+    fname = args.dfname.replace('.npz', f'_{band:s}.npy')
+    os.remove(args.path + fname)
     print_log(f'Delete {band:s} TDMI temp data.', start)
   print_log(f'TDMI scan finished.', start)

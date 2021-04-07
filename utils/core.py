@@ -39,10 +39,10 @@ class EcogData:
         return sc, fc
 
 class EcogTDMI(EcogData):
-    def __init__(self, path:str='data/'):
+    def __init__(self, path:str='data/', dfname:str='tdmi_data_long.npz'):
         super().__init__(path)
         self.tdmi_mode = 'max'
-        self.tdmi_data = np.load(path+'tdmi_data_long.npz', allow_pickle=True)
+        self.tdmi_data = np.load(path+dfname, allow_pickle=True)
 
     def init_data(self, snr_th_path:str=None)->None:
         self.compute_mi_stats()

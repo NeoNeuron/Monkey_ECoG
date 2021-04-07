@@ -58,6 +58,12 @@ def Linear_R2(x:np.ndarray, y:np.ndarray, pval:np.ndarray)->float:
     R = np.corrcoef(y[mask], y_predict)[0,1]
     return R**2
 
+def linear_fit(x, y):
+    not_nan_mask = ~np.isnan(x)*~np.isnan(y)*~np.isinf(x)
+    pval = np.polyfit(x[not_nan_mask], y[not_nan_mask], deg=1)
+    r = Linear_R2(x, y, pval)**0.5
+    return pval, r
+
 def CG(tdmi_data:np.ndarray, stride:np.ndarray)->np.ndarray:
     """Compute the coarse-grained average of 
         each cortical region for tdmi_data.

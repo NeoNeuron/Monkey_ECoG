@@ -3,13 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.size'] = 20
 from utils.core import EcogTDMI, EcogGC
-from utils.utils import Linear_R2
-def linear_fit(x, y):
-    not_nan_mask = ~np.isnan(x)*~np.isnan(y)*~np.isinf(x)
-    pval = np.polyfit(x[not_nan_mask], y[not_nan_mask], deg=1)
-    r = Linear_R2(x, y, pval)**0.5
-    return pval, r
-
+from utils.utils import linear_fit
 # %%
 data = EcogTDMI()
 # data.init_data('tdmi_snr_analysis/')
