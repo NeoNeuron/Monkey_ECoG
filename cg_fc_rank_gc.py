@@ -9,8 +9,8 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     plt.rcParams['font.size'] = 14
     # plt.rcParams['axes.labelsize'] = 16
-    # plt.rcParams['xtick.labelsize'] = 16
-    # plt.rcParams['ytick.labelsize'] = 16
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 12
     from utils.core import EcogGC
     from utils.utils import print_log
     from utils.binary_threshold import find_gap_threshold
@@ -37,37 +37,38 @@ if __name__ == '__main__':
     data.init_data()
     sc, fc = data.get_sc_fc('cg')
     # ==================================================
-    
-    fig, ax  = plt.subplots(2,4, figsize=(15,6), sharex=True)
-    ax = ax.reshape((-1,))
+
+    fig = plt.figure(figsize=(8,15), dpi=100)
+    gs = fig.add_gridspec(nrows=4, ncols=2, 
+                          left=0.10, right=0.90, top=0.96, bottom=0.05, 
+                          wspace=0.36, hspace=0.30)
+    ax = np.array([fig.add_subplot(i) for i in gs])
+    axt = []
 
     for idx, band in enumerate(data.filters):
         gap_th_val, gap_th_label = find_gap_threshold(np.log10(fc[band]))
-        ax[idx].plot(np.log10(np.sort(fc[band])), '.', ms=0.1)
-        ax[idx].set_xlabel('Ranked GC index')
-        ax[idx].set_ylabel(r'$\log_{10}$(GC value)')
+        ax[idx].plot(np.log10(np.sort(fc[band])), np.arange(fc[band].shape[0]), '.', ms=0.1)
+        ax[idx].yaxis.get_major_formatter().set_powerlimits((0,1))
         ax[idx].set_title(band)
-        ax[idx].axhline(gap_th_val, color='orange', label=gap_th_label)
-        # from scipy.optimize import curve_fit
-        # from utils.utils import Gaussian, Double_Gaussian
-        # axt=ax[idx].twiny()
-        # (counts, edges) = np.histogram(np.log10(fc[band]), bins=100)
-        # popt, _ = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
-        # if popt[2] > popt[3]:
-        #     axt.plot(Gaussian(edges[1:], popt[0],popt[2],popt[4]), edges[1:], 'ro', markersize = 3, label=r'$1^{st}$ Gaussian fit')
-        #     axt.plot(Gaussian(edges[1:], popt[1],popt[3],popt[5]), edges[1:], 'bo', markersize = 3, label=r'$2^{nd}$ Gaussian fit')
-        # else:
-        #     axt.plot(Gaussian(edges[1:], popt[0],popt[2],popt[4]), edges[1:], 'bo', markersize = 3, label=r'$2^{nd}$ Gaussian fit')
-        #     axt.plot(Gaussian(edges[1:], popt[1],popt[3],popt[5]), edges[1:], 'ro', markersize = 3, label=r'$1^{nd}$ Gaussian fit')
-        # axt.set_xlabel('Counts')
-        ax[idx].legend()
-        print_log(f"Figure {band:s} generated.", start)
+        ax[idx].axvline(gap_th_val, color='r', label=gap_th_label)
+        axt.append(ax[idx].twinx())
+        axt[idx].hist(np.log10(fc[band][sc[band]>0]),color='orange', alpha=.5, bins=100, label='SC Present')
+        axt[idx].hist(np.log10(fc[band][sc[band]==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
+        axt[idx].yaxis.get_major_formatter().set_powerlimits((0,1))
+        ax[idx].legend(fontsize=10, loc=5)
+        ax[idx].text(
+            0.05, 0.95, 
+            f'PPV:{np.sum(fc[band][sc[band]>0]>10**gap_th_val)*100./np.sum(fc[band]>10**gap_th_val):4.1f} %',
+            fontsize=14, transform=ax[idx].transAxes, 
+            verticalalignment='top', horizontalalignment='left'
+        )
 
-    ax[-1].plot(np.log10(np.sort(sc[band])), '.', color='orange', ms=0.1)
-    ax[-1].set_xlabel('Ranked weight index')
-    ax[-1].set_ylabel(r'$\log_{10}$(weight)')
-    ax[-1].set_title('Weight')
-    plt.tight_layout()
+    [ax[i].set_ylabel('Ranked GC index') for i in (0,2,4,6)]
+    [ax[i].set_xlabel(r'$\log_{10}$(GC value)') for i in (5,6)]
+    [axt[i].set_ylabel('Counts') for i in (1,3,5)]
+    handles, labels = axt[0].get_legend_handles_labels()
+    ax[-1].legend(handles, labels, fontsize=16, loc=2)
+    ax[-1].axis('off')
 
     fname = f'cg_gc_rank.png'
     fig.savefig(args.path + fname)
