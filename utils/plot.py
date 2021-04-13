@@ -8,6 +8,7 @@ def gen_causal_distribution_figure(tdmi_flatten:np.ndarray,
                                    weight_flatten:np.ndarray,
                                    tdmi_threshold:float, 
                                    snr_mask:np.ndarray=None,
+                                   is_log:bool=True,
                                    )->plt.Figure:
     """Generated figure for analysis of causal distributions.
 
@@ -19,7 +20,10 @@ def gen_causal_distribution_figure(tdmi_flatten:np.ndarray,
     Returns:
         plt.Figure: matplotlib.figure.Figure
     """
-    log_tdmi_data = np.log10(tdmi_flatten)
+    if is_log:
+        log_tdmi_data = np.log10(tdmi_flatten)
+    else:
+        log_tdmi_data = tdmi_flatten.copy()
     log_tdmi_range = [log_tdmi_data.min(), log_tdmi_data.max()]
 
     # calculate histogram
@@ -130,7 +134,7 @@ def gen_auc_threshold_figure(aucs:dict, w_thresholds:list,
     if fig_return_flag:
         return fig
 
-def gen_mi_s_figure(tdmi_data_flatten:dict, weight_flatten:dict, snr_mask:dict=None)->plt.Figure:
+def gen_mi_s_figure(tdmi_data_flatten:dict, weight_flatten:dict, snr_mask:dict=None, is_log:bool=True)->plt.Figure:
     fig, ax = plt.subplots(2,4,figsize=(20,10))
     ax = ax.reshape((8,))
     idx = 0
@@ -138,7 +142,10 @@ def gen_mi_s_figure(tdmi_data_flatten:dict, weight_flatten:dict, snr_mask:dict=N
         if tdmi_flatten is None:
             ax[idx].set_visible(False)
         else:
-            log_tdmi_data = np.log10(tdmi_flatten)
+            if is_log:
+                log_tdmi_data = np.log10(tdmi_flatten)
+            else:
+                log_tdmi_data = tdmi_flatten.copy()
             if snr_mask is not None:
                 log_tdmi_data[~snr_mask[band]] = np.nan
 

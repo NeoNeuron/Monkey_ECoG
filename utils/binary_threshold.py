@@ -7,11 +7,14 @@ from .utils import Linear_R2
 from .roc import scan_auc_threshold
 from .utils import Gaussian, Double_Gaussian
 
-def get_linear_fit_pm(x_flatten:dict, y_flatten:dict, snr_mask:dict=None):
+def get_linear_fit_pm(x_flatten:dict, y_flatten:dict, snr_mask:dict=None, is_log=True):
     pval = {}
     R2 = {}
     for band in y_flatten.keys():
-        log_y = np.log10(y_flatten[band])
+        if is_log:
+            log_y = np.log10(y_flatten[band])
+        else:
+            log_y = y_flatten[band].copy()
         if snr_mask is not None:
             log_y[~snr_mask[band]] = np.nan
         answer = x_flatten[band].copy()
@@ -82,23 +85,31 @@ def find_gap_threshold(data_flatten):
 # --------------------------------------------------
 # Get threshold functions
 
-def get_fit_threshold(weight_flatten:dict, prediction_flatten:dict, w_thresholds:np.ndarray, snr_mask:dict=None):
-    pval,_ = get_linear_fit_pm(weight_flatten, prediction_flatten, snr_mask)
+def get_fit_threshold(weight_flatten:dict, prediction_flatten:dict, w_thresholds:np.ndarray, snr_mask:dict=None, is_log=True):
+    pval,_ = get_linear_fit_pm(weight_flatten, prediction_flatten, snr_mask, is_log)
     fit_th = {}
     for band, p in pval.items():
-        fit_th[band] = np.array([10**(p[0]*i + p[1]) for i in np.log10(w_thresholds)])
+        if is_log:
+            fit_th[band] = np.array([10**(p[0]*i + p[1]) for i in np.log10(w_thresholds)])
+        else:
+            fit_th[band] = np.array([p[0]*i + p[1] for i in np.log10(w_thresholds)])
     return fit_th
 
-def get_gap_threshold(data_flatten:dict):
+def get_gap_threshold(data_flatten:dict, is_log=True):
     gap_th = {}
     for band,data_flatten_band in data_flatten.items():
-        gap_th[band],_ = find_gap_threshold(np.log10(data_flatten_band))
-        gap_th[band] = 10**gap_th[band]
+        if is_log:
+            gap_th[band],_ = find_gap_threshold(np.log10(data_flatten_band))
+            gap_th[band] = 10**gap_th[band]
+        else:
+            gap_th[band],_ = find_gap_threshold(data_flatten_band)
     return gap_th
 
-def get_roc_threshold(y_true:dict, y_predict:dict, w_thresholds:np.ndarray):
+def get_roc_threshold(y_true:dict, y_predict:dict, w_thresholds:np.ndarray, is_log:bool=True):
     opt_th = {}
     for band, y_true_band in y_true.items():
-        _, opt_th[band] = scan_auc_threshold(y_predict[band], y_true_band, w_thresholds)
-        opt_th[band] = np.array([10**item for item in opt_th[band]])
+        # TODO: add is_log flag
+        _, opt_th[band] = scan_auc_threshold(y_predict[band], y_true_band, w_thresholds, is_log)
+        if is_log:
+            opt_th[band] = np.array([10**item for item in opt_th[band]])
     return opt_th

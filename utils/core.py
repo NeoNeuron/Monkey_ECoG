@@ -102,4 +102,4 @@ class EcogCC(EcogData):
 
     def init_data(self):
         for band in self.filters:
-            self.fc[band] = self.cc_data[band]
+            self.fc[band] = np.abs(self.cc_data[band])

@@ -70,7 +70,7 @@ if __name__ == '__main__':
         ax[idx].legend(fontsize=10, loc=5)
         ax[idx].text(
             0.05, 0.95, 
-            f'PPV:{np.sum(fc[band][sc[band]>0]>10**gap_th_val)*100./np.sum(fc[band]>10**gap_th_val):4.1f} %',
+            f'PPV:{np.sum(fc[band][sc[band]>0]>gap_th_val)*100./np.sum(fc[band]>gap_th_val):4.1f} %',
             fontsize=14, transform=ax[idx].transAxes, 
             verticalalignment='top', horizontalalignment='left'
         )
