@@ -215,7 +215,8 @@ def gen_binary_recon_figure(tdmi_mask:dict, weight_mask:np.ndarray, roi_mask:np.
         'raw'   : (0, 1)
     }
     for band, index in indices.items():
-        _plt_unit2(ax[index], tdmi_mask[band], roi_mask, sorted_id)
+        if tdmi_mask[band] is not None:
+            _plt_unit2(ax[index], tdmi_mask[band], roi_mask, sorted_id)
         ax[index].set_title(band, fontsize=16)
         ax[index].set_xticklabels([])
         ax[index].set_yticklabels([])

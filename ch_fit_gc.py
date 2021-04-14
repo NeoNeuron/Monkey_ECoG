@@ -43,9 +43,10 @@ if __name__ == '__main__':
     # ==================================================
     if args.is_interarea:
         for band in data.filters:
-            interarea_mask = (sc[band] != 1.5)
-            sc[band] = sc[band][interarea_mask]
-            fc[band] = fc[band][interarea_mask]
+            if fc[band] is not None:
+                interarea_mask = (sc[band] != 1.5)
+                sc[band] = sc[band][interarea_mask]
+                fc[band] = fc[band][interarea_mask]
 
     fig = gen_mi_s_figure(fc, sc)
 

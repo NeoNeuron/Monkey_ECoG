@@ -12,13 +12,18 @@ plt.rcParams['lines.linewidth'] = 0.1
 
 def gen_figures(fname:str, sc_mask:list, fc_mask:dict, roi_mask):
     w_thresholds = np.logspace(-6, 0, num=7, base=10)
-    if len(list(fc_mask.values())[0].shape) == 1:
-        for key, item in fc_mask.items():
-            fc_mask[key] = np.tile(item, (len(w_thresholds),1))
+    for key, item in fc_mask.items():
+        if item is not None:
+            if len(item.shape) == 1:
+                fc_mask[key] = np.tile(item, (len(w_thresholds),1))
     fc_mask_buffer = [{}]*len(w_thresholds)
     for band, item in fc_mask.items():
-        for idx in range(len(w_thresholds)):
-            fc_mask_buffer[idx][band] = item[idx]
+        if item is not None:
+            for idx in range(len(w_thresholds)):
+                fc_mask_buffer[idx][band] = item[idx]
+        else:
+            for idx in range(len(w_thresholds)):
+                fc_mask_buffer[idx][band] = None
 
     for idx in range(len(w_thresholds)):
         fig = gen_binary_recon_figure(fc_mask_buffer[idx], sc_mask[idx], roi_mask)

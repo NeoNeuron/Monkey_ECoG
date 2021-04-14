@@ -11,10 +11,13 @@ def gen_bin_recon(weight, fc, fc_th):
     sc_mask = [weight > w_th for w_th in w_thresholds]
     fc_mask = {}
     for band in fc.keys():
-        if isinstance(fc_th[band], np.ndarray):
-            fc_mask[band] = np.array([(fc[band] >= fc_th_i) for fc_th_i in fc_th[band]])
+        if fc[band] is not None:
+            if isinstance(fc_th[band], np.ndarray):
+                fc_mask[band] = np.array([(fc[band] >= fc_th_i) for fc_th_i in fc_th[band]])
+            else:
+                fc_mask[band] = (fc[band] >= fc_th[band])
         else:
-            fc_mask[band] = (fc[band] >= fc_th[band])
+            fc_mask[band] = None
     return sc_mask, fc_mask
 
 if __name__ == '__main__':

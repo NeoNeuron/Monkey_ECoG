@@ -11,31 +11,35 @@ def get_linear_fit_pm(x_flatten:dict, y_flatten:dict, snr_mask:dict=None, is_log
     pval = {}
     R2 = {}
     for band in y_flatten.keys():
-        if is_log:
-            log_y = np.log10(y_flatten[band])
-        else:
-            log_y = y_flatten[band].copy()
-        if snr_mask is not None:
-            log_y[~snr_mask[band]] = np.nan
-        answer = x_flatten[band].copy()
-        answer[answer==0]=1e-7 # to avoid log10(0)=nan
-        log_answer = np.log10(answer)
-        answer_edges = np.linspace(-6, 1, num = 15)
-        answer_center = (answer_edges[1:] + answer_edges[:-1])/2
-        # average data
-        log_y_mean = np.zeros(len(answer_edges)-1)
-        for i in range(len(answer_edges)-1):
-            mask = (log_answer >= answer_edges[i]) & (log_answer < answer_edges[i+1])
-            if mask.sum() == 0:
-                log_y_mean[i] = np.nan
+        if y_flatten[band] is not None:
+            if is_log:
+                log_y = np.log10(y_flatten[band])
             else:
-                log_y_mean[i] = np.nanmean(log_y[mask])
-        pval[band] = np.polyfit(
-            answer_center[~np.isnan(log_y_mean)], 
-            log_y_mean[~np.isnan(log_y_mean)], 
-            deg=1
-        )
-        R2[band] = Linear_R2(answer_edges[:-1], log_y_mean, pval[band])
+                log_y = y_flatten[band].copy()
+            if snr_mask is not None:
+                log_y[~snr_mask[band]] = np.nan
+            answer = x_flatten[band].copy()
+            answer[answer==0]=1e-7 # to avoid log10(0)=nan
+            log_answer = np.log10(answer)
+            answer_edges = np.linspace(-6, 1, num = 15)
+            answer_center = (answer_edges[1:] + answer_edges[:-1])/2
+            # average data
+            log_y_mean = np.zeros(len(answer_edges)-1)
+            for i in range(len(answer_edges)-1):
+                mask = (log_answer >= answer_edges[i]) & (log_answer < answer_edges[i+1])
+                if mask.sum() == 0:
+                    log_y_mean[i] = np.nan
+                else:
+                    log_y_mean[i] = np.nanmean(log_y[mask])
+            pval[band] = np.polyfit(
+                answer_center[~np.isnan(log_y_mean)], 
+                log_y_mean[~np.isnan(log_y_mean)], 
+                deg=1
+            )
+            R2[band] = Linear_R2(answer_edges[:-1], log_y_mean, pval[band])
+        else:
+            pval[band] = None
+            R2[band] = None
     return pval, R2
 
 def find_gap_threshold(data_flatten):
@@ -89,27 +93,35 @@ def get_fit_threshold(weight_flatten:dict, prediction_flatten:dict, w_thresholds
     pval,_ = get_linear_fit_pm(weight_flatten, prediction_flatten, snr_mask, is_log)
     fit_th = {}
     for band, p in pval.items():
-        if is_log:
-            fit_th[band] = np.array([10**(p[0]*i + p[1]) for i in np.log10(w_thresholds)])
+        if p is not None:
+            if is_log:
+                fit_th[band] = np.array([10**(p[0]*i + p[1]) for i in np.log10(w_thresholds)])
+            else:
+                fit_th[band] = np.array([p[0]*i + p[1] for i in np.log10(w_thresholds)])
         else:
-            fit_th[band] = np.array([p[0]*i + p[1] for i in np.log10(w_thresholds)])
+            fit_th[band] = None
     return fit_th
 
 def get_gap_threshold(data_flatten:dict, is_log=True):
     gap_th = {}
     for band,data_flatten_band in data_flatten.items():
-        if is_log:
-            gap_th[band],_ = find_gap_threshold(np.log10(data_flatten_band))
-            gap_th[band] = 10**gap_th[band]
+        if data_flatten_band is not None:
+            if is_log:
+                gap_th[band],_ = find_gap_threshold(np.log10(data_flatten_band))
+                gap_th[band] = 10**gap_th[band]
+            else:
+                gap_th[band],_ = find_gap_threshold(data_flatten_band)
         else:
-            gap_th[band],_ = find_gap_threshold(data_flatten_band)
+            gap_th[band] = None
     return gap_th
 
 def get_roc_threshold(y_true:dict, y_predict:dict, w_thresholds:np.ndarray, is_log:bool=True):
     opt_th = {}
     for band, y_true_band in y_true.items():
-        # TODO: add is_log flag
-        _, opt_th[band] = scan_auc_threshold(y_predict[band], y_true_band, w_thresholds, is_log)
-        if is_log:
-            opt_th[band] = np.array([10**item for item in opt_th[band]])
+        if y_predict[band] is not None:
+            _, opt_th[band] = scan_auc_threshold(y_predict[band], y_true_band, w_thresholds, is_log)
+            if is_log:
+                opt_th[band] = np.array([10**item for item in opt_th[band]])
+        else:
+            opt_th[band] = None
     return opt_th

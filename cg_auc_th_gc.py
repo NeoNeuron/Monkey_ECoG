@@ -43,7 +43,11 @@ w_thresholds = np.logspace(-6, 0, num=7, base=10)
 aucs = {}
 opt_threshold = {}
 for band in data.filters:
-    aucs[band], opt_threshold[band] = scan_auc_threshold(fc[band], sc[band], w_thresholds)
+    if fc[band] is not None:
+        aucs[band], opt_threshold[band] = scan_auc_threshold(fc[band], sc[band], w_thresholds)
+    else:
+        aucs[band], opt_threshold[band] = None, None
+        print_log(f"Data for {band:s} band does not exist.", start)
 
 fig = gen_auc_threshold_figure(aucs, w_thresholds)
 

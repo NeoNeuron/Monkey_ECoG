@@ -45,24 +45,27 @@ if __name__ == '__main__':
     sc, fc = data.get_sc_fc('ch')
     # ==================================================
     for band in data.filters:
-        if args.is_interarea:
-            interarea_mask = (sc[band] != 1.5)
-            sc[band] = sc[band][interarea_mask]
-            fc[band] = fc[band][interarea_mask]
+        if fc[band] is not None:
+            if args.is_interarea:
+                interarea_mask = (sc[band] != 1.5)
+                sc[band] = sc[band][interarea_mask]
+                fc[band] = fc[band][interarea_mask]
 
-        fig = gen_causal_distribution_figure(fc[band], sc[band], None)
+            fig = gen_causal_distribution_figure(fc[band], sc[band], None)
 
-        fig.get_axes()[4].set_ylabel(r'$log_{10}\left(GC\right)$')
-        handles, labels = fig.get_axes()[4].get_legend_handles_labels()
-        labels = [item.replace('TDMI', 'GC') for item in labels]
-        fig.get_axes()[4].legend(handles, labels)
-        plt.tight_layout()
-        print_log(f"Figure {band:s} generated.", start)
+            fig.get_axes()[4].set_ylabel(r'$log_{10}\left(GC\right)$')
+            handles, labels = fig.get_axes()[4].get_legend_handles_labels()
+            labels = [item.replace('TDMI', 'GC') for item in labels]
+            fig.get_axes()[4].legend(handles, labels)
+            plt.tight_layout()
+            print_log(f"Figure {band:s} generated.", start)
 
-        if args.is_interarea:
-            fname = f'ch_{band:s}_gc_interarea_order_{args.order:d}.png'
+            if args.is_interarea:
+                fname = f'ch_{band:s}_gc_interarea_order_{args.order:d}.png'
+            else:
+                fname = f'ch_{band:s}_gc_order_{args.order:d}.png'
+            fig.savefig(args.path + fname)
+            print_log(f'Figure save to {args.path+fname:s}.', start)
+            plt.close(fig)
         else:
-            fname = f'ch_{band:s}_gc_order_{args.order:d}.png'
-        fig.savefig(args.path + fname)
-        print_log(f'Figure save to {args.path+fname:s}.', start)
-        plt.close(fig)
+            print_log(f"Data for {band:s} band does not exist.", start)

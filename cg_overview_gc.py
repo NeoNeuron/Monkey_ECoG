@@ -40,16 +40,19 @@ if __name__ == '__main__':
     sc, fc = data.get_sc_fc('cg')
     # ==================================================
     for band in data.filters:
-        fig = gen_causal_distribution_figure(fc[band], sc[band], None)
-        fig.get_axes()[4].set_ylabel(r'$log_{10}\left(GC\right)$')
-        fig.get_axes()[4].get_lines()[1].set_color((0,0,0,0))
-        handles, labels = fig.get_axes()[4].get_legend_handles_labels()
-        labels = [item.replace('TDMI', 'GC') for item in labels]
-        fig.get_axes()[4].legend((handles[0],handles[2]), (labels[0], labels[2]))
-        plt.tight_layout()
-        print_log(f"Figure {band:s} generated.", start)
+        if fc[band] is not None:
+            fig = gen_causal_distribution_figure(fc[band], sc[band], None)
+            fig.get_axes()[4].set_ylabel(r'$log_{10}\left(GC\right)$')
+            fig.get_axes()[4].get_lines()[1].set_color((0,0,0,0))
+            handles, labels = fig.get_axes()[4].get_legend_handles_labels()
+            labels = [item.replace('TDMI', 'GC') for item in labels]
+            fig.get_axes()[4].legend((handles[0],handles[2]), (labels[0], labels[2]))
+            plt.tight_layout()
+            print_log(f"Figure {band:s} generated.", start)
 
-        fname = f'cg_{band:s}_gc_order_{args.order:d}.png'
-        fig.savefig(args.path + fname)
-        print_log(f'Figure save to {args.path+fname:s}.', start)
-        plt.close(fig)
+            fname = f'cg_{band:s}_gc_order_{args.order:d}.png'
+            fig.savefig(args.path + fname)
+            print_log(f'Figure save to {args.path+fname:s}.', start)
+            plt.close(fig)
+        else:
+            print_log(f"Data for {band:s} band does not exist.", start)

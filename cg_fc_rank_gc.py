@@ -46,22 +46,25 @@ if __name__ == '__main__':
     axt = []
 
     for idx, band in enumerate(data.filters):
-        gap_th_val, gap_th_label = find_gap_threshold(np.log10(fc[band]))
-        ax[idx].plot(np.log10(np.sort(fc[band])), np.arange(fc[band].shape[0]), '.', ms=0.1)
-        ax[idx].yaxis.get_major_formatter().set_powerlimits((0,1))
-        ax[idx].set_title(band)
-        ax[idx].axvline(gap_th_val, color='r', label=gap_th_label)
-        axt.append(ax[idx].twinx())
-        axt[idx].hist(np.log10(fc[band][sc[band]>0]),color='orange', alpha=.5, bins=100, label='SC Present')
-        axt[idx].hist(np.log10(fc[band][sc[band]==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
-        axt[idx].yaxis.get_major_formatter().set_powerlimits((0,1))
-        ax[idx].legend(fontsize=10, loc=5)
-        ax[idx].text(
-            0.05, 0.95, 
-            f'PPV:{np.sum(fc[band][sc[band]>0]>10**gap_th_val)*100./np.sum(fc[band]>10**gap_th_val):4.1f} %',
-            fontsize=14, transform=ax[idx].transAxes, 
-            verticalalignment='top', horizontalalignment='left'
-        )
+        if fc[band] is not None:
+            gap_th_val, gap_th_label = find_gap_threshold(np.log10(fc[band]))
+            ax[idx].plot(np.log10(np.sort(fc[band])), np.arange(fc[band].shape[0]), '.', ms=0.1)
+            ax[idx].yaxis.get_major_formatter().set_powerlimits((0,1))
+            ax[idx].set_title(band)
+            ax[idx].axvline(gap_th_val, color='r', label=gap_th_label)
+            axt.append(ax[idx].twinx())
+            axt[idx].hist(np.log10(fc[band][sc[band]>0]),color='orange', alpha=.5, bins=100, label='SC Present')
+            axt[idx].hist(np.log10(fc[band][sc[band]==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
+            axt[idx].yaxis.get_major_formatter().set_powerlimits((0,1))
+            ax[idx].legend(fontsize=10, loc=5)
+            ax[idx].text(
+                0.05, 0.95, 
+                f'PPV:{np.sum(fc[band][sc[band]>0]>10**gap_th_val)*100./np.sum(fc[band]>10**gap_th_val):4.1f} %',
+                fontsize=14, transform=ax[idx].transAxes, 
+                verticalalignment='top', horizontalalignment='left'
+            )
+        else:
+            axt.append(ax[idx].twinx())
 
     [ax[i].set_ylabel('Ranked GC index') for i in (0,2,4,6)]
     [ax[i].set_xlabel(r'$\log_{10}$(GC value)') for i in (5,6)]

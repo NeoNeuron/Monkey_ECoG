@@ -30,10 +30,20 @@ class EcogData:
         self.compute_roi_masking(ty)
         if ty == 'ch':
             sc = {band : self.weight[self.roi_mask] for band in self.filters}
-            fc = {band : self.fc[band][self.roi_mask] for band in self.filters}
+            fc = {}
+            for band in self.filters:
+                if self.fc[band] is not None:
+                    fc[band] = self.fc[band][self.roi_mask]
+                else:
+                    fc[band] = None
         elif ty == 'cg':
             sc = {band : self.adj_mat[self.roi_mask] for band in self.filters}
-            fc = {band : CG(self.fc[band], self.stride)[self.roi_mask] for band in self.filters}
+            fc = {}
+            for band in self.filters:
+                if self.fc[band] is not None:
+                    fc[band] = CG(self.fc[band], self.stride)[self.roi_mask]
+                else:
+                    fc[band] = None
         else:
             raise ArgumentTypeError('Invalid mask type.')
         return sc, fc
@@ -86,12 +96,15 @@ class EcogTDMI(EcogData):
 class EcogGC(EcogData):
     def __init__(self, path:str='data/'):
         super().__init__(path)
-        self.gc_data = np.load(path+'gc_order_6.npz', allow_pickle=True)
+        self.gc_data = np.load(path+'cgc.npz', allow_pickle=True)
 
     def init_data(self):
         for band in self.filters:
-            self.fc[band] = self.gc_data[band].copy()
-            self.fc[band][self.fc[band]<=0] = 1e-5
+            if band in self.gc_data.files:
+                self.fc[band] = self.gc_data[band].copy()
+                self.fc[band][self.fc[band]<=0] = 1e-5
+            else:
+                self.fc[band] = None
 
 class EcogCC(EcogData):
     def __init__(self, path:str='data/', dfname:str='cc.npz'):
@@ -102,4 +115,4 @@ class EcogCC(EcogData):
 
     def init_data(self):
         for band in self.filters:
-            self.fc[band] = np.abs(self.cc_data[band])
+            self.fc[band] = self.cc_data[band]
