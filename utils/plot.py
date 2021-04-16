@@ -362,3 +362,27 @@ def gen_fc_rank_figure(sc, fc, is_log=True, is_interarea=False):
     ax[-1].legend(handles, labels, fontsize=16, loc=2)
     ax[-1].axis('off')
     return fig
+
+def gen_binary_recon_figures(fname:str, sc_mask:list, fc_mask:dict, roi_mask):
+    plt.rcParams['axes.linewidth'] = 0.5
+    plt.rcParams['lines.linewidth'] = 0.1
+    w_thresholds = np.logspace(-6, 0, num=7, base=10)
+    # reshape fc_mask
+    for key, item in fc_mask.items():
+        if item is not None:
+            if len(item.shape) == 1:
+                fc_mask[key] = np.tile(item, (len(w_thresholds),1))
+    fc_mask_buffer = [{}]*len(w_thresholds)
+    for band, item in fc_mask.items():
+        if item is not None:
+            for idx in range(len(w_thresholds)):
+                fc_mask_buffer[idx][band] = item[idx]
+        else:
+            for idx in range(len(w_thresholds)):
+                fc_mask_buffer[idx][band] = None
+
+    for idx in range(len(w_thresholds)):
+        fig = gen_binary_recon_figure(fc_mask_buffer[idx], sc_mask[idx], roi_mask)
+        plt.tight_layout()
+        fig.savefig(fname.replace('.pkl', f'_{idx:d}.png'))
+        plt.close()
