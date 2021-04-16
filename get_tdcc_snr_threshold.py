@@ -12,25 +12,16 @@ from sklearn.cluster import KMeans
 
 path = 'tdmi_snr_analysis/'
 # prepare weight_flatten
-# snr_th_manual = {
-#     'delta'      :3.5,
-#     'theta'      :5.0,
-#     'alpha'      :5.0,
-#     'beta'       :6.5,
-#     'gamma'      :20,  
-#     'high_gamma' :20,  
-#     'raw'        :8.0,
-# }
-tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
-off_diag_mask = ~np.eye(tdmi_data['raw'].shape[0], dtype=bool)
-filter_pool = list(tdmi_data.files)
+tdcc_data = np.load('data/tdcc.npz', allow_pickle=True)
+off_diag_mask = ~np.eye(tdcc_data['raw'].shape[0], dtype=bool)
+filter_pool = list(tdcc_data.files)
 
 snr_th_gauss = {}
 snr_th_kmean = {}
 fig, ax = plt.subplots(2, 4, figsize=(18,8), sharex='row')
 ax = ax.reshape(-1)
 for i, band in enumerate(filter_pool):
-    snr_matrix = compute_snr_matrix(tdmi_data[band])
+    snr_matrix = compute_snr_matrix(tdcc_data[band])
     snr_log = np.log10(snr_matrix[off_diag_mask])
 
     (counts, edges) = np.histogram(snr_log, bins=100)
@@ -75,7 +66,7 @@ ax[-1].legend(handles, labels, loc=2, fontsize=16)
 ax[-1].axis('off')
 
 plt.tight_layout()
-suffix = '_tdmi'
+suffix = '_tdcc'
 fig.savefig(path + f'snr_dist_figure{suffix:s}.png')
 
 # save snr-th
