@@ -20,7 +20,7 @@ if __name__ == '__main__':
         path + 'snr_th_kmean/cg_aucs.pkl', 
         path + 'snr_th_gauss/cg_aucs.pkl',
         path + 'gc_6/cg_aucs_gc_order_6.pkl', 
-        path + 'cc/cg_aucs_gc_order_6.pkl',
+        path + 'cc_linear/cg_aucs_cc.pkl',
     ]
     colors = ['r', 'orange', 'royalblue', 'springgreen']
     labels = ['TDMI(KMeans)','TDMI(Gauss)', 'GC', 'CC' ]

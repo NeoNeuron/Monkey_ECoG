@@ -42,6 +42,6 @@ for band in data.filters:
 
 fig = gen_auc_threshold_figure(aucs, w_thresholds)
 
-fname = f'cg_auc-threshold.png'
+fname = f'cg_auc-threshold_mi.png'
 fig.savefig(args.path + fname)
 print_log(f'Figure save to {args.path+fname:s}.', start)

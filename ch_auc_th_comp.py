@@ -19,7 +19,7 @@ if __name__ == '__main__':
     fnames = [
         path + 'snr_th_kmean/ch_aucs.pkl', 
         path + 'snr_th_gauss/ch_aucs.pkl',
-        path + 'gc_6/gc_aucs_order_6.pkl', 
+        path + 'gc_6/ch_aucs_gc_order_6.pkl', 
         path + 'cc/gc_aucs_order_6.pkl',
     ]
     colors = ['r', 'orange', 'royalblue', 'springgreen']

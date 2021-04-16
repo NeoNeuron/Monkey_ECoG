@@ -30,7 +30,7 @@ start = time.time()
 # ==================================================
 data = EcogTDCC()
 data.init_data()
-sc, fc = data.get_sc_fc('ch')
+sc, fc = data.get_sc_fc('cg')
 # ==================================================
 w_thresholds = np.logspace(-6, 0, num=7, base=10)
 

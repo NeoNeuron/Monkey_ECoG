@@ -51,8 +51,8 @@ if __name__ == '__main__':
     fig = gen_auc_threshold_figure(aucs, w_thresholds)
 
     if args.is_interarea:
-        fname = f'auc-threshold_interarea.png'
+        fname = f'ch_auc-threshold_mi_interarea.png'
     else:
-        fname = f'auc-threshold.png'
+        fname = f'ch_auc-threshold_mi.png'
     fig.savefig(args.path + fname)
     print_log(f'Figure save to {args.path+fname:s}.', start)

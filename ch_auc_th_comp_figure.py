@@ -27,7 +27,7 @@ if __name__ == '__main__':
     w_thresholds = np.logspace(-6, 0, num=7, base=10)
     with open(args.path + 'ch_aucs.pkl', 'rb') as f:
         aucs_tdmi = pickle.load(f)
-    with open(args.path + 'gc_aucs_order_6.pkl', 'rb') as f:
+    with open(args.path + 'ch_aucs_gc_order_6.pkl', 'rb') as f:
         aucs_gc = pickle.load(f)
     
     fig = gen_auc_threshold_figure(aucs_tdmi, w_thresholds, labels='TDMI')
@@ -35,6 +35,6 @@ if __name__ == '__main__':
     [axi.legend() for axi in fig.get_axes()[:-1]]
     fig.get_axes()[0].set_ylim(0.45,0.85)
 
-    fname = f'auc-threshold_summary.png'
+    fname = f'ch_auc-threshold_summary.png'
     fig.savefig(args.path + fname)
     print_log(f'Figure save to {args.path+fname:s}.', start)

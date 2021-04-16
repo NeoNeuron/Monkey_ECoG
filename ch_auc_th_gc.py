@@ -59,24 +59,18 @@ for band in data.filters:
     
 fig = gen_auc_threshold_figure(aucs, w_thresholds)
 
-# save optimal threshold computed by Youden Index
 if args.is_interarea:
-    np.savez(args.path + f'opt_threshold_channel_interarea_gc_order_{args.order:d}.npz', **opt_threshold)
+    fname = f'ch_auc-threshold_gc_interarea_{args.order:d}.png'
 else:
-    np.savez(args.path + f'opt_threshold_channel_gc_order_{args.order:d}.npz', **opt_threshold)
-
-if args.is_interarea:
-    fname = f'gc_auc-threshold_interarea_{args.order:d}.png'
-else:
-    fname = f'gc_auc-threshold_{args.order:d}.png'
+    fname = f'ch_auc-threshold_gc_{args.order:d}.png'
 fig.savefig(args.path + fname)
 print_log(f'Figure save to {args.path+fname:s}.', start)
 
 if args.is_interarea:
-    with open(args.path+f'gc_aucs_interarea_order_{args.order:d}.pkl', 'wb') as f:
+    with open(args.path+f'ch_aucs_gc_interarea_order_{args.order:d}.pkl', 'wb') as f:
         pickle.dump(aucs, f)
-    print_log(f'Figure save to {args.path:s}gc_aucs_interarea_order_{args.order:d}.pkl', start)
+    print_log(f'Figure save to {args.path:s}ch_aucs_gc_interarea_order_{args.order:d}.pkl', start)
 else:
-    with open(args.path+f'gc_aucs_order_{args.order:d}.pkl', 'wb') as f:
+    with open(args.path+f'ch_aucs_gc_order_{args.order:d}.pkl', 'wb') as f:
         pickle.dump(aucs, f)
-    print_log(f'Figure save to {args.path:s}gc_aucs_order_{args.order:d}.pkl', start)
+    print_log(f'Figure save to {args.path:s}ch_aucs_gc_order_{args.order:d}.pkl', start)
