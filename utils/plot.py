@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from .roc import ROC_curve, AUC, Youden_Index
 from .utils import Linear_R2
 from .cluster import get_cluster_id, get_sorted_mat
+from .binary_threshold import find_gap_threshold
 
 def gen_causal_distribution_figure(tdmi_flatten:np.ndarray, 
                                    weight_flatten:np.ndarray,
@@ -257,3 +258,107 @@ def plot_ppv_curves(fnames:str, figname:str):
     plt.tight_layout()
     plt.savefig(figname)
     plt.close()
+
+def gen_sc_fc_figure(tdmi_flatten:dict, 
+                     weight_flatten:dict,
+                     tdmi_threshold:float, 
+                     snr_mask:np.ndarray=None,
+                     is_log:bool=True,
+                     )->plt.Figure:
+    """Generated figure for analysis of causal distributions.
+
+    Args:
+        tdmi_flatten (np.ndarray): flattened data for target tdmi statistics.
+        weight_flatten (np.ndarray): flattened data for true connectome.
+        tdmi_threshold (float): significance value of tdmi statistics.
+
+    Returns:
+        plt.Figure: matplotlib.figure.Figure
+    """
+    # create figure canvas
+    fig = plt.figure(figsize=(9,15), dpi=100)
+    gs = fig.add_gridspec(nrows=4, ncols=2, 
+                          left=0.10, right=0.90, top=0.96, bottom=0.05, 
+                          wspace=0.25, hspace=0.35)
+    ax = np.array([fig.add_subplot(i) for i in gs])
+
+    for idx, band in enumerate(tdmi_flatten.keys()):
+        if is_log:
+            log_tdmi_data = np.log10(tdmi_flatten[band])
+        else:
+            log_tdmi_data = tdmi_flatten[band].copy()
+
+        weight_set = np.unique(weight_flatten[band])
+        log_tdmi_data_buffer = log_tdmi_data.copy()
+        if snr_mask is None:
+            snr_mask = np.ones_like(tdmi_flatten).astype(bool)
+        log_tdmi_data_buffer[~snr_mask] = np.nan
+        log_tdmi_data_mean = np.array([np.nanmean(log_tdmi_data_buffer[weight_flatten[band]==key]) for key in weight_set])
+        log_tdmi_data_mean[weight_set==0]=np.nan
+        weight_set[weight_set==0]=np.nan
+        # pval = np.polyfit(np.log10(weight_set), log_tdmi_data_mean, deg=1)
+        pval = np.polyfit(np.log10(weight_set)[~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
+        # pval = np.polyfit(np.log10(weight_flatten+1e-6)[~np.isnan(log_tdmi_data_buffer)], log_tdmi_data_buffer[~np.isnan(log_tdmi_data_buffer)], deg=1)
+        ax[idx].plot(np.log10(weight_flatten[band]+1e-6), log_tdmi_data.flatten(), 'k.', label='TDMI samples')
+        ax[idx].plot(np.log10(weight_flatten[band]+1e-6), log_tdmi_data_buffer, 'b.', label='TDMI (above SNR th)')
+        ax[idx].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
+        ax[idx].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
+        ax[idx].set_xlabel(r'$log_{10}$(Connectivity Strength)')
+        weight_flatten_buffer = weight_flatten[band].copy()
+        weight_flatten_buffer[weight_flatten_buffer==0] = np.nan
+        ax[idx].set_title('Fitness(mean) : r = %5.3f,\n Fitness : r = %5.3f' % 
+            (Linear_R2(np.log10(weight_set), log_tdmi_data_mean, pval)**0.5,Linear_R2(np.log10(weight_flatten_buffer), log_tdmi_data_buffer, pval)**0.5),
+            fontsize=16
+        )
+
+    return fig
+
+def gen_fc_rank_figure(sc, fc, is_log=True, is_interarea=False):
+    fig = plt.figure(figsize=(8,15), dpi=100)
+    gs = fig.add_gridspec(nrows=4, ncols=2, 
+                          left=0.10, right=0.90, top=0.96, bottom=0.05, 
+                          wspace=0.36, hspace=0.30)
+    ax = np.array([fig.add_subplot(i) for i in gs])
+    axt = []
+
+    for idx, band in enumerate(sc.keys()):
+        axt.append(ax[idx].twinx())
+        if fc[band] is not None:
+            # setup interarea mask
+            if is_interarea:
+                interarea_mask = (sc[band] != 1.5)
+                sc[band] = sc[band][interarea_mask]
+                fc[band] = fc[band][interarea_mask]
+
+            if is_log:
+                ax[idx].plot(np.log10(np.sort(fc[band])), np.arange(fc[band].shape[0]), '.', ms=0.1)
+                gap_th_val, gap_th_label = find_gap_threshold(np.log10(fc[band]))
+                ax[idx].axvline(gap_th_val, color='r', label=gap_th_label)
+                gap_th_val = 10**gap_th_val
+                axt[idx].hist(np.log10(fc[band][sc[band]>0]),color='orange', alpha=.5, bins=100, label='SC Present')
+                axt[idx].hist(np.log10(fc[band][sc[band]==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
+            else:
+                ax[idx].plot((np.sort(fc[band])), np.arange(fc[band].shape[0]), '.', ms=0.1)
+                gap_th_val, gap_th_label = find_gap_threshold((fc[band]))
+                ax[idx].axvline(gap_th_val, color='r', label=gap_th_label)
+                axt[idx].hist((fc[band][sc[band]>0]),color='orange', alpha=.5, bins=100, label='SC Present')
+                axt[idx].hist((fc[band][sc[band]==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
+
+            # styling
+            ax[idx].legend(fontsize=10, loc=5)
+            ax[idx].yaxis.get_major_formatter().set_powerlimits((0,1))
+            ax[idx].set_title(band)
+            ax[idx].text(
+                0.05, 0.95, 
+                f'PPV:{np.sum(fc[band][sc[band]>0]>gap_th_val)*100./np.sum(fc[band]>gap_th_val):4.1f} %',
+                fontsize=14, transform=ax[idx].transAxes, 
+                verticalalignment='top', horizontalalignment='left'
+            )
+
+    [ax[i].set_ylabel('Ranked MI index') for i in (0,2,4,6)]
+    [ax[i].set_xlabel('MI value') for i in (5,6)]
+    [axt[i].set_ylabel('Counts') for i in (1,3,5)]
+    handles, labels = axt[0].get_legend_handles_labels()
+    ax[-1].legend(handles, labels, fontsize=16, loc=2)
+    ax[-1].axis('off')
+    return fig
