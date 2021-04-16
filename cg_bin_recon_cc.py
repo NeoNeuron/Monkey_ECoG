@@ -7,7 +7,7 @@
 import numpy as np
 
 if __name__ == '__main__':
-    from ch_bin_recon_cc import gen_bin_recon
+    from utils.binary_threshold import gen_bin_recon
     from utils.core import EcogCC
     import pickle
     path = 'tdmi_snr_analysis/'

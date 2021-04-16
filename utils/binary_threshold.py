@@ -125,3 +125,21 @@ def get_roc_threshold(y_true:dict, y_predict:dict, w_thresholds:np.ndarray, is_l
         else:
             opt_th[band] = None
     return opt_th
+
+
+def gen_bin_recon(weight, fc, fc_th, snr_mask=None):
+    w_thresholds = np.logspace(-6, 0, num=7, base=10)
+    sc_mask = [weight > w_th for w_th in w_thresholds]
+    fc_mask = {}
+    # set snr_mask (all ones) for default case
+    if snr_mask is None:
+        snr_mask = {band:np.ones_like(weight, dtype=bool) for band in fc.keys()}
+    for band in fc.keys():
+        if fc[band] is not None:
+            if isinstance(fc_th[band], np.ndarray):
+                fc_mask[band] = np.array([(fc[band] >= fc_th_i) * snr_mask[band] for fc_th_i in fc_th[band]])
+            else:
+                fc_mask[band] = (fc[band] >= fc_th[band]) * snr_mask[band]
+        else:
+            fc_mask[band] = None
+    return sc_mask, fc_mask
