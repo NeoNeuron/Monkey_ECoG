@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # Load SC and FC data
     # ==================================================
     data = EcogTDCC('data/')
-    data.init_data()
+    data.init_data(args.path, 'snr_th_gauss_tdcc.pkl')
     sc, fc = data.get_sc_fc('ch')
     # ==================================================
     

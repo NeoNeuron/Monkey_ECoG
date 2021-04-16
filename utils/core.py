@@ -54,10 +54,12 @@ class EcogTDMI(EcogData):
         self.tdmi_mode = 'max'
         self.tdmi_data = np.load(path+dfname, allow_pickle=True)
 
-    def init_data(self, snr_th_path:str=None)->None:
+    def init_data(self, snr_th_path:str=None, fname:str=None)->None:
         self.compute_mi_stats()
         if snr_th_path is not None:
-            with open(snr_th_path+'snr_th.pkl', 'rb') as f:
+            if fname is None:
+                fname = 'snr_th.pkl'
+            with open(snr_th_path+fname, 'rb') as f:
                 snr_th = pickle.load(f)
             self.compute_snr_masking(snr_th)
 

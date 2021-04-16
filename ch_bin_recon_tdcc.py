@@ -13,7 +13,7 @@ if __name__ == '__main__':
     # Load SC and FC data
     # ==================================================
     data = EcogTDCC('data/')
-    data.init_data() # for binary reconstruction, no need for SNR masking
+    data.init_data(path, 'snr_th_gauss_tdcc.pkl') # for binary reconstruction, no need for SNR masking
     sc, fc = data.get_sc_fc('ch')
     roi_mask = data.roi_mask.copy() # ! excute after get_snr_mask()
     # ==================================================
