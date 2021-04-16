@@ -115,4 +115,12 @@ class EcogCC(EcogData):
 
     def init_data(self):
         for band in self.filters:
-            self.fc[band] = self.cc_data[band]
+            self.fc[band] = np.abs(self.cc_data[band])
+
+class EcogTDCC(EcogTDMI):
+    def __init__(self, path:str='data/', dfname:str='tdcc.npz'):
+        super().__init__(path, dfname)
+        data_buffer = {}
+        for band in self.filters:
+            data_buffer[band] = np.abs(self.tdmi_data[band])
+        self.tdmi_data = data_buffer.copy()
