@@ -13,6 +13,7 @@ mpl.rcParams['xtick.labelsize'] = 16
 mpl.rcParams['ytick.labelsize'] = 16
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
+from sklearn.metrics import pairwise_distances
 import os
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
@@ -92,6 +93,16 @@ for i in range(stride.shape[0]-1):
 weight[np.eye(weight.shape[0], dtype=bool)] = 0
 data_package['weight'] = weight
 
+# spatial metrics
+loc = loadmat(data_path+'loc3.mat')['loc3'][0]
+loc = np.vstack(loc)
+is_nonzero = np.sum((loc != 0), axis=1)
+loc = loc[is_nonzero, :]
+d_matrix = pairwise_distances(loc)
+data_package['loc'] = loc
+data_package['d_matrix'] = d_matrix
+
+# filtering data
 for band in filter_pool:
     data_filtered = np.empty_like(data_series)
     for idx in range(data_filtered.shape[1]):
