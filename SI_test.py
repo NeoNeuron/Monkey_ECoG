@@ -9,7 +9,7 @@ import multiprocessing
 import time
 
 if __name__ == '__main__':
-  from mutual_info_cy import mutual_info
+  from minfo import mutual_info
   from utils.utils import print_log
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
   arg_default = {'path': 'data/'}

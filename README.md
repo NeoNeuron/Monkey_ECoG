@@ -6,9 +6,7 @@
 
 ```bash
 cd mutual_information
-python setup.py build_ext --inplace
-# copy compiled lib (*.so) to the parent folder
-cp mutual_info_cy.cpython-37m-darwin.so ..  # example for macOS
+pip install -e .
 ```
 
 ## Data file structure

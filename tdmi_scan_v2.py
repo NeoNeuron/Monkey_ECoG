@@ -38,7 +38,7 @@ def ScanTDMI(data_series:np.ndarray, delay_len:int=10, pn:int=None)->np.ndarray:
 
 if __name__ == '__main__':
   import time
-  from mutual_info_cy import tdmi as TDMI
+  from minfo import tdmi as TDMI
   from utils.utils import print_log
   import os
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter

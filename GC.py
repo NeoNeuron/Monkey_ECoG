@@ -95,7 +95,7 @@ def GC_SI(p, order, length):
     return chi2.ppf(1-p, order)/length
 
 if __name__ == '__main__':
-    from mutual_info_cy import mutual_info
+    from minfo import mutual_info
     import matplotlib.pyplot as plt
     n = 100000
     order = 10
