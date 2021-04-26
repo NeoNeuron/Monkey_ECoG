@@ -30,9 +30,9 @@ def compute_tdmi_full(tdmi_data:np.ndarray):
     return tdmi_data_full
 
 def compute_delay_matrix(tdmi_data:np.ndarray):
-    # tdmi_data_full = compute_tdmi_full(tdmi_data)
-    # n_delay = tdmi_data.shape[2]
-    delay_mat = np.argmax(tdmi_data, axis=2)
+    tdmi_data_full = compute_tdmi_full(tdmi_data)
+    n_delay = tdmi_data.shape[2]
+    delay_mat = np.argmax(tdmi_data_full, axis=2) - n_delay + 1
     return delay_mat
 
 def compute_snr_matrix(tdmi_data:np.ndarray):

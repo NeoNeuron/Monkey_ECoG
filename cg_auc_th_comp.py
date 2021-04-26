@@ -17,8 +17,8 @@ if __name__ == '__main__':
     start = time.time()
     w_thresholds = np.logspace(-6, 0, num=7, base=10)
     fnames = [
-        path + 'snr_th_kmean/cg_aucs.pkl', 
-        path + 'snr_th_gauss/cg_aucs.pkl',
+        path + 'tdmi_kmean/cg_aucs.pkl', 
+        path + 'tdmi_gauss/cg_aucs.pkl',
         path + 'gc_6/cg_aucs_gc_order_6.pkl', 
         path + 'cc_linear/cg_aucs_cc.pkl',
     ]

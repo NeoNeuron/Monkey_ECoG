@@ -37,8 +37,8 @@ def plot_ppv_curves(fnames:list, labels:list, colors:list, figname:str):
 if __name__ == '__main__':
     path = 'tdmi_snr_analysis/'
     fnames = [
-        path + 'snr_th_kmean/recon_gap_tdmi_CG.npy', 
-        path + 'snr_th_gauss/recon_gap_tdmi_CG.npy',
+        path + 'tdmi_kmean/recon_gap_tdmi_CG.npy', 
+        path + 'tdmi_gauss/recon_gap_tdmi_CG.npy',
         path + 'gc_6/recon_gap_gc_CG.npy', 
         path + 'cc/recon_gap_gc_CG.npy',
     ]

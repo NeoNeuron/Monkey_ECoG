@@ -6,102 +6,94 @@ Random Geometric Graph
 Example
 """
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import networkx as nx
 import pickle
 
 path = 'tdmi_snr_analysis/'
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-with open(path + 'WA_v3_cg.pkl', 'rb') as f:
-    tdmi_mask_total = pickle.load(f)
+with open(path + 'tdmi_kmean/recon_gap_tdmi.pkl', 'rb') as f:
+    sc_mask = pickle.load(f)
+    fc_mask = pickle.load(f)
+    roi_mask = pickle.load(f)
 
-weight = data_package['adj_mat']
+for idx in range(len(sc_mask)):
+    buffer = np.zeros_like(roi_mask, dtype=bool)
+    buffer[roi_mask] = sc_mask[idx]
+    sc_mask[idx] = buffer.copy()
+
+for band, item in fc_mask.items():
+    buffer = np.zeros_like(roi_mask, dtype=bool)
+    buffer[roi_mask] = item
+    fc_mask[band] = buffer.copy()
+
+weight = data_package['weight']
 FROM, TO = np.meshgrid(range(weight.shape[0]), range(weight.shape[1]))
 
 edges = [(i,j,w) for i,j,w in zip(FROM.flatten(), TO.flatten(), weight.flatten())]
 
-n = 46
-G = nx.DiGraph()
-G.add_nodes_from(range(n))
-G.add_weighted_edges_from(edges)
 # position is stored as node attribute data for random_geometric_graph
-np.random.seed(0)
-pos_x, pos_y = np.meshgrid(np.arange(7)/7, np.arange(7)/7)
-pos_x, pos_y = pos_x.flatten()+.1, pos_y.flatten()+.1
-indices =np.random.choice(np.arange(pos_x.shape[0]), n, replace=False).astype(int)
-indices = np.arange(n).astype(int)
-pos = {i: [pos_x[indices[i]], pos_y[indices[i]]] for i in range(n)}
-labels = {n:str(n) for n,_ in pos.items()}
-
-# find node near center (0.5,0.5)
-dmin = 1
-ncenter = 0
-# for n in pos:
-#     x, y = pos[n]
-#     d = (x - 0.5) ** 2 + (y - 0.5) ** 2
-#     if d < dmin:
-#         ncenter = n
-#         dmin = d
+n = 117
+loc = data_package['loc']
 
 # color by path length from node near center
-# p = dict(nx.single_source_shortest_path_length(G, ncenter))
+rb_cmap = plt.cm.get_cmap('rainbow_r')
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+color_dict = {band: rb_cmap(idx/6.0) for idx, band in enumerate(filter_pool)}
+color_dict['raw'] = 'k'
 
-filter_pool = ['delta', 'theta', 'alpha',
-                'beta', 'gamma', 'high_gamma']
-color_dict = {
-    'delta':      (1,  0,  0,  1),
-    'theta':      (1, .5,  0,  1),
-    'alpha':      (1,  1,  0,  1),
-    'beta':       (0,  1,  0,  1),
-    'gamma':      (0,  1,  1,  1),
-    'high_gamma': (1,  0,  1,  1)
-}
+fig = plt.figure(figsize=(9,15), dpi=100)
+gs = fig.add_gridspec(nrows=4, ncols=2, 
+                      left=0.05, right=0.96, top=0.96, bottom=0.05, 
+                      wspace=0.15, hspace=0.20)
+ax = np.array([fig.add_subplot(i) for i in gs])
+xx, yy = np.meshgrid(np.arange(117), np.arange(117))
+w_max=weight.max()
+for i, band in enumerate(color_dict.keys()):
+    ax[i].plot(loc[:, 0], loc[:, 1], 'ok', ms=3)
+    ax[i].axis('equal')
+    for x, y, c in zip(xx.flatten(), yy.flatten(), fc_mask[band].flatten()):
+        if c:
+            ax[i].plot(loc[(x,y),0], loc[(x,y),1], color=color_dict[band], alpha=0.05)
+    ax[i].set_title(band, fontsize=20)
+    ax[i].axis("off")
 
-# color_array = np.zeros((len(edges), 4))
-# for band in filter_pool:
-#     buffer = tdmi_mask_total["## $w_{ij}>10^{-3}$ "][band]
-#     color_array[buffer.flatten(), :] = color_dict[band]
+norm = matplotlib.colors.Normalize(vmin=-6, vmax=np.log10(1.5))
+ax[-1].plot(loc[:, 0], loc[:, 1], 'ok', ms=3)
+for x, y, c in zip(xx.flatten(), yy.flatten(), weight.flatten()):
+    ax[-1].plot(loc[(x,y),0], loc[(x,y),1], color=rb_cmap(norm(np.log10(c+1e-6))), alpha=0.01+0.99*c/w_max)
+ax[-1].axis('equal')
+ax[-1].axis("off")
+ax[-1].set_title('Anatomical Weight', fontsize=20)
 
-title_set = [
-    "## $w_{ij}>10^{%d}$ " % item for item in np.arange(-6, 1)
-]
-for title in title_set:
-    fig, ax = plt.subplots(1, 6, figsize=(30, 5))
-    for i in range(6):
-        color_array = np.zeros((len(edges), 4))
-        buffer = tdmi_mask_total[title][filter_pool[i]]
-        color_array[buffer.flatten(), :] = color_dict[filter_pool[i]]
-        nx.draw_networkx_edges(
-            G, 
-            pos, 
-            # nodelist=[ncenter], 
-            edge_color=color_array,
-            ax = ax[i],
-        )
-        nx.draw_networkx_nodes(
-            G,
-            pos,
-            # nodelist=list(p.keys()),
-            node_size=400,
-            node_color='w',
-            edgecolors='navy',
-            # node_color=list(p.values()),
-            cmap=plt.cm.Reds_r,
-            ax = ax[i],
-        )
-        nx.draw_networkx_labels(
-            G,
-            pos,
-            labels={n:lab for n, lab in labels.items() if n in pos},
-            font_size=10,
-            ax = ax[i],
-        )
+plt.savefig(path + f"recon_net_graph.png")
 
-        ax[i].set_xlim(-0.05, 1.05)
-        ax[i].set_ylim(-0.05, 1.05)
-        ax[i].set_title(filter_pool[i], fontsize=20)
-        ax[i].axis("off")
-    fig.suptitle(title.strip('#'), fontsize=20)
-    plt.tight_layout()
-    plt.savefig(path + f"network_graph_{title.strip('#$ '):s}.png")
+
+fig = plt.figure(figsize=(9,15), dpi=100)
+gs = fig.add_gridspec(nrows=4, ncols=2, 
+                      left=0.05, right=0.96, top=0.96, bottom=0.05, 
+                      wspace=0.15, hspace=0.20)
+ax = np.array([fig.add_subplot(i) for i in gs])
+xx, yy = np.meshgrid(np.arange(117), np.arange(117))
+w_max=weight.max()
+alphas = [0.006, 0.006, 0.01, 0.02, 0.05, 0.1, 0.15]
+for i, mask in enumerate(sc_mask):
+    ax[i].plot(loc[:, 0], loc[:, 1], 'or', ms=3)
+    ax[i].axis('equal')
+    for x, y, c in zip(xx.flatten(), yy.flatten(), mask.flatten()):
+        if c:
+            ax[i].plot(loc[(x,y),0], loc[(x,y),1], color='k', alpha=alphas[i])
+    ax[i].set_title(r'$w>10^{-%.d}$'%(6-i), fontsize=20)
+    ax[i].axis("off")
+
+ax[-1].axis("off")
+# norm = matplotlib.colors.Normalize(vmin=-6, vmax=np.log10(1.5))
+# ax[-1].plot(loc[:, 0], loc[:, 1], 'ok', ms=3)
+# for x, y, c in zip(xx.flatten(), yy.flatten(), weight.flatten()):
+#     ax[-1].plot(loc[(x,y),0], loc[(x,y),1], color=rb_cmap(norm(np.log10(c+1e-6))), alpha=0.01+0.99*c/w_max)
+# ax[-1].axis('equal')
+# ax[-1].axis("off")
+# ax[-1].set_title('Anatomical Weight', fontsize=20)
+
+plt.savefig(path + f"recon_answer.png")
