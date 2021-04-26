@@ -262,7 +262,7 @@ def plot_ppv_curves(fnames:str, figname:str):
 def gen_sc_fc_figure(tdmi_flatten:dict, 
                      weight_flatten:dict,
                      tdmi_threshold:float, 
-                     snr_mask:np.ndarray=None,
+                     snr_mask:dict=None,
                      is_log:bool=True,
                      )->plt.Figure:
     """Generated figure for analysis of causal distributions.
@@ -282,6 +282,10 @@ def gen_sc_fc_figure(tdmi_flatten:dict,
                           wspace=0.25, hspace=0.35)
     ax = np.array([fig.add_subplot(i) for i in gs])
 
+    if snr_mask is None:
+        snr_mask = {}
+        for band, value in tdmi_flatten.items():
+            snr_mask[band] = np.ones_like(value).astype(bool)
     for idx, band in enumerate(tdmi_flatten.keys()):
         if is_log:
             log_tdmi_data = np.log10(tdmi_flatten[band])
@@ -290,9 +294,7 @@ def gen_sc_fc_figure(tdmi_flatten:dict,
 
         weight_set = np.unique(weight_flatten[band])
         log_tdmi_data_buffer = log_tdmi_data.copy()
-        if snr_mask is None:
-            snr_mask = np.ones_like(tdmi_flatten).astype(bool)
-        log_tdmi_data_buffer[~snr_mask] = np.nan
+        log_tdmi_data_buffer[~snr_mask[band]] = np.nan
         log_tdmi_data_mean = np.array([np.nanmean(log_tdmi_data_buffer[weight_flatten[band]==key]) for key in weight_set])
         log_tdmi_data_mean[weight_set==0]=np.nan
         weight_set[weight_set==0]=np.nan
@@ -306,7 +308,7 @@ def gen_sc_fc_figure(tdmi_flatten:dict,
         ax[idx].set_xlabel(r'$log_{10}$(Connectivity Strength)')
         weight_flatten_buffer = weight_flatten[band].copy()
         weight_flatten_buffer[weight_flatten_buffer==0] = np.nan
-        ax[idx].set_title('Fitness(mean) : r = %5.3f,\n Fitness : r = %5.3f' % 
+        ax[idx].set_title('r(mean) = %5.3f, r = %5.3f' % 
             (Linear_R2(np.log10(weight_set), log_tdmi_data_mean, pval)**0.5,Linear_R2(np.log10(weight_flatten_buffer), log_tdmi_data_buffer, pval)**0.5),
             fontsize=16
         )
