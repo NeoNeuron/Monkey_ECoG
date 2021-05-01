@@ -408,4 +408,13 @@ def plot_union(data:dict, func):
     ax = fig.add_subplot(gs_origin[0])
     ax = func(ax, data['raw'])
     ax.set_title('raw')
+
+    # handle common legends
+    handles, labels = ax.get_legend_handles_labels()
+    if len(handles) > 0:
+        if len(handles) <= 4:
+            ncol = 1
+        else:
+            ncol = 2
+        ax.legend(handles, labels, loc='center', bbox_to_anchor=(-0.1, -1.0, 1., 1.), fontsize=9, ncol=ncol)
     return fig
