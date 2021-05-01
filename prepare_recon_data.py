@@ -5,7 +5,7 @@ import numpy as np
 import pickle
 from scipy.io import loadmat, savemat
 
-with open('tdmi_snr_analysis/snr_th_kmean/recon_gap_tdmi.pkl', 'rb') as f:
+with open('tdmi_snr_analysis/tdmi_kmean/recon_gap_tdmi.pkl', 'rb') as f:
     pickle.load(f)
     dat = pickle.load(f)
     roi_mask = pickle.load(f)
