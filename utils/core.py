@@ -1,6 +1,5 @@
 # Author: Kai Chen
-from argparse import ArgumentTypeError
-from .tdmi import MI_stats, compute_noise_matrix, compute_snr_matrix
+from .tdmi import MI_stats, compute_noise_matrix, compute_snr_matrix, compute_delay_matrix
 from .utils import CG
 import numpy as np
 import pickle
@@ -22,7 +21,8 @@ class EcogData:
             multiplicity = np.diff(self.stride).astype(int)
             self.roi_mask = ~np.diag(multiplicity == 1).astype(bool)
         else:
-            raise ArgumentTypeError('Invalid mask type.')
+            raise AttributeError('Invalid mask type.')
+        return self.roi_mask
 
     def get_sc_fc(self, ty:str):
         if not self.fc:
@@ -45,7 +45,7 @@ class EcogData:
                 else:
                     fc[band] = None
         else:
-            raise ArgumentTypeError('Invalid mask type.')
+            raise AttributeError('Invalid mask type.')
         return sc, fc
 
 class EcogTDMI(EcogData):
@@ -94,6 +94,12 @@ class EcogTDMI(EcogData):
             snr_mask[band] = snr_matrix >= snr_th[band]
             snr_mask[band] = snr_mask[band][self.roi_mask]
         return snr_mask
+
+    def get_delay_matrix(self,):
+        delay_matrix = {}
+        for band in self.filters:
+            delay_matrix[band] = compute_delay_matrix(self.tdmi_data[band])
+        return delay_matrix
 
 class EcogGC(EcogData):
     def __init__(self, path:str='data/'):

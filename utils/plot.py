@@ -388,3 +388,24 @@ def gen_binary_recon_figures(fname:str, sc_mask:list, fc_mask:dict, roi_mask):
         plt.tight_layout()
         fig.savefig(fname.replace('.pkl', f'_{idx:d}.png'))
         plt.close()
+
+def plot_union(data:dict, func):
+    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+    fig = plt.figure(figsize=(14,6), dpi=200)
+    # plot banded
+    gs = fig.add_gridspec(nrows=2, ncols=3, 
+                        left=0.28, right=0.98, top=0.92, bottom=0.08, 
+                        wspace=0.25, hspace=0.25)
+    ax = np.array([fig.add_subplot(i) for i in gs])
+    for idx, band in enumerate(filter_pool):
+        ax[idx] = func(ax[idx], data[band])
+        ax[idx].set_title(band)
+    [ax[i].set_xlabel('') for i in (0,1,2)]
+
+    # plot raw
+    gs_origin = fig.add_gridspec(nrows=1, ncols=1, left=0.05, right=0.24,
+                                top=0.69, bottom=0.31) 
+    ax = fig.add_subplot(gs_origin[0])
+    ax = func(ax, data['raw'])
+    ax.set_title('raw')
+    return fig

@@ -2,80 +2,62 @@
 # Author: Kai Chen
 # TDMI delay analysis. plot the delay statistics.
 
-import pickle
+import numpy as np 
+import matplotlib.pyplot as plt 
+import utils
 
+def plot_delay_matrix(ax, data:np.ndarray):
+    pax = ax.pcolormesh(data, cmap=plt.cm.bwr)
+    plt.colorbar(pax, ax=ax)
+    ax.axis('scaled')
+    ax.invert_yaxis()
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    return ax
+
+def plot_delay_hist(ax, data:np.ndarray, bins=100):
+    ax.hist(data[np.triu(np.ones_like(data), 1).astype(bool)].flatten(), bins = bins)
+    ax.set_xlabel('Time Delay(ms)')
+    ax.set_ylabel('Counts')
+    return ax
 
 if __name__ == '__main__':
-    import numpy as np 
-    import matplotlib.pyplot as plt 
-    def axis_formattor(ax):
-        ax.axis('scaled')
-        ax.invert_yaxis()
-        ax.xaxis.set_visible(False)
-        ax.yaxis.set_visible(False)
-        return ax
-    from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-    from utils.tdmi import compute_delay_matrix, compute_snr_matrix
-    arg_default = {'path': 'data_preprocessing_46_region/'}
-    parser = ArgumentParser(prog='tdmi_delay_analysis',
-                            description = "Scan pair-wise maximum delay and SNR\
-                                            of time delayed mutual information",
-                            formatter_class=ArgumentDefaultsHelpFormatter)
-    parser.add_argument('path', default=arg_default['path'], nargs='?',
-                        type = str, 
-                        help = "path of working directory."
-                        )
-    args = parser.parse_args()
-
+    from utils.plot import plot_union
+    path = "data_preprocessing_46_region/"
     data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-    tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
-    with open('tdmi_snr_analysis/snr_th.pkl', 'rb') as f:
-        snr_th = pickle.load(f)
-    d_matrix = data_package['d_matrix']
+    data = utils.core.EcogTDMI()
+    delay_matrix = data.get_delay_matrix()
+    stride = data_package['stride']
+    n_region = stride.shape[0]-1
 
-    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+    fig = plot_union(delay_matrix, plot_delay_matrix)
+    plt.savefig(path+f'tdmi_delay_matrix_channel.png')
+    plt.close()
 
-    delay_th = 30
-    mask = {}
-    for band in filter_pool:
-        delay_mat = np.abs(compute_delay_matrix(tdmi_data[band]))
-        snr_mat = compute_snr_matrix(tdmi_data[band])
-        snr_mat[np.eye(snr_mat.shape[0], dtype=bool)] = 0
-        snr_mask = snr_mat > snr_th['raw']
-        mask[band] = (delay_mat<delay_th) * snr_mask
-    # plot delay matrices
-    # -------------------
-    fig = plt.figure(figsize=(14,6), dpi=200)
-    # plot raw
-    gs_raw = fig.add_gridspec(nrows=1, ncols=1, left=0.05, right=0.25,
-                                 top=0.69, bottom=0.31) 
-    ax = fig.add_subplot(gs_raw[0])
+    data_plt = {}
+    for band in data.filters:
+        # average within regions
+        delay_mat_region = np.zeros((n_region, n_region))
+        for i in range(n_region):
+            for j in range(n_region):
+                delay_mat_region[i,j] = delay_matrix[band][stride[i]:stride[i+1],stride[j]:stride[j+1]].mean()
+                # if i != j:
+                #     delay_mat_region[i,j]=data_buffer.mean()
+                # else:
+                #     if multiplicity[i] > 1:
+                #         delay_mat_region[i,j]=np.mean(data_buffer[~np.eye(multiplicity[i], dtype=bool)])
+                #     else:
+                #         delay_mat_region[i,j]=data_buffer.mean() # won't be used in ROC.
+        data_plt[band] = delay_mat_region.copy()
+    binary_delay_match = {}
+    for band in data.filters:
+        binary_delay_match[band] = (data_plt[band]-data_plt['raw'])>=0
+        print(f'{band:s} band matching ratio : {binary_delay_match[band].astype(float).mean()*100.:3.3f} %' )
 
-    delay_mat = np.abs(compute_delay_matrix(tdmi_data['raw']))
-    # pax = ax.pcolormesh(delay_mat, cmap=plt.cm.bwr)
-    ax.plot((d_matrix[mask['raw']]),delay_mat[mask['raw']], '.')
-    # plt.colorbar(pax, ax=ax)
-    ax.set_title('raw')
-    ax.set_ylabel('Delay (ms)')
-    ax.set_xlabel('Channel Distance')
-    # ax.set_xlabel(r'Channel Distance$^{-1}$')
-    # axis_formattor(ax)
-    # plot bands
-    gs = fig.add_gridspec(nrows=2, ncols=3, 
-                          left=0.28, right=0.98, top=0.92, bottom=0.08, 
-                          wspace=0.15)
-    ax = np.array([fig.add_subplot(i) for i in gs])
-    for idx, band in enumerate(filter_pool[:-1]):
-        delay_mat = np.abs(compute_delay_matrix(tdmi_data[band]))
-        
-        # pax = ax[idx].pcolormesh(delay_mat, cmap=plt.cm.bwr)
-        ax[idx].plot((d_matrix[mask[band]]),delay_mat[mask[band]], '.')
-        # plt.colorbar(pax, ax=ax[idx])
-        ax[idx].set_title(band)
-        # axis_formattor(ax[idx])
-    
-    [ax[i].set_xlabel('Channel Distance') for i in (3,4,5)]
+    fig = plot_union(data_plt, plot_delay_matrix)
+    plt.savefig(path+f'tdmi_delay_matrix_region.png')
+    plt.close()
 
-    # plt.savefig(args.path+f'tdmi_delay_matrix.png')
-    plt.savefig(args.path+f'tdmi_delay_dist.png')
+    fig = plot_union(data_plt, plot_delay_hist)
+    plt.savefig(path+f'tdmi_delay_matrix_region_hist.png')
     plt.close()
