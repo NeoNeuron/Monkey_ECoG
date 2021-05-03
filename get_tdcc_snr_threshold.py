@@ -1,6 +1,7 @@
 #!/Users/kchen/miniconda3/bin/python
 # Author: Kai Chen
 
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.size'] = 14
@@ -21,7 +22,7 @@ snr_th_kmean = {}
 fig, ax = plt.subplots(2, 4, figsize=(18,8), sharex='row')
 ax = ax.reshape(-1)
 for i, band in enumerate(filter_pool):
-    snr_matrix = compute_snr_matrix(tdcc_data[band])
+    snr_matrix = compute_snr_matrix(np.abs(tdcc_data[band]))
     snr_log = np.log10(snr_matrix[off_diag_mask])
 
     (counts, edges) = np.histogram(snr_log, bins=100)
@@ -48,7 +49,9 @@ for i, band in enumerate(filter_pool):
         ax[i].axvline(grid[th_id], color = 'springgreen', label='Double Gaussian th')
 
     except:
-        print(f'WARNING: Failed fitting the {band:s} band case.')
+        warnings.warn("gauss-type threshold critera: "
+                        "fail to fit double Gaussian. "
+                        "Force to use kmean-type criteria.")
         snr_th_gauss[band] = np.nan
         pass
 
