@@ -18,7 +18,7 @@ def plot_tdmi(ax, i, j, color, yaxis_type='linear'):
     else:
         raise TypeError('Invalid yaxis type.')
 
-path = "data_preprocessing_46_region/"
+path = "tmp/"
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 weight = data_package['weight']
 weight_log = np.log10(weight+1e-6)
@@ -31,7 +31,7 @@ tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 yaxis_type = 'linear'
 filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
 for band in filter_pool:
-    data = tdmi_data[band].copy()
+    data = tdmi_data[band]
     data_mean = data.mean(2)
 
     fig, ax = plt.subplots(1,1,figsize=(5,3), dpi=300)
@@ -42,7 +42,7 @@ for band in filter_pool:
             if data_mean[i,j]>0.2:
                 plot_tdmi(ax, i, j, my_colors[i,j], yaxis_type=yaxis_type)
                 target_ids.append([i,j])
-    np.save('tmp/target_ids.npy', np.array(target_ids))
+    np.save(path+'target_ids.npy', np.array(target_ids))
     ax.set_xlabel(r'Time delay $\tau$ (ms)')
     ax.set_ylabel('Mutual Info (nats)')
     ax.set_xlim(-data.shape[2], data.shape[2])
@@ -57,5 +57,5 @@ for band in filter_pool:
 
     plt.tight_layout()
     plt.grid(ls='--', color='grey', lw=0.5)
-    plt.savefig(f'tmp/tdmi_trace_v2_{band:s}_{yaxis_type:s}.png')
+    plt.savefig(path+f'tdmi_trace_v2_{band:s}_{yaxis_type:s}.png')
     plt.close()

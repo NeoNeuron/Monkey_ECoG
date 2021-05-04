@@ -54,14 +54,17 @@ class EcogTDMI(EcogData):
         self.tdmi_mode = 'max'
         self.tdmi_data = np.load(path+dfname, allow_pickle=True)
 
-    def init_data(self, snr_th_path:str=None, fname:str=None)->None:
+    def init_data(self, snr_th_path:str=None, fname:str='snr_th.pkl'):
         self.compute_mi_stats()
         if snr_th_path is not None:
-            if fname is None:
-                fname = 'snr_th.pkl'
             with open(snr_th_path+fname, 'rb') as f:
                 snr_th = pickle.load(f)
-            self.compute_snr_masking(snr_th)
+            for band in self.filters:
+                snr_matrix = compute_snr_matrix(self.tdmi_data[band])
+                noise_matrix = compute_noise_matrix(self.tdmi_data[band])
+                snr_mask = snr_matrix >= snr_th[band]
+                self.fc[band][~snr_mask] = noise_matrix[~snr_mask]
+        return self
 
     def init_data_strict(self, snr_th_path:str=None)->None:
         self.compute_mi_stats()
@@ -77,15 +80,8 @@ class EcogTDMI(EcogData):
         for band in self.filters:
             self.fc[band] = MI_stats(self.tdmi_data[band], self.tdmi_mode)
 
-    def compute_snr_masking(self, snr_th):
-        for band in self.filters:
-            snr_matrix = compute_snr_matrix(self.tdmi_data[band])
-            noise_matrix = compute_noise_matrix(self.tdmi_data[band])
-            snr_mask = snr_matrix >= snr_th[band]
-            self.fc[band][~snr_mask] = noise_matrix[~snr_mask]
-
-    def get_snr_mask(self, snr_th_path:str):
-        with open(snr_th_path+'snr_th.pkl', 'rb') as f:
+    def get_snr_mask(self, snr_th_path:str=None, fname:str='snr_th.pkl'):
+        with open(snr_th_path+fname, 'rb') as f:
             snr_th = pickle.load(f)
         self.compute_roi_masking('ch')
         snr_mask = {}
