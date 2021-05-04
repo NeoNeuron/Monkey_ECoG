@@ -2,24 +2,42 @@
 # Author: Kai Chen
 
 # %%
-import time
 import numpy as np
 import matplotlib.pyplot as plt
 import utils
 from minfo.mi_float import tdmi_omp as TDMI
 from scipy.signal import detrend
+from scipy.stats import ks_2samp
 # %%
 
 path = 'tdmi_snr_analysis/'
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 
-target_ids = np.load('tmp/target_ids_v2.npy', allow_pickle=True)
+target_ids = np.load('tmp/target_ids.npy', allow_pickle=True)
 print(target_ids)
 # %%
 data = utils.core.EcogTDMI()
 data.init_data(path, fname='snr_th_kmean_tdmi.pkl')
 sc, fc = data.get_sc_fc('ch')
 snr_mask = data.get_snr_mask(path, 'snr_th_kmean_tdmi.pkl')
+
+# %%
+fig, ax = plt.subplots(1,1,figsize=(10,6))
+time_series = (data_package['data_series_raw'][:, 0])
+(counts_0, edges_0) = np.histogram(time_series[:12000], bins=100, density=True)
+(counts_1, edges_1) = np.histogram(time_series[12000:], bins=100, density=True)
+ax.plot(edges_0[1:], counts_0, ds='steps-pre', color='navy',   label='First Half')
+ax.plot(edges_1[1:], counts_1, ds='steps-pre', color='orange', label='Second Half')
+ax.set_xlabel(r'ECoG ($\mu$V)', fontsize=20)
+ax.set_ylabel('Counts', fontsize=20)
+ax.set_title('Distribution of among all channels')
+ax.legend(fontsize=20)
+fig.savefig('distribution_all_channels.png')
+# %%
+print(ks_2samp(data_package['data_series_raw'][:12000:100, 0].flatten(),data_package['data_series_raw'][12000::100, 0].flatten()))
+# %%
+plt.plot(data_package['data_series_raw'][:12000:100, 0])
+plt.plot(data_package['data_series_raw'][12000::100, 0])
 # %%
 # delays = 3001
 # tdmi_data = np.zeros((target_ids.shape[0], delays*2-1))

@@ -24,12 +24,12 @@ weight = data_package['weight']
 weight_log = np.log10(weight+1e-6)
 weight_color = weight_log/weight_log.max()
 weight_color = (weight_color-weight_color.min())/(weight_color.max()-weight_color.min())
-my_colors = cm.Oranges(weight_color, alpha=0.5)
+my_colors = cm.rainbow(weight_color, alpha=0.5)
 tdmi_data = np.load('data/tdmi_data_long.npz', allow_pickle=True)
 
 
 yaxis_type = 'linear'
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+filter_pool = ['raw']
 for band in filter_pool:
     data = tdmi_data[band]
     data_mean = data.mean(2)
@@ -39,7 +39,7 @@ for band in filter_pool:
     target_ids = []
     for i in range(1, data.shape[0]):
         for j in range(i+1, data.shape[0]):
-            if data_mean[i,j]>0.2:
+            if data_mean[i,j]>0.2 and weight[i,j]>5e-2:
                 plot_tdmi(ax, i, j, my_colors[i,j], yaxis_type=yaxis_type)
                 target_ids.append([i,j])
     np.save(path+'target_ids.npy', np.array(target_ids))
@@ -48,7 +48,7 @@ for band in filter_pool:
     ax.set_xlim(-data.shape[2], data.shape[2])
     # create colorbar
     norm = colors.Normalize(weight_log.min(), weight_log.max())
-    cb = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cm.Oranges), ax=ax)
+    cb = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cm.rainbow), ax=ax)
     cb.set_label('Weight',rotation=-90, verticalalignment='bottom' )
     ticks = cb.get_ticks()
     labels = ['$10^{%d}$'%item for item in ticks]

@@ -38,9 +38,10 @@ def ScanTDMI(data_series:np.ndarray, delay_len:int=10, pn:int=None)->np.ndarray:
 
 if __name__ == '__main__':
   import time
-  from minfo import tdmi as TDMI
+  from minfo.mi_float import tdmi_omp as TDMI
   from utils.utils import print_log
   import os
+  from scipy.signal import detrend
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
   arg_default = {
     'path': 'data/',
@@ -69,7 +70,7 @@ if __name__ == '__main__':
   filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
   tdmi_data = {}
   for band in filter_pool:
-    tdmi_data[band] = ScanTDMI(data_package['data_series_'+band], 3001)
+    tdmi_data[band] = ScanTDMI(detrend(data_package['data_series_'+band], axis=0), 3001)
     # save result to temp file.
     fname = args.dfname.replace('.npz', f'_{band:s}.npy')
     np.save(args.path + fname, tdmi_data[band])
