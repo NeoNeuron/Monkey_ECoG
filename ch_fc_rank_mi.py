@@ -43,9 +43,10 @@ if __name__ == '__main__':
     data = EcogTDMI('data/')
     data.init_data(args.path)
     sc, fc = data.get_sc_fc('ch')
+    snr_mask = data.get_snr_mask(args.path)
     # ==================================================
     
-    fig = gen_fc_rank_figure(sc, fc)
+    fig = gen_fc_rank_figure(sc, fc, snr_mask)
     ax = fig.get_axes()
 
     [ax[i].set_ylabel('Ranked TDMI index') for i in (0,2,4,6)]

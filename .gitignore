@@ -21,3 +21,4 @@ tdmi_snr_analysis
 *.so
 *.csv
 *.pkl
+*.svg

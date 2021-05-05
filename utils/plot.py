@@ -315,13 +315,16 @@ def gen_sc_fc_figure(tdmi_flatten:dict,
 
     return fig
 
-def gen_fc_rank_figure(sc, fc, is_log=True, is_interarea=False):
+def gen_fc_rank_figure(sc:dict, fc:dict, snr_mask:dict=None, is_log=True, is_interarea=False):
     fig = plt.figure(figsize=(8,15), dpi=100)
     gs = fig.add_gridspec(nrows=4, ncols=2, 
                           left=0.10, right=0.90, top=0.96, bottom=0.05, 
                           wspace=0.36, hspace=0.30)
     ax = np.array([fig.add_subplot(i) for i in gs])
     axt = []
+
+    if snr_mask is None:
+        snr_mask = {band:np.ones_like(value, dtype=bool) for band, value in sc.items()}
 
     for idx, band in enumerate(sc.keys()):
         axt.append(ax[idx].twinx())
@@ -352,7 +355,7 @@ def gen_fc_rank_figure(sc, fc, is_log=True, is_interarea=False):
             ax[idx].set_title(band)
             ax[idx].text(
                 0.05, 0.95, 
-                f'PPV:{np.sum(fc[band][sc[band]>0]>gap_th_val)*100./np.sum(fc[band]>gap_th_val):4.1f} %',
+                f'PPV:{np.sum(fc[band][(sc[band]>0)*snr_mask[band]]>gap_th_val)*100./np.sum(fc[band][snr_mask[band]]>gap_th_val):4.1f} %',
                 fontsize=14, transform=ax[idx].transAxes, 
                 verticalalignment='top', horizontalalignment='left'
             )
