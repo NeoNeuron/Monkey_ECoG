@@ -4,6 +4,7 @@ from GC import GC
 from utils.utils import print_log
 import time
 import os
+from scipy.signal import detrend
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 arg_default = {'path': 'data/',
                'order': 6,
@@ -36,6 +37,7 @@ start = time.time()
 gc_total = {}
 for band in filters:
     data_series = data_package['data_series_'+band]
+    # data_series = detrend(data_package['data_series_'+band], axis=0)
     # shuffle data
     if args.shuffle:
         for i in range(data_series.shape[1]):

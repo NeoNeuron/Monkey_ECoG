@@ -100,7 +100,7 @@ class EcogTDMI(EcogData):
 class EcogGC(EcogData):
     def __init__(self, path:str='data/'):
         super().__init__(path)
-        self.gc_data = np.load(path+'cgc.npz', allow_pickle=True)
+        self.gc_data = np.load(path+'gc_order_6.npz', allow_pickle=True)
 
     def init_data(self):
         for band in self.filters:

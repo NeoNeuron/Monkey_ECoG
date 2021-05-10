@@ -22,16 +22,17 @@ if __name__ == '__main__':
     path = 'tdmi_snr_analysis/'
     fnames = [
         path + 'tdmi_kmean/recon_gap_tdmi.npy', 
-        path + 'tdmi_gauss/recon_gap_tdmi.npy',
+        path + 'tdmi_detrend_kmean/recon_gap_tdmi.npy',
         path + 'gc_6/recon_gap_gc.npy', 
+        path + 'gc_detrend/recon_gap_gc.npy',
         path + 'cgc/recon_gap_gc.npy', 
         path + 'cc_linear_abs/recon_gap_cc.npy',
         path + 'tdcc_kmean/recon_gap_tdcc.npy',
-        path + 'tdcc_gauss/recon_gap_tdcc.npy',
+        path + 'tdcc_detrend_kmean/recon_gap_tdcc.npy',
     ]
     all_data = [np.load(fname, allow_pickle=True) for fname in fnames]
-    colors = ['r', 'orange', 'navy', 'purple', 'springgreen', 'b', 'cyan']
-    labels = ['TDMI(Kmean)', 'TDMI(Gauss)', 'GC', 'Cond GC', 'CC', 'TDCC(Kmean)', 'TDCC(Gauss)']
+    colors = ['red', 'orange', 'royalblue', 'm', 'y', 'k', 'cyan', 'springgreen',]
+    labels = ['TDMI', 'TDMI_detrend', 'GC', 'GC_detrend', 'Cond GC', 'CC', 'TDCC', 'TDCC_detrend']
     filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
     data_plt = {}
     for i, band in enumerate(filters):
@@ -41,5 +42,5 @@ if __name__ == '__main__':
             'labels':labels,
         }
     fig = plot_union(data_plt, plot_ppv_curve)
-    plt.savefig(path + 'ch_bin_recon_ppv_comp_all.png')
+    plt.savefig(path + 'ch_bin_recon_ppv_comp_all_detrend.png')
     plt.close()
