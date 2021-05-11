@@ -20,6 +20,14 @@ def butter_lowpass_filter(data, highcut, fs, order=5):
     y = sosfilt(sos, yr)
     return y[::-1]
 
+def butter_highpass_filter(data, lowcut, fs, order=5):
+    sos = butter(order, lowcut, btype='highpass', fs = fs, output = 'sos')
+    y = sosfilt(sos, data)
+    yr = y[::-1]
+    y = sosfilt(sos, yr)
+    return y[::-1]
+
+
 def filter(data, band, fs, order = 5):
     """
     Signal filter of target band.
@@ -30,7 +38,7 @@ def filter(data, band, fs, order = 5):
         Original data series
     band : string
         Band of filter, 
-        includeing 'delta', 'theta', 'alpha', 'beta', 'gamma', and 'high_gamma'
+        includeing 'sub_delta', 'delta', 'theta', 'alpha', 'beta', 'gamma', and 'high_gamma'
     fs : float
         Sampling frequency
     order : int
@@ -47,7 +55,11 @@ def filter(data, band, fs, order = 5):
 
     """
     
-    if band == 'delta':
+    if band == 'sub_delta':
+        y = butter_lowpass_filter(data, highcut=1, fs=fs, order=order)
+    elif band == 'above_delta':
+        y = butter_highpass_filter(data, lowcut=1, fs=fs, order=order)
+    elif band == 'delta':
         y = butter_bandpass_filter(data, lowcut = 1, highcut = 4, fs = fs, order = order)
     elif band == 'theta':
         y = butter_bandpass_filter(data, lowcut = 5, highcut = 8, fs = fs, order = order)

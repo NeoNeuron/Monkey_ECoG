@@ -8,52 +8,165 @@ import utils
 from minfo.mi_float import tdmi_omp as TDMI
 from scipy.signal import detrend
 from scipy.stats import ks_2samp
-# %%
+import pandas as pd
+import joypy
+from utils.filter import filter
 
+def ridgeplot_detrend(time_series):
+    """Ridgeline plot for single time series.
+
+    Args:
+        time_series (np.ndarray): single original time series.
+
+    Returns:
+        fig, ax: figure and axis.
+    """
+    N = time_series.shape[0]
+    time_series_detrend = detrend(time_series)
+    df_test = pd.DataFrame({
+        'part1': np.hstack((time_series[:int(N/2)], time_series_detrend[:int(N/2)])),
+        'part2': np.hstack((time_series[int(N/2):], time_series_detrend[int(N/2):])),
+        'type': ['raw']*int(time_series.shape[0]/2)+['detrend']*int(time_series.shape[0]/2),
+    })
+    fig, ax = plt.subplots(1,1, figsize=(10,5), dpi=200)
+    fig, ax = joypy.joyplot(df_test, by='type', alpha=.5, legend=True, ax=ax, bins=50)
+    return fig, ax
+
+# %%
 path = 'tdmi_snr_analysis/'
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 
-target_ids = np.load('tmp/target_ids.npy', allow_pickle=True)
-print(target_ids)
-# %%
 data = utils.core.EcogTDMI()
 data.init_data(path, fname='snr_th_kmean_tdmi.pkl')
 sc, fc = data.get_sc_fc('ch')
 snr_mask = data.get_snr_mask(path, 'snr_th_kmean_tdmi.pkl')
 
-# %%
-fig, ax = plt.subplots(1,1,figsize=(10,6))
-time_series = (data_package['data_series_raw'][:, 0])
-(counts_0, edges_0) = np.histogram(time_series[:12000], bins=100, density=True)
-(counts_1, edges_1) = np.histogram(time_series[12000:], bins=100, density=True)
-ax.plot(edges_0[1:], counts_0, ds='steps-pre', color='navy',   label='First Half')
-ax.plot(edges_1[1:], counts_1, ds='steps-pre', color='orange', label='Second Half')
-ax.set_xlabel(r'ECoG ($\mu$V)', fontsize=20)
-ax.set_ylabel('Counts', fontsize=20)
-ax.set_title('Distribution of among all channels')
-ax.legend(fontsize=20)
-fig.savefig('distribution_all_channels.png')
-# %%
-print(ks_2samp(data_package['data_series_raw'][:12000:100, 0].flatten(),data_package['data_series_raw'][12000::100, 0].flatten()))
-# %%
-plt.plot(data_package['data_series_raw'][:12000:100, 0])
-plt.plot(data_package['data_series_raw'][12000::100, 0])
-# %%
-# delays = 3001
-# tdmi_data = np.zeros((target_ids.shape[0], delays*2-1))
-# for i, idx in enumerate(target_ids):
-#     tdmi_data[i,delays-1:] = data.tdmi_data['raw'][idx[0], idx[1],:]
-#     tdmi_data[i,:delays] = np.flip(data.tdmi_data['raw'][idx[1], idx[0],:])
+def map_stationary(bias, cmap):
+    bias_color_max = np.abs(bias).max()
+    bias_color= np.abs(bias)/bias_color_max
+    my_colors = cmap(bias_color)
+
+    loc = data_package['loc']
+    fig, ax = plt.subplots(dpi=300)
+    for i in range(loc.shape[0]):
+        ax.plot(loc[i,0], loc[i,1], '.', color=my_colors[i], ms=15)
+    ax.invert_yaxis()
+    ax.axis('off')
+    fig.savefig('brain_map_finer_classification.png')
+    return fig
 
 # %%
-# plt.figure(figsize=(20,10))
-# for i, curve in enumerate(tdmi_data[:10,:]):
-#     plt.plot(curve, label=str(i))
-# plt.legend()
+def ridgeplot_band(index:int):
+    """Ridgeline plot for single time series.
+
+    Args:
+        time_series (np.ndarray): single original time series.
+
+    Returns:
+        fig, ax: figure and axis.
+    """
+    data_raw = data_package['data_series_raw'][:24000, index] 
+    N = data_raw.shape[0]
+    df_test = pd.DataFrame({
+        'part1': data_raw[:int(N/2)],
+        'part2': data_raw[int(N/2):],
+        'band': ['raw']*int(data_raw.shape[0]/2),
+    })
+    for band in ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']:
+        data_band = data_package[f'data_series_{band:s}'][:24000, index] 
+        df_test = df_test.append(pd.DataFrame({
+            'part1': data_band[:int(N/2)],
+            'part2': data_band[int(N/2):],
+            'band': [band]*int(data_band.shape[0]/2),
+        }), ignore_index=True)
+    data_sub_delta = filter(data_raw, 'sub-delta', 1000)
+    df_test = df_test.append(pd.DataFrame({
+        'part1': data_sub_delta[:int(N/2)],
+        'part2': data_sub_delta[int(N/2):],
+        'band': ['sub_delta']*int(data_sub_delta.shape[0]/2),
+    }), ignore_index=True)
+    fig, ax = plt.subplots(1,1, figsize=(10,10), dpi=200)
+    fig, ax = joypy.joyplot(df_test, by='band', alpha=.5, legend=True, ax=ax, bins=50, )
+    return fig, ax
 # %%
+# %%
+fig,_ = ridgeplot_band(57)
+fig.savefig('hist_banded_57.png')
+# %%
+fig,_ = ridgeplot_band(45)
+fig.savefig('hist_banded_45.png')
+# %%
+def ridgeplot_band(index:int):
+    """Ridgeline plot for single time series.
+
+    Args:
+        time_series (np.ndarray): single original time series.
+
+    Returns:
+        fig, ax: figure and axis.
+    """
+    fig, ax = plt.subplots(3,1, figsize=(10,10), dpi=200)
+    data_raw = data_package['data_series_raw'][:24000, index] 
+    ax[0].plot(data_raw)
+    N = data_raw.shape[0]
+    data_band = np.zeros_like(data_raw, dtype=np.complex128)
+    for band in ['delta', 'theta', 'alpha', 'beta', 'gamma',]:
+        data_band += np.fft.fft(data_package[f'data_series_{band:s}'][:24000, index])
+    data_sub_delta = filter(data_raw, 'sub-delta', 1000)
+    data_band += np.fft.fft(data_sub_delta)
+    data_band = np.fft.ifft(data_band)
+    ax[1].plot(data_band)
+    ax[2].plot(data_sub_delta)
+        # ax[1].plot(np.abs(data_band)[:1000])
+    return fig, ax
+fig,_ = ridgeplot_band(57)
+fig.savefig('ch57_decompose.png')
+
+# %%
+def plot_stationary_hist_all_channel(data_package):
+    fig, ax = plt.subplots(1,1,figsize=(10,6))
+    time_series = (data_package['data_series_raw'][:, :])
+    (counts_0, edges_0) = np.histogram(time_series[:12000].flatten(), bins=1000, density=True)
+    (counts_1, edges_1) = np.histogram(time_series[12000:].flatten(), bins=1000, density=True)
+    ax.plot(edges_0[1:], counts_0, ds='steps-pre', color='navy',   label='First Half')
+    ax.plot(edges_1[1:], counts_1, ds='steps-pre', color='orange', label='Second Half')
+    ax.set_xlabel(r'ECoG ($\mu$V)', fontsize=20)
+    ax.set_ylabel('Counts', fontsize=20)
+    ax.set_title('Distribution of among all channels')
+    ax.legend(fontsize=20)
+    fig.savefig('distribution_all_channels.png')
+    return fig
+# %%
+# calculate stationary measure
+def get_bias(data, ty='long'):
+    if ty == 'long':
+        bias = np.abs((data[:12000,:].mean(0) - data[12000:,:].mean(0)) / data.std(0))
+    elif ty == 'short':
+        bias = np.reshape(data[:24000,:].T, (data.shape[1], -1, 500)).mean(2).std(1)
+    return bias
+time_series = data_package['data_series_raw']
+bias = get_bias(time_series)
+# %%
+plt.hist(bias, bins=50)
+for id in np.argsort(bias)[-10:]:
+    fig,_ = ridgeplot_detrend(data_package['data_series_raw'][:24000,id])
+    fig.savefig(f'chn_distribution_{id:d}.png')
+
+# %%
+map_stationary(bias, plt.cm.hot)
+
+non_wss = np.nonzero(np.abs(bias)>0.6)[0]
+wss = np.nonzero(np.abs(bias)<0.05)[0]
+# %%
+for id in wss:
+    fig,_ = ridgeplot_detrend(data_package['data_series_raw'][:24000,id])
+    
+
+# %%
+target_ids = np.load('tmp/target_ids.npy', allow_pickle=True)
+print(target_ids)
+# plot all channel distribution
 for id, index in enumerate(target_ids):
-# id = 100
-# index = target_ids[2]
     delays = 3001
     fig = plt.figure(figsize=(20,20), dpi=100)
     gs = fig.add_gridspec(nrows=1, ncols=2, 
@@ -111,71 +224,68 @@ for id, index in enumerate(target_ids):
                     fontsize=16)
     fig.savefig(f'TDMI_nondecay_analysis_{id:d}.png')
 
-# # %%
-# # create a gaussian random white process
+    for i in index:
+        fig,_ = ridgeplot_detrend(data_package['data_series_raw'][:24000,i])
+        fig.savefig(f'chn_distribution_{i:d}.png')
 
-# T = 10000
-# x = np.zeros((2, T))
-# W = np.array([[0, 0.],[-0.1, 0]])
-# noise = np.random.randn(2, T)*.1
 
-# for i in range(T-1):
-#     x[:, i+1] = -0.9*x[:, i] + W @ x[:, i] + noise[:, i]
+# %%
+# trend manipulation
+delays=3001
+tdmi_data_trend = np.zeros((delays*2-1,))
+trend = np.arange(24001)/24001
+trend -= trend.mean()
+trend *= 200
 
-# # add trend
-# trend = np.arange(T)/T
-# trend -= trend.mean()
-# x[1,:]+= trend*1
-# x[0,:]+= trend*.5
+tdmi_data_trend[delays-1:] = TDMI(data_package['data_series_raw'][:,0]+trend,
+                                  data_package['data_series_raw'][:,3]+trend,
+                                  delays)
+tdmi_data_trend[:delays] = np.flip(TDMI(data_package['data_series_raw'][:,3]+trend,
+                                        data_package['data_series_raw'][:,0]+trend,
+                                        delays))
+plt.figure(figsize=(20,6))
+plt.plot(np.arange(-delays+1, delays), tdmi_data_untrend, alpha = .5, label='original')
+plt.plot(np.arange(-delays+1, delays), tdmi_data_trend,   alpha = .5, label='trend')
 
-# plt.figure(figsize=(20,10))
-# for i in range(2):
-#     plt.plot(x[i], label=f"neuron {i:d}")
-# plt.legend()
-# # %%
-# delays = 100
-# tdmi_test = np.zeros((delays*2-1,))
+# %%
+# draw ridgeline plot
+df = pd.DataFrame(data_package['data_series_raw'])
+fig, ax = plt.subplots(1,1, figsize=(12,30), dpi=200)
+_, _ = joypy.joyplot(df, colormap=plt.cm.turbo, ax=ax)
 
-# tdmi_test[delays-1:] = TDMI(x[0,:],
-#                             x[1,:],
-#                             delays)
-# tdmi_test[:delays] = np.flip(TDMI(x[1, :],
-#                                   x[0, :],
-#                                   delays))
-
-# # %%
-# plt.figure(figsize=(20,10))
-# plt.plot(np.arange(-delays+1, delays), tdmi_test)
-# plt.xlabel('Delay(ms)')
-# plt.ylabel('MI')
-# plt.grid(ls='--')
-# # %%
-# delays=3001
-# tdmi_data_untrend = np.zeros((delays*2-1,))
-
-# tdmi_data_untrend[delays-1:] = TDMI(data_package['data_series_raw'][:,0],
-#                                   data_package['data_series_raw'][:,3],
-#                                   delays)
-# tdmi_data_untrend[:delays] = np.flip(TDMI(data_package['data_series_raw'][:,3],
-#                                         data_package['data_series_raw'][:,0],
-#                                         delays))
-# # %%
-
-# delays=3001
-# tdmi_data_trend = np.zeros((delays*2-1,))
-# trend = np.arange(24001)/24001
-# trend -= trend.mean()
-# trend *= 200
-
-# tdmi_data_trend[delays-1:] = TDMI(data_package['data_series_raw'][:,0]+trend,
-#                                   data_package['data_series_raw'][:,3]+trend,
-#                                   delays)
-# tdmi_data_trend[:delays] = np.flip(TDMI(data_package['data_series_raw'][:,3]+trend,
-#                                         data_package['data_series_raw'][:,0]+trend,
-#                                         delays))
-# plt.figure(figsize=(20,6))
-# plt.plot(np.arange(-delays+1, delays), tdmi_data_untrend, alpha = .5, label='original')
-# plt.plot(np.arange(-delays+1, delays), tdmi_data_trend,   alpha = .5, label='trend')
-# # %%
-
+# %%
+# stationary distribution sorted by stationariness
+def hist_with_bias_order(df_pooled, bias):
+    order_with_bias = np.argsort(np.abs(bias))
+    df_reorder = df_pooled[df_pooled['ch_id']==order_with_bias[0]]
+    for idx in order_with_bias[1:]:
+        df_reorder=df_reorder.append(df_pooled[df_pooled['ch_id']==idx], ignore_index=True)
+    df_grouped = df_reorder.groupby('ch_id', sort=False)
+    fig, ax = plt.subplots(1,1, figsize=(5,30), dpi=200)
+    fig, ax = joypy.joyplot(df_grouped, column=['part1','part2'], alpha=.4, legend=True, ax=ax, bins=50)
+    return fig
+# %%
+for band in ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']:
+    df_pooled = pd.DataFrame({
+        'part1': data_package[f'data_series_{band:s}'][:12000,:].flatten(),
+        'part2': data_package[f'data_series_{band:s}'][12000:24000,:].flatten(),
+        'ch_id': np.tile(np.arange(117).reshape(-1, 1),(1,12000)).T.flatten(), 
+    })
+    ty = 'short'
+    bias = get_bias(data_package[f'data_series_{band:s}'], ty=ty)
+    fig = hist_with_bias_order(df_pooled, bias)
+    fig.savefig(f'ordered_hist_{ty:s}_{band:s}.png')
+# %%
+fig, ax = plt.subplots(1,1, figsize=(5,30), dpi=200)
+_, _ = joypy.joyplot(df_pooled[df_pooled['ch_id']<=40], by='ch_id', alpha=.4, legend=True, ax=ax, bins=50)
+fig.savefig('channel_distribution_2parts_1.svg')
+fig.savefig('channel_distribution_2parts_1.png')
+fig, ax = plt.subplots(1,1, figsize=(5,30), dpi=200)
+_, _ = joypy.joyplot(df_pooled[(df_pooled['ch_id']>40).values*(df_pooled['ch_id']<=80).values], by='ch_id', alpha=.4, legend=True, ax=ax, bins=50)
+fig.savefig('channel_distribution_2parts_2.svg')
+fig.savefig('channel_distribution_2parts_2.png')
+fig, ax = plt.subplots(1,1, figsize=(5,30), dpi=200)
+_, _ = joypy.joyplot(df_pooled[df_pooled['ch_id']>80], by='ch_id', alpha=.4, legend=True, ax=ax, bins=50)
+fig.savefig('channel_distribution_2parts_3.svg')
+fig.savefig('channel_distribution_2parts_3.png')
 # %%
