@@ -4,8 +4,7 @@ TDMI_SNR_PATH="tdmi_snr_analysis/"
 mkdir -p $TDMI_SNR_PATH
 
 # determine SNR threshold
-# python tdmi_snr_distribution.py
-python tdmi_snr_and_trace.py
+python get_tdmi_snr_threshold.py
 
 # other analysis
 python ch_fc_rank_mi.py

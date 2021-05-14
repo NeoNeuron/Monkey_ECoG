@@ -67,7 +67,7 @@ if __name__ == '__main__':
   data_package = np.load(args.path + 'preprocessed_data.npz', allow_pickle=True)
 
   start = time.time()
-  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+  filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw', 'sub_delta', 'above_delta']
   tdmi_data = {}
   for band in filter_pool:
     tdmi_data[band] = ScanTDMI(data_package['data_series_'+band], 3001)

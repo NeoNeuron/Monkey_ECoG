@@ -52,8 +52,8 @@ if __name__ == '__main__':
     plt.tight_layout()
 
     if args.is_interarea:
-        fname = f'mi-s_interarea_snr.png'
+        fname = f'ch_mi-s_interarea_snr.png'
     else:
-        fname = f'mi-s_snr.png'
+        fname = f'ch_mi-s_snr.png'
     fig.savefig(args.path + fname)
     print_log(f'Figure save to {args.path+fname:s}.', start)

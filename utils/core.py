@@ -8,7 +8,7 @@ class EcogData:
     def __init__(self, path:str='data/'):
         data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
         self.stride = data_package['stride']
-        self.filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+        self.filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw', 'sub_delta', 'above_delta']
         self.adj_mat = data_package['adj_mat'] + np.eye(self.stride.shape[0]-1)*1.5
         self.weight = data_package['weight']
         self.fc = {}

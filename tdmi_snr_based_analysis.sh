@@ -18,7 +18,4 @@ python cg_overview_mi_snr.py $TDMI_PATH
 python cg_auc_th_mi_snr.py $TDMI_PATH
 python cg_fit_mi_snr.py $TDMI_PATH
 
-# delay analysis
-python tdmi_delay_analysis.py $TDMI_SNR_PATH
-
 echo "[INFO]: processing done!"

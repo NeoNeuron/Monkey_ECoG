@@ -111,75 +111,89 @@ def gen_auc_threshold_figure(aucs:dict, w_thresholds:list,
                              ax:np.ndarray=None, colors:str='navy',labels:str=None,)->plt.Figure:
     fig_return_flag = False
     if ax is None:
-        fig, ax = plt.subplots(2,4,figsize=(20,10), sharey=True)
+        fig, ax = plt.subplots(2,5,figsize=(24,10), sharey=True)
         fig_return_flag = True
-    ax = ax.reshape((-1,))
-    idx = 0
-    for band, auc in aucs.items():
-        if auc is None:
-            ax[idx].set_visible(False)
-        else:
-            # plot dependence of AUC w.r.t w_threshold value
-            ax[idx].semilogx(w_thresholds, auc, '-*', color=colors, label = labels)
-            ax[idx].grid(ls='--')
-            ax[idx].set_title(band)
-        idx += 1
-
-    [ax[i].set_ylabel('AUC') for i in (0,4)]
-    [ax[i].set_xlabel('Threshold value') for i in (4,5,6)]
-    ax[0].set_ylim(0.5, 0.9)
+    ax = ax.flatten()
+    for i, (band, auc) in enumerate(aucs.items()):
+        ax[i] = gen_th_auc_figure_single(ax[i], w_thresholds, auc, band, colors, labels)
 
     # make last subfigure invisible
     ax[-1].set_visible(False)
     plt.tight_layout()
     if fig_return_flag:
         return fig
+    else:
+        return ax
+
+def gen_th_auc_figure_single(ax, w_thresholds:list, auc:np.ndarray, band:str,
+    colors:str='navy',labels:str=None,)->plt.Figure:
+    if auc is None:
+        ax.set_visible(False)
+    else:
+        # plot dependence of AUC w.r.t w_threshold value
+        ax.semilogx(w_thresholds, auc, '-*', color=colors, label = labels)
+        ax.grid(ls='--')
+        ax.set_title(band)
+
+        ax.set_ylabel('AUC')
+        ax.set_xlabel('Threshold value')
+        ax.set_ylim(0.5, 0.9)
+    return ax 
 
 def gen_mi_s_figure(tdmi_data_flatten:dict, weight_flatten:dict, snr_mask:dict=None, is_log:bool=True)->plt.Figure:
-    fig, ax = plt.subplots(2,4,figsize=(20,10))
-    ax = ax.reshape((8,))
-    idx = 0
-    for band, tdmi_flatten in tdmi_data_flatten.items():
-        if tdmi_flatten is None:
-            ax[idx].set_visible(False)
+    fig, ax = plt.subplots(2,5,figsize=(24,10))
+    ax = ax.flatten()
+    for i, band in enumerate(tdmi_data_flatten.keys()):
+        if snr_mask is None:
+            ax[i] = gen_sc_fc_figure_cg_single(ax[i], tdmi_data_flatten[band], weight_flatten[band], band, None, is_log)
         else:
-            if is_log:
-                log_tdmi_data = np.log10(tdmi_flatten)
-            else:
-                log_tdmi_data = tdmi_flatten.copy()
-            if snr_mask is not None:
-                log_tdmi_data[~snr_mask[band]] = np.nan
-
-            answer = weight_flatten[band].copy()
-            answer[answer==0]=1e-7
-            log_answer = np.log10(answer)
-            answer_edges = np.linspace(-6, 1, num = 15)
-            answer_center = (answer_edges[1:] + answer_edges[:-1])/2
-            # average data
-            log_tdmi_data_mean = np.zeros(len(answer_edges)-1)
-            for i in range(len(answer_edges)-1):
-                mask = (log_answer >= answer_edges[i]) & (log_answer < answer_edges[i+1])
-                if mask.sum() == 0:
-                    log_tdmi_data_mean[i] = np.nan
-                else:
-                    log_tdmi_data_mean[i] = np.nanmean(log_tdmi_data[mask])
-            pval = np.polyfit(answer_center[~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
-            ax[idx].plot(answer_center, log_tdmi_data_mean, 'k.', markersize=15, label='TDMI mean')
-            ax[idx].plot(answer_center, np.polyval(pval, answer_center), 'r', label='Linear Fitting')
-            ticks = [-6, -4, -2, 0]
-            labels = ['$10^{%d}$'%item for item in ticks]
-            ax[idx].set_xticks(ticks)
-            ax[idx].set_xticklabels(labels)
-            ax[idx].set_title(f'{band:s} ($r$ = {Linear_R2(answer_center, log_tdmi_data_mean, pval)**0.5:5.3f})')
-            ax[idx].legend(fontsize=15)
-            ax[idx].grid(ls='--')
-        idx += 1
-
+            ax[i] = gen_sc_fc_figure_cg_single(ax[i], tdmi_data_flatten[band], weight_flatten[band], band, snr_mask[band], is_log)
     # make last subfigure invisible
     ax[-1].set_visible(False)
-
     plt.tight_layout()
     return fig
+
+def gen_sc_fc_figure_cg_single(ax,
+    fc:np.ndarray, 
+    sc:np.ndarray, 
+    band:str,
+    snr_mask:np.ndarray=None, 
+    is_log:bool=True,
+)->plt.Figure:
+    if fc is None:
+        ax.set_visible(False)
+    else:
+        if is_log:
+            log_fc = np.log10(fc)
+        else:
+            log_fc = fc.copy()
+        if snr_mask is not None:
+            log_fc[~snr_mask] = np.nan
+
+        answer = sc.copy()
+        answer[answer==0]=1e-7
+        log_answer = np.log10(answer)
+        answer_edges = np.linspace(-6, 1, num = 50)
+        answer_center = (answer_edges[1:] + answer_edges[:-1])/2
+        # average data
+        log_fc_mean = np.zeros(len(answer_edges)-1)
+        for i in range(len(answer_edges)-1):
+            mask = (log_answer >= answer_edges[i]) & (log_answer < answer_edges[i+1])
+            if mask.sum() == 0:
+                log_fc_mean[i] = np.nan
+            else:
+                log_fc_mean[i] = np.nanmean(log_fc[mask])
+        pval = np.polyfit(answer_center[~np.isnan(log_fc_mean)], log_fc_mean[~np.isnan(log_fc_mean)], deg=1)
+        ax.plot(answer_center, log_fc_mean, 'k.', markersize=15, label='TDMI mean')
+        ax.plot(answer_center, np.polyval(pval, answer_center), 'r', label='Linear Fitting')
+        ticks = [-6, -4, -2, 0]
+        labels = ['$10^{%d}$'%item for item in ticks]
+        ax.set_xticks(ticks)
+        ax.set_xticklabels(labels)
+        ax.set_title(f'{band:s} ($r$ = {Linear_R2(answer_center, log_fc_mean, pval)**0.5:5.3f})')
+        ax.legend(fontsize=15)
+        ax.grid(ls='--')
+    return ax
 
 def gen_binary_recon_figure(tdmi_mask:dict, weight_mask:np.ndarray, roi_mask:np.ndarray):
     """Generate figure for all bands with respect to same weight_mask.
@@ -199,61 +213,75 @@ def gen_binary_recon_figure(tdmi_mask:dict, weight_mask:np.ndarray, roi_mask:np.
             axi.pcolormesh(mat_buffer, cmap=plt.cm.gray)
 
     # plot figure
-    fig, ax = plt.subplots(4, 2, figsize=(6, 12))
+    fig, ax = plt.subplots(5, 2, figsize=(6, 15))
+    ax = ax.flatten()
     plt_buffer_mat = np.zeros_like(roi_mask, dtype=bool)
     plt_buffer_mat[roi_mask] = weight_mask
     sorted_id = get_cluster_id(plt_buffer_mat)
-    _plt_unit2(ax[0, 0], weight_mask, roi_mask, sorted_id)
-    ax[0, 0].set_title('Weight Matrix')
-    ax[0, 0].set_xticklabels([])
-    indices = {
-        'delta' : (1, 0),
-        'theta' : (2, 0), 
-        'alpha' : (3, 0),
-        'beta'  : (1, 1),
-        'gamma' : (2, 1),
-        'high_gamma' : (3, 1),
-        'raw'   : (0, 1)
-    }
-    for band, index in indices.items():
+    _plt_unit2(ax[0], weight_mask, roi_mask, sorted_id)
+    ax[0].set_title('Weight Matrix')
+    ax[0].set_xticklabels([])
+    index_order = [
+        'raw','delta','theta','alpha','beta',
+        'gamma','high_gamma','sub_delta','above_delta',
+    ]
+    for idx, band in enumerate(index_order):
         if tdmi_mask[band] is not None:
-            _plt_unit2(ax[index], tdmi_mask[band], roi_mask, sorted_id)
-        ax[index].set_title(band, fontsize=16)
-        ax[index].set_xticklabels([])
-        ax[index].set_yticklabels([])
-    [axi.invert_yaxis() for axi in ax.flatten()]
-    [axi.axis('scaled') for axi in ax.flatten()]
+            _plt_unit2(ax[idx+1], tdmi_mask[band], roi_mask, sorted_id)
+        ax[idx+1].set_title(band, fontsize=16)
+        ax[idx+1].set_xticklabels([])
+        ax[idx+1].set_yticklabels([])
+    [axi.invert_yaxis() for axi in ax]
+    [axi.axis('scaled') for axi in ax]
     return fig
 
-def plot_ppv_curves(fnames:str, figname:str):
-    fig, ax = plt.subplots(2, 4, figsize=(12, 6), sharey=True)
+def plot_ppv_curve(ax, roc_data, colors, labels, band=None):
     separator = [-6, -5, -4, -3, -2, -1, 0]
-    filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
-    indices = [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2)]
+    for roc, color, label in zip(roc_data, colors, labels):
+        ax.plot(separator, 100*roc[:, -1], '-o',
+                markersize=2, markerfacecolor='None', color=color, label=label)
+        # ax.plot(separator, 100*roc[:, i, -3], '-s',
+        #         markerfacecolor='None', color=color, label='TPR'+label)
+
+    ax.plot(separator, 100*(roc[:, 0]+roc[:,2])/roc[:,0:4].sum(1),
+            '-o', markersize=2, markerfacecolor='None', color='gray', ls='--', label='p true')
+    ax.grid(ls='--')
+    ax.set_ylim(0,100)
+    ax.set_ylabel('Percentage(%)')
+    ax.set_xlabel(r'$\log_{10}$(SCs Thresholding)')
+    if band is not None:
+        ax.set_title(band)
+    return ax
+
+def plot_ppv_curves(fnames:str, figname:str):
+    fig, ax = plt.subplots(2, 5, figsize=(15, 6), sharey=True)
+    separator = [-6, -5, -4, -3, -2, -1, 0]
+    filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw', 'sub_delta', 'above_delta']
+    ax = ax.flatten()
     colors = ['r','royalblue','orange']
     labels = [r'PPV(th$_{fit}$)', r'PPV(th$_{gap}$)', r'PPV(th$_{roc}$)']
 
     for fname, color, label in zip(fnames, colors, labels):
         roc_data = np.load(fname, allow_pickle=True)
-        for i, index in enumerate(indices):
-            ax[index].plot(separator, 100*roc_data[:, i, -1], '-o',
+        for i in range(len(filters)):
+            ax[i].plot(separator, 100*roc_data[:, i, -1], '-o',
                         markersize=2, markerfacecolor='None', color=color, label=label)
-            # ax[index].plot(separator, 100*roc_data[:, i, -3], '-s',
+            # ax[i].plot(separator, 100*roc_data[:, i, -3], '-s',
             #              markerfacecolor='None', color=color, label='TPR'+label)
 
-    for i, index in enumerate(indices):
-        ax[index].plot(separator, 100*(roc_data[:,i, 0]+roc_data[:,i,2])/roc_data[:,i,0:4].sum(1),
-                     '-o', markersize=2, markerfacecolor='None', color='k', label='p true')
-        ax[index].grid(ls='--')
-        ax[index].set_title(filters[i])
+    for i in range(len(filters)):
+        ax[i].plot(separator, 100*(roc_data[:,i, 0]+roc_data[:,i,2])/roc_data[:,i,0:4].sum(1),
+                 '-o', markersize=2, markerfacecolor='None', color='k', label='p true')
+        ax[i].grid(ls='--')
+        ax[i].set_title(filters[i])
 
     # plot legend in the empty subplot
-    handles, labels = ax[0, 0].get_legend_handles_labels()
-    ax[-1, -1].legend(handles, labels, loc=1, fontsize=16)
-    ax[-1, -1].axis('off')
+    handles, labels = ax[0].get_legend_handles_labels()
+    ax[-1].legend(handles, labels, loc=1, fontsize=16)
+    ax[-1].axis('off')
 
-    [ax[i, 0].set_ylabel('Percentage(%)',fontsize=16) for i in (0, 1)]
-    [ax[-1, i].set_xlabel(r'$\log_{10}$(Weight thresholding)',fontsize=12) for i in [0, 1, 2]]
+    [ax[i].set_ylabel('Percentage(%)',fontsize=16) for i in (0, 1)]
+    [ax[i].set_xlabel(r'$\log_{10}$(Weight thresholding)',fontsize=12) for i in [0, 1, 2]]
 
     plt.tight_layout()
     plt.savefig(figname)
@@ -276,44 +304,54 @@ def gen_sc_fc_figure(tdmi_flatten:dict,
         plt.Figure: matplotlib.figure.Figure
     """
     # create figure canvas
-    fig = plt.figure(figsize=(9,15), dpi=100)
-    gs = fig.add_gridspec(nrows=4, ncols=2, 
-                          left=0.10, right=0.90, top=0.96, bottom=0.05, 
+    fig = plt.figure(figsize=(15,15), dpi=100)
+    gs = fig.add_gridspec(nrows=3, ncols=3, 
+                          left=0.05, right=0.95, top=0.96, bottom=0.05, 
                           wspace=0.25, hspace=0.35)
     ax = np.array([fig.add_subplot(i) for i in gs])
+    for i, band in enumerate(tdmi_flatten.keys()):
+        if snr_mask is None:
+            ax[i] = gen_sc_fc_figure_single(ax[i], tdmi_flatten[band], weight_flatten[band], band, None, is_log)
+        else:
+            ax[i] = gen_sc_fc_figure_single(ax[i], tdmi_flatten[band], weight_flatten[band], band, snr_mask[band], is_log)
+    return fig
+
+def gen_sc_fc_figure_single(ax,
+    fc:np.ndarray, sc:np.ndarray, band:str,
+    snr_mask:np.ndarray=None, is_log:bool=True,
+    **kwargs
+)->plt.Figure:
 
     if snr_mask is None:
-        snr_mask = {}
-        for band, value in tdmi_flatten.items():
-            snr_mask[band] = np.ones_like(value).astype(bool)
-    for idx, band in enumerate(tdmi_flatten.keys()):
-        if is_log:
-            log_tdmi_data = np.log10(tdmi_flatten[band])
-        else:
-            log_tdmi_data = tdmi_flatten[band].copy()
+        snr_mask = np.ones_like(fc).astype(bool)
+    if is_log:
+        log_fc = np.log10(fc)
+        ax.set_ylabel(r'$log_{10}$(TDMI)')
+    else:
+        log_fc = fc.copy()
+        ax.set_ylabel(r'TDMI')
 
-        weight_set = np.unique(weight_flatten[band])
-        log_tdmi_data_buffer = log_tdmi_data.copy()
-        log_tdmi_data_buffer[~snr_mask[band]] = np.nan
-        log_tdmi_data_mean = np.array([np.nanmean(log_tdmi_data_buffer[weight_flatten[band]==key]) for key in weight_set])
-        log_tdmi_data_mean[weight_set==0]=np.nan
-        weight_set[weight_set==0]=np.nan
-        # pval = np.polyfit(np.log10(weight_set), log_tdmi_data_mean, deg=1)
-        pval = np.polyfit(np.log10(weight_set)[~np.isnan(log_tdmi_data_mean)], log_tdmi_data_mean[~np.isnan(log_tdmi_data_mean)], deg=1)
-        # pval = np.polyfit(np.log10(weight_flatten+1e-6)[~np.isnan(log_tdmi_data_buffer)], log_tdmi_data_buffer[~np.isnan(log_tdmi_data_buffer)], deg=1)
-        ax[idx].plot(np.log10(weight_flatten[band]+1e-6), log_tdmi_data.flatten(), 'k.', label='TDMI samples')
-        ax[idx].plot(np.log10(weight_flatten[band]+1e-6), log_tdmi_data_buffer, 'b.', label='TDMI (above SNR th)')
-        ax[idx].plot(np.log10(weight_set), log_tdmi_data_mean, 'm.', label='TDMI mean')
-        ax[idx].plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
-        ax[idx].set_xlabel(r'$log_{10}$(Connectivity Strength)')
-        weight_flatten_buffer = weight_flatten[band].copy()
-        weight_flatten_buffer[weight_flatten_buffer==0] = np.nan
-        ax[idx].set_title('r(mean) = %5.3f, r = %5.3f' % 
-            (Linear_R2(np.log10(weight_set), log_tdmi_data_mean, pval)**0.5,Linear_R2(np.log10(weight_flatten_buffer), log_tdmi_data_buffer, pval)**0.5),
-            fontsize=16
-        )
-
-    return fig
+    weight_set = np.unique(sc)
+    log_fc_buffer = log_fc.copy()
+    log_fc_buffer[~snr_mask] = np.nan
+    log_fc_mean = np.array([np.nanmean(log_fc_buffer[sc==key]) for key in weight_set])
+    log_fc_mean[weight_set==0]=np.nan
+    weight_set[weight_set==0]=np.nan
+    # pval = np.polyfit(np.log10(weight_set), log_fc_mean, deg=1)
+    pval = np.polyfit(np.log10(weight_set)[~np.isnan(log_fc_mean)], log_fc_mean[~np.isnan(log_fc_mean)], deg=1)
+    # pval = np.polyfit(np.log10(sc+1e-6)[~np.isnan(log_fc_buffer)], log_fc_buffer[~np.isnan(log_fc_buffer)], deg=1)
+    ax.plot(np.log10(sc+1e-6), log_fc.flatten(), 'k.', label='TDMI samples')
+    ax.plot(np.log10(sc+1e-6), log_fc_buffer, 'b.', label='TDMI (above SNR th)')
+    ax.plot(np.log10(weight_set), log_fc_mean, 'm.', label='TDMI mean')
+    ax.plot(np.log10(weight_set), np.polyval(pval, np.log10(weight_set)), 'r', label='Linear Fitting')
+    ax.set_xlabel(r'$log_{10}$(Connectivity Strength)')
+    sc_buffer = sc.copy()
+    sc_buffer[sc_buffer==0] = np.nan
+    ax.set_title(band+'\n r(mean) = %5.3f, r = %5.3f' % 
+        (Linear_R2(np.log10(weight_set), log_fc_mean, pval)**0.5,Linear_R2(np.log10(sc_buffer), log_fc_buffer, pval)**0.5),
+        fontsize=16
+    )
+    return ax
 
 def gen_fc_rank_figure(sc:dict, fc:dict, snr_mask:dict=None, is_log=True, is_interarea=False):
     fig = plt.figure(figsize=(8,15), dpi=100)
@@ -321,52 +359,57 @@ def gen_fc_rank_figure(sc:dict, fc:dict, snr_mask:dict=None, is_log=True, is_int
                           left=0.10, right=0.90, top=0.96, bottom=0.05, 
                           wspace=0.36, hspace=0.30)
     ax = np.array([fig.add_subplot(i) for i in gs])
-    axt = []
-
-    if snr_mask is None:
-        snr_mask = {band:np.ones_like(value, dtype=bool) for band, value in sc.items()}
-
-    for idx, band in enumerate(sc.keys()):
-        axt.append(ax[idx].twinx())
+    for i, band in enumerate(fc.keys()):
         if fc[band] is not None:
-            # setup interarea mask
-            if is_interarea:
-                interarea_mask = (sc[band] != 1.5)
-                sc[band] = sc[band][interarea_mask]
-                fc[band] = fc[band][interarea_mask]
-
-            if is_log:
-                ax[idx].plot(np.log10(np.sort(fc[band])), np.arange(fc[band].shape[0]), '.', ms=0.1)
-                gap_th_val, gap_th_label = find_gap_threshold(np.log10(fc[band]))
-                ax[idx].axvline(gap_th_val, color='r', label=gap_th_label)
-                gap_th_val = 10**gap_th_val
-                axt[idx].hist(np.log10(fc[band][sc[band]>0]),color='orange', alpha=.5, bins=100, label='SC Present')
-                axt[idx].hist(np.log10(fc[band][sc[band]==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
+            if snr_mask is None:
+                ax[i] = gen_fc_rank_figure_single(ax[i], sc[band], fc[band], band, None, is_log, is_interarea)
             else:
-                ax[idx].plot((np.sort(fc[band])), np.arange(fc[band].shape[0]), '.', ms=0.1)
-                gap_th_val, gap_th_label = find_gap_threshold((fc[band]))
-                ax[idx].axvline(gap_th_val, color='r', label=gap_th_label)
-                axt[idx].hist((fc[band][sc[band]>0]),color='orange', alpha=.5, bins=100, label='SC Present')
-                axt[idx].hist((fc[band][sc[band]==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
+                ax[i] = gen_fc_rank_figure_single(ax[i], sc[band], fc[band], band, snr_mask[band], is_log, is_interarea)
 
-            # styling
-            ax[idx].legend(fontsize=10, loc=5)
-            ax[idx].yaxis.get_major_formatter().set_powerlimits((0,1))
-            ax[idx].set_title(band)
-            ax[idx].text(
-                0.05, 0.95, 
-                f'PPV:{np.sum(fc[band][(sc[band]>0)*snr_mask[band]]>gap_th_val)*100./np.sum(fc[band][snr_mask[band]]>gap_th_val):4.1f} %',
-                fontsize=14, transform=ax[idx].transAxes, 
-                verticalalignment='top', horizontalalignment='left'
-            )
-
-    [ax[i].set_ylabel('Ranked MI index') for i in (0,2,4,6)]
+    [axi.set_xlabel('') for axi in ax]
+    [axi.set_ylabel('') for axi in ax]
+    [ax[i].set_ylabel('Counts') for i in (0,2,4,6)]
     [ax[i].set_xlabel('MI value') for i in (5,6)]
-    [axt[i].set_ylabel('Counts') for i in (1,3,5)]
-    handles, labels = axt[0].get_legend_handles_labels()
+    handles, labels = ax[0].get_legend_handles_labels()
     ax[-1].legend(handles, labels, fontsize=16, loc=2)
     ax[-1].axis('off')
     return fig
+
+def gen_fc_rank_figure_single(ax, sc:np.ndarray, fc:np.ndarray, band:str, snr_mask:np.ndarray=None, is_log=True, is_interarea=False):
+    if snr_mask is None:
+        snr_mask = np.ones_like(sc, dtype=bool)
+    # setup interarea mask
+    if is_interarea:
+        interarea_mask = (sc != 1.5)
+        sc = sc[interarea_mask]
+        fc = fc[interarea_mask]
+
+    if is_log:
+        gap_th_val, gap_th_label = find_gap_threshold(np.log10(fc))
+        ax.axvline(gap_th_val, color='r', label=gap_th_label)
+        gap_th_val = 10**gap_th_val
+        ax.hist(np.log10(fc[sc>0]),color='orange', alpha=.5, bins=100, label='SC Present')
+        ax.hist(np.log10(fc[sc==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
+    else:
+        gap_th_val, gap_th_label = find_gap_threshold((fc))
+        ax.axvline(gap_th_val, color='r', label=gap_th_label)
+        ax.hist((fc[sc>0]),color='orange', alpha=.5, bins=100, label='SC Present')
+        ax.hist((fc[sc==0]), color='navy', alpha=.5, bins=100, label='SC Absent')
+
+    # styling
+    ax.legend(fontsize=10, loc=5)
+    ax.yaxis.get_major_formatter().set_powerlimits((0,1))
+    ax.set_title(band)
+    ax.text(
+        0.05, 0.95, 
+        f'PPV:{np.sum(fc[(sc>0)*snr_mask]>gap_th_val)*100./np.sum(fc[snr_mask]>gap_th_val):4.1f} %',
+        fontsize=14, transform=ax.transAxes, 
+        verticalalignment='top', horizontalalignment='left'
+    )
+    ax.set_ylabel('Counts')
+    ax.set_xlabel('MI value')
+    return ax
+
 
 def gen_binary_recon_figures(fname:str, sc_mask:list, fc_mask:dict, roi_mask):
     plt.rcParams['axes.linewidth'] = 0.5
@@ -391,33 +434,3 @@ def gen_binary_recon_figures(fname:str, sc_mask:list, fc_mask:dict, roi_mask):
         plt.tight_layout()
         fig.savefig(fname.replace('.pkl', f'_{idx:d}.png'))
         plt.close()
-
-def plot_union(data:dict, func):
-    filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
-    fig = plt.figure(figsize=(14,6), dpi=200)
-    # plot banded
-    gs = fig.add_gridspec(nrows=2, ncols=3, 
-                        left=0.28, right=0.98, top=0.92, bottom=0.08, 
-                        wspace=0.25, hspace=0.25)
-    ax = np.array([fig.add_subplot(i) for i in gs])
-    for idx, band in enumerate(filter_pool):
-        ax[idx] = func(ax[idx], data[band])
-        ax[idx].set_title(band)
-    [ax[i].set_xlabel('') for i in (0,1,2)]
-
-    # plot raw
-    gs_origin = fig.add_gridspec(nrows=1, ncols=1, left=0.05, right=0.24,
-                                top=0.69, bottom=0.31) 
-    ax = fig.add_subplot(gs_origin[0])
-    ax = func(ax, data['raw'])
-    ax.set_title('raw')
-
-    # handle common legends
-    handles, labels = ax.get_legend_handles_labels()
-    if len(handles) > 0:
-        if len(handles) <= 4:
-            ncol = 1
-        else:
-            ncol = 2
-        ax.legend(handles, labels, loc='center', bbox_to_anchor=(-0.1, -1.0, 1., 1.), fontsize=9, ncol=ncol)
-    return fig

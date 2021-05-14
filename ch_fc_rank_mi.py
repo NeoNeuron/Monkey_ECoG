@@ -13,7 +13,8 @@ if __name__ == '__main__':
     plt.rcParams['ytick.labelsize'] = 12
     from utils.core import EcogTDMI
     from utils.utils import print_log
-    from utils.plot import gen_fc_rank_figure
+    from utils.plot import gen_fc_rank_figure_single
+    from utils.plot_frame import *
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {
         'path': 'tdmi_snr_analysis/',
@@ -45,12 +46,19 @@ if __name__ == '__main__':
     sc, fc = data.get_sc_fc('ch')
     snr_mask = data.get_snr_mask(args.path)
     # ==================================================
+    data_plt = {}
+    for band in data.filters:
+        data_plt[band] = {
+            'fc':fc[band],
+            'sc':sc[band],
+            'band':band,
+            'snr_mask':snr_mask[band],
+        }
     
-    fig = gen_fc_rank_figure(sc, fc, snr_mask)
+    fig = fig_frame52(data_plt, gen_fc_rank_figure_single)
     ax = fig.get_axes()
-
-    [ax[i].set_ylabel('Ranked TDMI index') for i in (0,2,4,6)]
-    [ax[i].set_xlabel(r'$\log_{10}$(TDMI value)') for i in (5,6)]
+    [axi.set_ylabel('Ranked TDMI index') for axi in ax if axi.get_ylabel()]
+    [axi.set_xlabel(r'$\log_{10}$(TDMI value)') for axi in ax if axi.get_xlabel()]
 
     if args.is_interarea:
         fname = f'ch_mi_rank_interarea.png'

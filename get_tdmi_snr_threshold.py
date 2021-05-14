@@ -27,7 +27,7 @@ filter_pool = list(tdmi_data.files)
 
 snr_th_gauss = {}
 snr_th_kmean = {}
-fig, ax = plt.subplots(2, 4, figsize=(18,8), sharex='row')
+fig, ax = plt.subplots(2, 5, figsize=(24,8), sharex=True)
 ax = ax.reshape(-1)
 for i, band in enumerate(filter_pool):
     snr_matrix = compute_snr_matrix(tdmi_data[band])
@@ -36,8 +36,8 @@ for i, band in enumerate(filter_pool):
     (counts, edges) = np.histogram(snr_log, bins=100)
     ax[i].bar(edges[1:], counts, width=edges[1]-edges[0], alpha=.75)
     ax[i].set_title(band)
-    ax[0].set_xlabel(r'$\log_{10}$(SNR)')
-    ax[0].set_ylabel('Counts')
+    ax[i].set_xlabel(r'$\log_{10}$(SNR)')
+    ax[i].set_ylabel('Counts')
 
     try:
         popt, _ = curve_fit(Double_Gaussian, edges[1:], counts, p0=[0,0,0,0,1,1])
@@ -69,6 +69,7 @@ for i, band in enumerate(filter_pool):
     kmean_th = (snr_log[kmeans.labels_==label_large].min() + snr_log[kmeans.labels_==label_small].max())/2
     snr_th_kmean[band] = 10**kmean_th
     ax[i].axvline(kmean_th, color = 'orange', label='kmean th')
+    ax[i].grid(ls='--')
 # plot legend in the empty subplot
 handles, labels = ax[0].get_legend_handles_labels()
 ax[-1].legend(handles, labels, loc=2, fontsize=16)

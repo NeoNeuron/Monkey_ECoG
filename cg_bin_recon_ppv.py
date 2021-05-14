@@ -7,9 +7,21 @@
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
+    import numpy as np
+    from utils.plot_frame import *
     plt.rcParams['lines.linewidth'] = 0.5
-    from utils.plot import plot_ppv_curves
+    from utils.plot import plot_ppv_curve
     path = 'tdmi_snr_analysis/'
     fnames = ['recon_fit_tdmi_CG.npy', 'recon_gap_tdmi_CG.npy', 'recon_roc_tdmi_CG.npy']
-    fnames = [path+fname for fname in fnames]
-    plot_ppv_curves(fnames, path + f'cg_bin_recon_ppv.png')
+    all_data = [np.load(path+fname, allow_pickle=True) for fname in fnames]
+    filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw', 'sub_delta', 'above_delta']
+    data_plt = {}
+    for i, band in enumerate(filters):
+        data_plt[band] = {
+            'roc_data':[ data[:, i, :] for data in all_data ],
+            'colors':['r','royalblue','orange'],
+            'labels':[r'PPV(th$_{fit}$)', r'PPV(th$_{gap}$)', r'PPV(th$_{roc}$)'],
+            'band':band,
+        }
+    fig = fig_frame52(data_plt, plot_ppv_curve)
+    fig.savefig(path + 'cg_bin_recon_ppv.png')

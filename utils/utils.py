@@ -108,7 +108,7 @@ def pkl2md(fname:str, sc_mask:list, fc_mask:dict):
             union_mask = np.zeros_like(sc, dtype=bool)
             for iidx, band in enumerate(fc_mask.keys()):
                 if fc_mask[band] is not None:
-                    if band != 'raw':
+                    if band not in ('raw', 'sub_delta', 'above_delta'):
                         union_mask += fc_mask[band][idx]
                     TP, FP, FN, TN = ROC_matrix(sc, fc_mask[band][idx])
                     CORR = np.corrcoef(sc, fc_mask[band][idx])[0, 1]
