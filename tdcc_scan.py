@@ -9,13 +9,13 @@ shuffle = False
 data_package = np.load(path + 'preprocessed_data.npz', allow_pickle=True)
 N = data_package['stride'][-1]
 
-filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+filters = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw', 'sub_delta', 'above_delta']
 # %%
 n_delay = 3001
 cc_total = {}
 for band in filters:
     data_series = data_package['data_series_'+band]
-    data_series = detrend(data_package['data_series_'+band], axis=0)
+    # data_series = detrend(data_package['data_series_'+band], axis=0)
     L = data_series.shape[0]
     # shuffle data
     if shuffle:

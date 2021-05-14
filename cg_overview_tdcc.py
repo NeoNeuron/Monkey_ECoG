@@ -3,8 +3,6 @@
 # Institute: INS, SJTU
 # Analyze the causal relation calculated from ECoG data.
 
-from utils.plot import gen_sc_fc_figure
-
 
 if __name__ == '__main__':
     import time
@@ -15,6 +13,8 @@ if __name__ == '__main__':
     mpl.rcParams['ytick.labelsize'] = 16
     import matplotlib.pyplot as plt
     from utils.core import EcogTDCC
+    from utils.plot import gen_sc_fc_figure_single
+    from utils.plot_frame import *
     from utils.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'tdmi_snr_analysis/',
@@ -35,14 +35,19 @@ if __name__ == '__main__':
     data.init_data(args.path, 'snr_th_gauss_tdcc.pkl')
     sc, fc = data.get_sc_fc('cg')
     # ==================================================
-
-    fig = gen_sc_fc_figure(fc, sc, None, is_log=False)
+    data_plt = {}
+    for band in data.filters:
+        data_plt[band] = {
+            'fc':fc[band],
+            'sc':sc[band],
+            'band':band,
+            'is_log':False,
+        }
+    fig = fig_frame52(data_plt, gen_sc_fc_figure_single)
     ax = fig.get_axes()
 
-    [axi.set_xlabel('') for axi in ax]
-    [axi.set_ylabel('') for axi in ax]
-    [ax[i].set_ylabel('CC') for i in (0,2,4,6)]
-    [ax[i].set_xlabel(r'$\log_{10}$(SC)') for i in (5,6)]
+    [axi.set_ylabel(axi.get_ylabel().replace('TDMI', 'CC'))
+        for axi in ax if axi.get_ylabel()]
     handles, labels = ax[0].get_legend_handles_labels()
     labels = [item.replace('TDMI', 'CC') for item in labels]
     ax[-1].legend(handles, labels)

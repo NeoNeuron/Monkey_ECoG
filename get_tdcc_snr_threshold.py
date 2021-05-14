@@ -19,7 +19,7 @@ filter_pool = list(tdcc_data.files)
 
 snr_th_gauss = {}
 snr_th_kmean = {}
-fig, ax = plt.subplots(2, 4, figsize=(18,8), sharex='row')
+fig, ax = plt.subplots(2, 5, figsize=(24,8), sharex=True)
 ax = ax.reshape(-1)
 for i, band in enumerate(filter_pool):
     snr_matrix = compute_snr_matrix(np.abs(tdcc_data[band]))
