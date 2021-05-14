@@ -44,11 +44,13 @@ band_freq = {'delta': [1,4],
              'alpha':[9,12],
              'beta':[13,30], 
              'gamma':[31,100],
-             'high_gamma':[55,100]
+             'high_gamma':[55,100],
+             'sub_delta':[0,1],
+             'above_delta':[1,300],
             }
 
 # filter target band
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma']
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'sub_delta', 'above_delta']
 
 if not os.path.isdir(args.path):
     os.makedirs(args.path)
