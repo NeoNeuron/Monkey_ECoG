@@ -280,8 +280,8 @@ def plot_ppv_curves(fnames:str, figname:str):
     ax[-1].legend(handles, labels, loc=1, fontsize=16)
     ax[-1].axis('off')
 
-    [ax[i].set_ylabel('Percentage(%)',fontsize=16) for i in (0, 1)]
-    [ax[i].set_xlabel(r'$\log_{10}$(Weight thresholding)',fontsize=12) for i in [0, 1, 2]]
+    [ax[i].set_ylabel('Percentage(%)',fontsize=16) for i in (0, 5)]
+    [ax[i].set_xlabel(r'$\log_{10}$(Weight thresholding)',fontsize=12) for i in [5,6,7,8,9]]
 
     plt.tight_layout()
     plt.savefig(figname)

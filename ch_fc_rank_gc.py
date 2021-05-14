@@ -13,7 +13,8 @@ if __name__ == '__main__':
     plt.rcParams['ytick.labelsize'] = 12
     from utils.core import EcogGC
     from utils.utils import print_log
-    from utils.plot import gen_fc_rank_figure
+    from utils.plot import gen_fc_rank_figure_single
+    from utils.plot_frame import *
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {
         'path': 'tdmi_snr_analysis/',
@@ -44,12 +45,18 @@ if __name__ == '__main__':
     data.init_data()
     sc, fc = data.get_sc_fc('ch')
     # ==================================================
+    data_plt = {}
+    for band in data.filters:
+        data_plt[band] = {
+            'fc':fc[band],
+            'sc':sc[band],
+            'band':band,
+        }
     
-    fig = gen_fc_rank_figure(sc, fc)
+    fig = fig_frame33(data_plt, gen_fc_rank_figure_single)
     ax = fig.get_axes()
-
-    [ax[i].set_ylabel('Ranked GC index') for i in (0,2,4,6)]
-    [ax[i].set_xlabel(r'$\log_{10}$(GC value)') for i in (5,6)]
+    [axi.set_ylabel('Ranked GC index') for axi in ax if axi.get_ylabel()]
+    [axi.set_xlabel(r'$\log_{10}$(GC value)') for axi in ax if axi.get_xlabel()]
 
     if args.is_interarea:
         fname = f'ch_gc_rank_interarea.png'
