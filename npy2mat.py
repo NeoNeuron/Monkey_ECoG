@@ -6,6 +6,6 @@
 
 from scipy.io import savemat
 import numpy as np
-path = 'data_preprocessing_46_region/'
+path = 'data/'
 data = np.load(path + 'preprocessed_data.npz')
 savemat(path+'preprocessed_data.mat', data)
