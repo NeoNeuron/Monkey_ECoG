@@ -54,11 +54,12 @@ class EcogTDMI(EcogData):
         self.tdmi_mode = 'max'
         self.tdmi_data = np.load(path+dfname, allow_pickle=True)
 
-    def init_data(self, snr_th_path:str=None, fname:str='snr_th.pkl'):
+    def init_data(self, snr_th_path:str=None, fname:str='snr_th.pkl', snr_th:dict=None):
         self.compute_mi_stats()
-        if snr_th_path is not None:
-            with open(snr_th_path+fname, 'rb') as f:
-                snr_th = pickle.load(f)
+        if snr_th is not None or snr_th_path is not None:
+            if snr_th is None:
+                with open(snr_th_path+fname, 'rb') as f:
+                    snr_th = pickle.load(f)
             for band in self.filters:
                 snr_matrix = compute_snr_matrix(self.tdmi_data[band])
                 noise_matrix = compute_noise_matrix(self.tdmi_data[band])
@@ -66,7 +67,14 @@ class EcogTDMI(EcogData):
                 self.fc[band][~snr_mask] = noise_matrix[~snr_mask]
         return self
 
-    def init_data_strict(self, snr_th_path:str=None)->None:
+    def init_data_strict(self, snr_th_path:str=None):
+        """Initialize TDMI data with SNR masking.
+            Set pairs to numpy.nan if not satisfies SNR criteria.
+
+        Args:
+            snr_th_path (str, optional): path of directary for snr_th file.
+                None for no SNR masking. Defaults to None.
+        """
         self.compute_mi_stats()
         if snr_th_path is not None:
             with open(snr_th_path+'snr_th.pkl', 'rb') as f:
@@ -75,20 +83,23 @@ class EcogTDMI(EcogData):
                 snr_matrix = compute_snr_matrix(self.tdmi_data[band])
                 snr_mask = snr_matrix >= snr_th[band]
                 self.fc[band][~snr_mask] = np.nan
+        return self
 
     def compute_mi_stats(self):
         for band in self.filters:
             self.fc[band] = MI_stats(self.tdmi_data[band], self.tdmi_mode)
 
-    def get_snr_mask(self, snr_th_path:str=None, fname:str='snr_th.pkl'):
-        with open(snr_th_path+fname, 'rb') as f:
-            snr_th = pickle.load(f)
-        self.compute_roi_masking('ch')
-        snr_mask = {}
-        for band in self.filters:
-            snr_matrix = compute_snr_matrix(self.tdmi_data[band])
-            snr_mask[band] = snr_matrix >= snr_th[band]
-            snr_mask[band] = snr_mask[band][self.roi_mask]
+    def get_snr_mask(self, snr_th_path:str=None, fname:str='snr_th.pkl', snr_th:dict=None):
+        if snr_th is not None or snr_th_path is not None:
+            if snr_th is None:
+                with open(snr_th_path+fname, 'rb') as f:
+                    snr_th = pickle.load(f)
+            self.compute_roi_masking('ch')
+            snr_mask = {}
+            for band in self.filters:
+                snr_matrix = compute_snr_matrix(self.tdmi_data[band])
+                snr_mask[band] = snr_matrix >= snr_th[band]
+                snr_mask[band] = snr_mask[band][self.roi_mask]
         return snr_mask
 
     def get_delay_matrix(self,):

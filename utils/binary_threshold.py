@@ -43,7 +43,7 @@ def get_linear_fit_pm(x_flatten:dict, y_flatten:dict, snr_mask:dict=None, is_log
             R2[band] = None
     return pval, R2
 
-def find_gap_threshold(data_flatten, criteria:str="auto"):
+def find_gap_threshold(data_flatten, criteria:str="kmean"):
     if criteria == "auto":
         diff_toggle, gauss_toggle, kmean_toggle = True, False, False
     elif criteria == "diff":
@@ -132,15 +132,15 @@ def get_fit_threshold(weight_flatten:dict, prediction_flatten:dict, w_thresholds
             fit_th[band] = None
     return fit_th
 
-def get_gap_threshold(data_flatten:dict, is_log=True):
+def get_gap_threshold(data_flatten:dict, is_log:bool=True, **kwargs):
     gap_th = {}
     for band,data_flatten_band in data_flatten.items():
         if data_flatten_band is not None:
             if is_log:
-                gap_th[band],_ = find_gap_threshold(np.log10(data_flatten_band))
+                gap_th[band],_ = find_gap_threshold(np.log10(data_flatten_band), **kwargs)
                 gap_th[band] = 10**gap_th[band]
             else:
-                gap_th[band],_ = find_gap_threshold(data_flatten_band)
+                gap_th[band],_ = find_gap_threshold(data_flatten_band, **kwargs)
         else:
             gap_th[band] = None
     return gap_th
