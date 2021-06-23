@@ -44,14 +44,14 @@ fc_tdmi_res[nan_mask*new_mask] = np.abs(fc_tdmi_res[nan_mask*new_mask] - 10**np.
 gen_sc_fc_figure_new(ax[0], fc_tdmi_res, sc_tdmi[band], new_mask,)
 
 
-new_mask = np.ones_like(new_mask, dtype=bool)
-new_mask[sc_gc[band]==0] = False
-new_mask[sc_gc[band]==1.5] = False
+# new_mask = np.ones_like(new_mask, dtype=bool)
+# new_mask[sc_gc[band]==0] = False
+# new_mask[sc_gc[band]==1.5] = False
 fc_gc_res = fc_gc[band].copy()
 nan_mask = ~np.isnan(np.log10(fc_gc_res))
 pval = np.polyfit(d_metric[nan_mask], np.log10(fc_gc_res[nan_mask]), deg=1)
 fc_gc_res[nan_mask] = np.abs(fc_gc_res[nan_mask] - 10**np.polyval(pval, d_metric[nan_mask]))
-gen_sc_fc_figure_new(ax[1], fc_gc_res, sc_gc[band], new_mask)
+gen_sc_fc_figure_new(ax[1], fc_gc_res, sc_gc[band], new_mask,)
 
 for axi, labeli in zip(ax, ('TDMI', 'GC')):
     axi.set_title(axi.get_title().replace(band, labeli))
@@ -148,9 +148,9 @@ d_metric = 1./d_mat[band]
 
 gen_sc_fc_figure_3d(ax[0], fc_tdmi[band], sc_tdmi[band], d_metric, new_mask,)
 
-new_mask = np.ones_like(new_mask, dtype=bool)
-new_mask[sc_gc[band]==0] = False
-new_mask[sc_gc[band]==1.5] = False
+# new_mask = np.ones_like(new_mask, dtype=bool)
+# new_mask[sc_gc[band]==0] = False
+# new_mask[sc_gc[band]==1.5] = False
 gen_sc_fc_figure_3d(ax[1], fc_gc[band], sc_gc[band], d_metric, new_mask,)
 
 for axi, labeli in zip(ax, ('TDMI', 'GC')):

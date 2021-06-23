@@ -39,7 +39,7 @@ new_mask = snr_mask_tdmi[band].copy()
 # new_mask[sc_tdmi[band]==0] = False
 # new_mask[sc_tdmi[band]==1.5] = False
 gen_sc_fc_figure(ax[0], fc_tdmi[band], 1./d_mat[band], new_mask, is_log='y')
-gen_sc_fc_figure(ax[1], fc_gc[band],   1./d_mat[band],           is_log='y')
+gen_sc_fc_figure(ax[1], fc_gc[band],   1./d_mat[band], new_mask, is_log='y')
 
 for axi, labeli in zip(ax, ('TDMI', 'GC')):
     axi.set_title(axi.get_title().replace(band, labeli))

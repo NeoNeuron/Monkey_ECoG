@@ -135,7 +135,7 @@ if __name__ == '__main__':
     # new_mask[sc_tdmi[band]==0] = False
     # new_mask[sc_tdmi[band]==1.5] = False
     gen_sc_fc_figure_new(ax[0], fc_tdmi[band], sc_tdmi[band], new_mask,)
-    gen_sc_fc_figure_new(ax[1], fc_gc[band], sc_gc[band],)
+    gen_sc_fc_figure_new(ax[1], fc_gc[band], sc_gc[band], new_mask,)
 
     for axi, labeli in zip(ax, ('TDMI', 'GC')):
         axi.set_title(labeli+' : '+axi.get_title())
