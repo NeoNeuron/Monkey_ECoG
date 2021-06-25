@@ -1,7 +1,7 @@
 #! /usr/bin/python 
 # Author: Kai Chen
 
-# Make the Figure 5 for paper: Graph analysis
+# Make the Figure 5 for paper: Shortest Path Length Anaylsis
 
 # %%
 from utils.core import *
@@ -61,6 +61,7 @@ fc_zscore = np.log10(fc_tdmi[band])
 sc_zscore = np.log10(sc_tdmi[band]+1e-6)
 normalize = lambda x: (x-x.mean())/x.std()
 diff = normalize(fc_zscore)-normalize(sc_zscore)
+vmax = np.abs(diff).max()
 
 @spines_formater
 @axis_log_formater(axis='y')
@@ -129,6 +130,26 @@ ax[2].invert_yaxis()
 ax[2].axis("off")
 
 fig.savefig(path+'Figure_5-3.png')
+# %%
+shortest_path_mask = 1./con_2d - shortest_path_length_array 
+shortest_path_mask = (shortest_path_mask[roi_mask] < 10000)
+fig, ax = plt.subplots(1,2,figsize=(9,4), dpi=400)
+
+band = 'raw'
+# new_mask = np.ones_like(snr_mask_tdmi[band])
+new_mask = snr_mask_tdmi[band].copy() * shortest_path_mask.copy()
+new_mask[sc_tdmi[band]==0] = False
+new_mask[sc_tdmi[band]==1.5] = False
+gen_sc_fc_figure_new(ax[0], fc_tdmi[band], sc_tdmi[band], new_mask,)
+gen_sc_fc_figure_new(ax[1], fc_gc[band], sc_gc[band], new_mask,)
+
+for axi, labeli in zip(ax, ('TDMI', 'GC')):
+    axi.set_title(labeli+' : '+axi.get_title())
+    # axi.set_xlim(-5.5, 0)
+    axi.set_ylabel(labeli)
+fig.suptitle(band)
+
+fig.savefig(path+'Figure_5-3-1.png')
 
 # %%
 fig, ax = plt.subplots(1,2, figsize=(10,4), dpi=400)

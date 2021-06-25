@@ -9,7 +9,6 @@ from utils.core import *
 from utils.utils import Linear_R2
 import numpy as np
 import matplotlib.pyplot as plt
-import networkx as nx
 import functools
 import pickle
 
@@ -122,12 +121,7 @@ path = 'image/'
 data_tdmi = EcogTDMI()
 data_tdmi.init_data(path, 'snr_th_kmean_tdmi.pkl')
 sc_tdmi, fc_tdmi = data_tdmi.get_sc_fc('ch')
-snr_mask_tdmi = data_tdmi.get_snr_mask(path, 'snr_th_kmean_tdmi.pkl')
 roi_mask = data_tdmi.roi_mask.copy()
-
-data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-dist_mat = data_package['d_matrix']
-d_mat = {band: dist_mat[roi_mask] for band in data_tdmi.filters}
 
 data_gc = EcogGC()
 data_gc.init_data()
@@ -137,19 +131,17 @@ def get_degree(con, roi_mask):
 	degree = np.zeros(roi_mask.shape[0])
 	con_2d = np.zeros_like(roi_mask, dtype=float)
 	con_2d[roi_mask] = con
-	con_2d = (con_2d+con_2d.T)/2
 	con_2d[con_2d<=0] = 0
-	degree = con_2d.sum(0)
+	degree = con_2d.sum(1)
 	return degree
 
 def get_clustering(con, roi_mask):
 	clustering_coef = np.zeros(roi_mask.shape[0])
 	con_2d = np.zeros_like(roi_mask, dtype=float)
 	con_2d[roi_mask] = con
-	con_2d = (con_2d+con_2d.T)/2
 	con_2d[con_2d<=0] = 0
 	for i in range(roi_mask.shape[0]):
-		mask_i = con_2d[i]>0
+		mask_i = con_2d[:, i]>0
 		buffer = con_2d[mask_i, :][:, mask_i]
 		clustering_coef[i] = buffer.sum()/(buffer.shape[0]*(buffer.shape[0]-1.0))
 	return clustering_coef
