@@ -1,7 +1,13 @@
 #! /usr/bin/python 
 # Author: Kai Chen
 
-# Make the Figure 5 for paper: Shortest Path Length Anaylsis
+# Make the Figure 5 for paper: Shortest Path Distance Anaylsis
+# * Figure 5-1   : Shortest path distance v.s. TDMI
+# * Figure 5-2   : Direct distance v.s. Shortest path distance v.s. diff(TDMI-SC)
+# * Figure 5-3   : Sorted colormap for diff(TDMI-SC)
+# * Figure 5-3-1 : SC v.s. TDMI masked by diff(TDMI-SC)
+# * Figure 5-4   : Direct distance v.s. Shortest path distance v.s. diff(GC-SC)
+# * Figure 5-5   : Sorted colormap for diff(GC-SC)
 
 # %%
 from utils.core import *
@@ -41,9 +47,8 @@ fig, ax = plt.subplots(1,2, figsize=(10,4), dpi=400)
 band = 'raw'
 # new_mask = np.ones_like(snr_mask_tdmi[band])
 new_mask = snr_mask_tdmi[band].copy()
-new_mask *= (sc_tdmi[band]!=1.5)
-# new_mask[sc_tdmi[band]==0] = False
-# new_mask[sc_tdmi[band]==1.5] = False
+new_mask[sc_tdmi[band]==0] = False
+new_mask[sc_tdmi[band]==1.5] = False
 gen_sc_fc_figure_new(ax[0], fc_tdmi[band], 1./shortest_path_length_array[roi_mask], new_mask,)
 gen_sc_fc_figure_new(ax[1], fc_gc[band], 1./shortest_path_length_array[roi_mask], new_mask,)
 
@@ -132,7 +137,7 @@ ax[2].axis("off")
 fig.savefig(path+'Figure_5-3.png')
 # %%
 shortest_path_mask = 1./con_2d - shortest_path_length_array 
-shortest_path_mask = (shortest_path_mask[roi_mask] < 10000)
+shortest_path_mask = (shortest_path_mask[roi_mask] < 10)
 fig, ax = plt.subplots(1,2,figsize=(9,4), dpi=400)
 
 band = 'raw'
@@ -154,6 +159,8 @@ fig.savefig(path+'Figure_5-3-1.png')
 # %%
 fig, ax = plt.subplots(1,2, figsize=(10,4), dpi=400)
 band = 'raw'
+new_mask = snr_mask_tdmi[band].copy()
+new_mask *= (sc_tdmi[band]!=1.5)
 fc_zscore = np.log10(fc_gc[band])
 sc_zscore = np.log10(sc_gc[band]+1e-6)
 normalize = lambda x: (x-x.mean())/x.std()
@@ -163,9 +170,9 @@ diff = normalize(fc_zscore)-normalize(sc_zscore)
 @axis_log_formater(axis='y')
 @axis_log_formater(axis='x')
 def gen_sp_p(ax):
-    cax = ax.scatter(np.log10(1./con_2d[roi_mask]), np.log10(shortest_path_length_array[roi_mask]), 
-        c=diff, vmax=vmax, vmin=-vmax, cmap=plt.cm.RdBu_r,
-        s=5, alpha=.5,zorder=10,
+    cax = ax.scatter(np.log10(1./con_2d[roi_mask])[new_mask], np.log10(shortest_path_length_array[roi_mask])[new_mask], 
+        c=diff[new_mask], vmax=vmax, vmin=-vmax, cmap=plt.cm.RdBu_r,
+        s=5, alpha=1,zorder=10,
     )
     plt.colorbar(cax, ax=ax)
     ax.set_xlabel('Direct distance')
@@ -178,7 +185,7 @@ gen_sp_p(ax[0])
 @spines_formater
 def gen_sc_fc_figure(*args, **kwargs):
     return gen_sc_fc_figure_new.__wrapped__.__wrapped__(*args, **kwargs)
-gen_sc_fc_figure(ax[1], diff, 1./(con_2d[roi_mask]*shortest_path_length_array[roi_mask]), c=diff, is_log='x')
+gen_sc_fc_figure(ax[1], diff[new_mask], 1./(con_2d[roi_mask]*shortest_path_length_array[roi_mask])[new_mask], c=diff[new_mask], is_log='x')
 ax[1].set_xlabel('Indirect path factor')
 ax[1].set_ylabel('Diff. (FC-SC)')
 
@@ -194,7 +201,7 @@ diff_mat_reorder = diff_mat.copy()
 diff_mat_reorder = diff_mat_reorder[diff_order, :]
 diff_mat_reorder = diff_mat_reorder[:, diff_order]
 
-fig, ax = plt.subplots(1,3,dpi=400, figsize=(14,4))
+fig, ax = plt.subplots(1,3,dpi=300, figsize=(14,4))
 vmax = np.abs(diff).max()
 plt.cm.RdBu_r(diff)
 cax=ax[0].scatter(normalize(sc_zscore), normalize(fc_zscore), c=diff, vmax=vmax, vmin=-vmax, cmap=plt.cm.RdBu_r)

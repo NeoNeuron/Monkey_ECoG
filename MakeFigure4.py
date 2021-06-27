@@ -149,14 +149,16 @@ def get_clustering(con, roi_mask):
 @spines_formater
 @exp_formatter(axis='y')
 @exp_formatter(axis='x')
-def gen_sc_fc_feature_comp(ax, sc_feature, fc_feature, label='feature'):
-    pval, r = linfit_range(sc_feature, fc_feature, )
+def gen_sc_fc_feature_comp(ax, sc_feature, fc_feature, label='feature', fit_range=None):
+    pval, r = linfit_range(sc_feature, fc_feature, fit_range)
     x_range = np.linspace(sc_feature.min(), sc_feature.max(), 10)
     ax.plot(sc_feature, fc_feature, '.', color='gray', ms=10)
     ax.plot(x_range, np.polyval(pval, x_range), color='red')
     ax.set_xlabel('Structural %s'%label.capitalize())
     ax.set_ylabel('Functional %s'%label.capitalize())
     ax.set_title(f'r={r:5.3f}')
+    if fit_range is not None:
+        ax.set_xlim(*fit_range)
     return ax
 #%%
 with open('image/th_gap_tdmi.pkl', 'rb') as f:
@@ -167,27 +169,28 @@ with open('image/th_gap_gc.pkl', 'rb') as f:
 band = 'raw'
 fig, ax = plt.subplots(1,2, figsize=(10,4), dpi=400)
 sc_tmp = sc_tdmi[band].copy()
-plot_binary_flag = True
+plot_binary_flag = False
 
 if plot_binary_flag:
     sc_tmp = (sc_tmp > 1e-2).astype(float)
     fc_tdmi_tmp = (fc_tdmi[band]>fc_tdmi_th[band]).astype(float)
     fc_gc_tmp = (fc_gc[band]>fc_gc_th[band]).astype(float)
+    fit_range = None
 else:
     sc_tmp[sc_tmp==1.5] = 0
     sc_tmp = sc_tmp/sc_tmp.max()
     fc_tdmi_tmp = fc_tdmi[band]/fc_tdmi_th[band].max()
     fc_gc_tmp = fc_gc[band]/fc_gc_th[band].max()
+    fit_range = (0,6)
 
 sc_degree = get_degree(sc_tmp, roi_mask)
 fc_degree = get_degree(fc_tdmi_tmp, roi_mask)
-gen_sc_fc_feature_comp(ax[0], sc_degree, fc_degree, 'degree')
+gen_sc_fc_feature_comp(ax[0], sc_degree, fc_degree, 'degree', fit_range=fit_range)
 fc_degree = get_degree(fc_gc_tmp, roi_mask)
-gen_sc_fc_feature_comp(ax[1], sc_degree, fc_degree, 'degree')
+gen_sc_fc_feature_comp(ax[1], sc_degree, fc_degree, 'degree', fit_range=fit_range)
 for i, label in enumerate(('TDMI', 'GC')):
     ax[i].set_title(label+' : '+ax[i].get_title())
-    # ax[i].set_xlim(0,7)
-
+plt.tight_layout()
 fig.savefig(path+'Figure_4-1.png')
 
 #%%
@@ -202,7 +205,7 @@ fc_cluster = get_clustering(fc_gc_tmp, roi_mask)
 gen_sc_fc_feature_comp(ax[1], sc_cluster, fc_cluster, 'clustering')
 for i, label in enumerate(('TDMI', 'GC')):
     ax[i].set_title(label+' : '+ax[i].get_title())
-
+plt.tight_layout()
 fig.savefig(path+'Figure_4-2.png')
 # %%
 @axis_log_formater(axis='x')
