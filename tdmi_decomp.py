@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-from utils.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix
-from utils.utils import Linear_R2
+from fcpy.tdmi import MI_stats, compute_snr_matrix, compute_noise_matrix
+from fcpy.utils import Linear_R2
 
 path = 'tdmi_snr_analysis/'
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)

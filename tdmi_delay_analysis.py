@@ -22,10 +22,10 @@ def plot_delay_hist(ax, data:np.ndarray, bins=100):
     return ax
 
 if __name__ == '__main__':
-    from utils.plot import plot_union
+    from fcpy.plot_frame import plot_union
     path = "data_preprocessing_46_region/"
     data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-    data = utils.core.EcogTDMI()
+    data = fcpy.core.EcogTDMI()
     delay_matrix = data.get_delay_matrix()
     stride = data_package['stride']
     n_region = stride.shape[0]-1

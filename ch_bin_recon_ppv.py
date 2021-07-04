@@ -8,9 +8,9 @@
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import numpy as np
-    from utils.plot_frame import *
+    from fcpy.plot_frame import *
     plt.rcParams['lines.linewidth'] = 0.5
-    from utils.plot import plot_ppv_curve
+    from fcpy.plot import plot_ppv_curve
     path = 'tdmi_snr_analysis/'
     fnames = ['recon_fit_tdmi.npy', 'recon_gap_tdmi.npy', 'recon_roc_tdmi.npy']
     all_data = [np.load(path+fname, allow_pickle=True) for fname in fnames]

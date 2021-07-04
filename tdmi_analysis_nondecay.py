@@ -10,7 +10,7 @@ from scipy.signal import detrend
 from scipy.stats import ks_2samp
 import pandas as pd
 import joypy
-from utils.filter import filter
+from fcpy.filter import filter
 
 def ridgeplot_detrend(time_series):
     """Ridgeline plot for single time series.
@@ -36,7 +36,7 @@ def ridgeplot_detrend(time_series):
 path = 'tdmi_snr_analysis/'
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
 
-data = utils.core.EcogTDMI()
+data = fcpy.core.EcogTDMI()
 data.init_data(path, fname='snr_th_kmean_tdmi.pkl')
 sc, fc = data.get_sc_fc('ch')
 snr_mask = data.get_snr_mask(path, 'snr_th_kmean_tdmi.pkl')

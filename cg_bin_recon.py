@@ -7,8 +7,8 @@
 
 if __name__ == '__main__':
     import pickle
-    from utils.core import EcogTDMI
-    from utils.binary_threshold import gen_bin_recon
+    from fcpy.core import EcogTDMI
+    from fcpy.binary_threshold import gen_bin_recon
     path = 'tdmi_snr_analysis/'
     # Load SC and FC data
     # ==================================================

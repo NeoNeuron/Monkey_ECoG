@@ -4,7 +4,7 @@
 # Make the Figure 2 for paper: Relationship between 1/distance and FC(TDMI).
 
 # %%
-from utils.core import *
+from fcpy.core import *
 import numpy as np
 import matplotlib.pyplot as plt
 from MakeFigure1 import gen_sc_fc_figure_new, axis_log_formater, spines_formater

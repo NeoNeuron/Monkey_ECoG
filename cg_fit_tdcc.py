@@ -8,9 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.size']=15
 plt.rcParams['axes.labelsize'] = 15
-from utils.core import EcogTDCC
-from utils.utils import print_log
-from utils.plot import gen_mi_s_figure
+from fcpy.core import EcogTDCC
+from fcpy.utils import print_log
+from fcpy.plot import gen_mi_s_figure
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 arg_default = {'path': 'data_preprocessing_46_region/',
                 }

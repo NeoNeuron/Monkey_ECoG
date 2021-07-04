@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.tdmi import compute_snr_matrix, compute_delay_matrix
+from fcpy.tdmi import compute_snr_matrix, compute_delay_matrix
 
 path = 'tdmi_snr_analysis/'
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)

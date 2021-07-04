@@ -4,7 +4,7 @@
 # Make the Figure 3 for paper: Relationship between SC and Residual.
 
 # %%
-from utils.core import *
+from fcpy.core import *
 import numpy as np
 import matplotlib.pyplot as plt
 from MakeFigure1 import axis_log_formater, gen_sc_fc_figure_new

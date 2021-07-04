@@ -39,7 +39,7 @@ def ScanTDMI(data_series:np.ndarray, delay_len:int=10, pn:int=None)->np.ndarray:
 if __name__ == '__main__':
   import time
   from minfo.mi_float import tdmi as TDMI # don't use tdmi_omp
-  from utils.utils import print_log
+  from fcpy.utils import print_log
   import os
   from scipy.signal import detrend
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter

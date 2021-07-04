@@ -37,7 +37,7 @@ args = parser.parse_args()
 #  high gamma: 55-100 Hz
 #  Pay specific attention to alpha and high gamma band;
 
-from utils.filter import filter
+from fcpy.filter import filter
 
 band_freq = {'delta': [1,4],
              'theta':[5,8],

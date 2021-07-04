@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 # plt.rcParams['axes.linewidth']=0.5
 plt.rcParams['lines.linewidth']=0.1
-from utils.tdmi import compute_tdmi_full, compute_delay_matrix
-from utils.tdmi import compute_snr_matrix
+from fcpy.tdmi import compute_tdmi_full, compute_delay_matrix
+from fcpy.tdmi import compute_snr_matrix
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
 path = 'data_preprocessing_46_region/'

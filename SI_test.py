@@ -10,7 +10,7 @@ import time
 
 if __name__ == '__main__':
   from minfo import mutual_info
-  from utils.utils import print_log
+  from fcpy.utils import print_log
   from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
   arg_default = {'path': 'data/'}
   parser = ArgumentParser(prog='tdmi_scan_significant_test',

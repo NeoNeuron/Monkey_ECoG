@@ -1,6 +1,6 @@
 if __name__ == '__main__':
-    from utils.binary_threshold import *
-    from utils.core import EcogGC
+    from fcpy.binary_threshold import *
+    from fcpy.core import EcogGC
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     import numpy as np
     import pickle

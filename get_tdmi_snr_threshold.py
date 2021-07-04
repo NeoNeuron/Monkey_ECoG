@@ -4,10 +4,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.size'] = 14
-from utils.tdmi import compute_snr_matrix
+from fcpy.tdmi import compute_snr_matrix
 import pickle
 from scipy.optimize import curve_fit
-from utils.utils import Gaussian, Double_Gaussian
+from fcpy.utils import Gaussian, Double_Gaussian
 from sklearn.cluster import KMeans
 
 path = 'tdmi_snr_analysis/'

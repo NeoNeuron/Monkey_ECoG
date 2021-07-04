@@ -11,10 +11,10 @@ if __name__ == '__main__':
     plt.rcParams['axes.labelsize'] = 16
     plt.rcParams['xtick.labelsize'] = 16
     plt.rcParams['ytick.labelsize'] = 16
-    from utils.core import EcogTDMI
-    from utils.plot import gen_causal_distribution_figure
-    from utils.utils import print_log
-    from utils.binary_threshold import find_gap_threshold
+    from fcpy.core import EcogTDMI
+    from fcpy.plot import gen_causal_distribution_figure
+    from fcpy.utils import print_log
+    from fcpy.binary_threshold import find_gap_threshold
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {
         'path': 'tdmi_snr_analysis/',

@@ -6,7 +6,7 @@
 # *   - All normalized to 0-1 valued matrix;
 
 if __name__ == '__main__':
-    from utils.utils import pkl2md
+    from fcpy.utils import pkl2md
     import pickle
     path = 'tdmi_snr_analysis/'
     # Load SC and FC data

@@ -4,8 +4,8 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 plt.rcParams['font.size']=20
-from utils.core import EcogTDMI, EcogCC
-from utils.utils import linear_fit
+from fcpy.core import EcogTDMI, EcogCC
+from fcpy.utils import linear_fit
 # %%
 
 path = 'data/'

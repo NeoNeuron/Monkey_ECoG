@@ -2,8 +2,8 @@
 # pairs with sufficient SNR value are counted.
 
 if __name__ == '__main__':
-    from utils.binary_threshold import *
-    from utils.core import EcogTDMI
+    from fcpy.binary_threshold import *
+    from fcpy.core import EcogTDMI
     import numpy as np
     import pickle
     path='tdmi_snr_analysis/'

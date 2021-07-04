@@ -11,9 +11,9 @@ if __name__ == '__main__':
     plt.rcParams['axes.labelsize'] = 16
     plt.rcParams['xtick.labelsize'] = 16
     plt.rcParams['ytick.labelsize'] = 16
-    from utils.core import EcogCC
-    from utils.utils import print_log
-    from utils.plot import gen_causal_distribution_figure
+    from fcpy.core import EcogCC
+    from fcpy.utils import print_log
+    from fcpy.plot import gen_causal_distribution_figure
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'data_preprocessing_46_region/',
                    'filters': ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw'],

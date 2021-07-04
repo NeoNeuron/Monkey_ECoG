@@ -5,8 +5,8 @@
 
 # %%
 from MakeFigure1 import axis_log_formater, spines_formater
-from utils.core import *
-from utils.utils import Linear_R2
+from fcpy.core import *
+from fcpy.utils import Linear_R2
 import numpy as np
 import matplotlib.pyplot as plt
 import functools

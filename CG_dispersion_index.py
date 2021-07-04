@@ -4,7 +4,7 @@
 # Analyze the causal relation calculated from ECoG data.
 
 import numpy as np
-from utils.tdmi import MI_stats
+from fcpy.tdmi import MI_stats
 
 def CG(tdmi_data:np.ndarray, stride:np.ndarray)->np.ndarray:
     """Compute the coarse-grained average of 

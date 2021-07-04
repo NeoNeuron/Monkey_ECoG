@@ -9,8 +9,8 @@ if __name__ == '__main__':
     import matplotlib as mpl 
     mpl.rcParams['font.size']=20
     mpl.rcParams['axes.labelsize']=25
-    from utils.plot import gen_auc_threshold_figure
-    from utils.utils import print_log
+    from fcpy.plot import gen_auc_threshold_figure
+    from fcpy.utils import print_log
     import pickle
     path='tdmi_snr_analysis/'
 

@@ -8,7 +8,7 @@
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     plt.rcParams['lines.linewidth'] = 0.5
-    from utils.plot import plot_ppv_curves
+    from fcpy.plot import plot_ppv_curves
     path = 'tdmi_snr_analysis/'
     fnames = ['recon_fit_gc_CG.npy', 'recon_gap_gc_CG.npy', 'recon_roc_gc_CG.npy']
     fnames = [path+fname for fname in fnames]

@@ -11,7 +11,7 @@ plt.rcParams['axes.labelsize'] = 16
 plt.rcParams['xtick.labelsize'] = 12
 plt.rcParams['ytick.labelsize'] = 12
 # plt.rcParams['backend'] = 'TkAgg'
-from utils.core import EcogTDMI
+from fcpy.core import EcogTDMI
 
 def gen_sc_fc_figure(tdmi_flatten:dict, 
                      weight_flatten:dict,

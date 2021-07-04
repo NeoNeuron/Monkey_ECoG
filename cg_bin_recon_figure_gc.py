@@ -5,7 +5,7 @@
 # *   - FC recon matrix masked by 3 types of FC thresholding mask;
 # *   - All normalized to 0-1 valued matrix;
 
-from utils.plot import gen_binary_recon_figures
+from fcpy.plot import gen_binary_recon_figures
 
 if __name__ == '__main__':
     import pickle

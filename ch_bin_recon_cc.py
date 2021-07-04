@@ -6,8 +6,8 @@
 # *   - All normalized to 0-1 valued matrix;
 
 if __name__ == '__main__':
-    from utils.core import EcogCC
-    from utils.binary_threshold import gen_bin_recon
+    from fcpy.core import EcogCC
+    from fcpy.binary_threshold import gen_bin_recon
     import pickle
     path = 'tdmi_snr_analysis/'
     # Load SC and FC data

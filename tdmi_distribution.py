@@ -4,7 +4,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.size'] = 14
-from utils.tdmi import *
+from fcpy.tdmi import *
 import pickle
 
 path = 'tdmi_snr_analysis/'

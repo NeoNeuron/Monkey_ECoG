@@ -1,5 +1,5 @@
 import numpy as np
-from utils.cluster import get_cluster_id, get_sorted_mat
+from fcpy.cluster import get_cluster_id, get_sorted_mat
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

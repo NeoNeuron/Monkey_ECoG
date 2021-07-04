@@ -10,10 +10,10 @@ import pickle
 import matplotlib.pyplot as plt
 plt.rcParams['font.size']=20
 plt.rcParams['axes.labelsize']=25
-from utils.core import EcogCC
-from utils.utils import print_log
-from utils.roc import scan_auc_threshold
-from utils.plot import gen_auc_threshold_figure
+from fcpy.core import EcogCC
+from fcpy.utils import print_log
+from fcpy.roc import scan_auc_threshold
+from fcpy.plot import gen_auc_threshold_figure
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 arg_default = {'path': 'data_preprocessing_46_region/',
                 'order': 6,

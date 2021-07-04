@@ -6,7 +6,7 @@
 # *   - TDMI recon matrix masked by corresponding TDMI threshold;
 # *   - All normalized to 0-1 valued matrix;
 # *   - plot the mean TDMI curves over different band and weight range.
-from utils.tdmi import compute_tdmi_full
+from fcpy.tdmi import compute_tdmi_full
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt

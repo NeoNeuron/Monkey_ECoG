@@ -8,9 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt 
 plt.rcParams['font.size']=15
 plt.rcParams['axes.labelsize'] = 15
-from utils.core import EcogTDMI
-from utils.plot import gen_mi_s_figure
-from utils.utils import print_log
+from fcpy.core import EcogTDMI
+from fcpy.plot import gen_mi_s_figure
+from fcpy.utils import print_log
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 arg_default = {
     'path': 'tdmi_snr_analysis/',

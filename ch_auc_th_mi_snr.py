@@ -10,10 +10,10 @@ if __name__ == '__main__':
     import matplotlib as mpl 
     mpl.rcParams['font.size']=20
     mpl.rcParams['axes.labelsize']=25
-    from utils.roc import scan_auc_threshold
-    from utils.plot import gen_auc_threshold_figure
-    from utils.utils import print_log
-    from utils.core import EcogTDMI
+    from fcpy.roc import scan_auc_threshold
+    from fcpy.plot import gen_auc_threshold_figure
+    from fcpy.utils import print_log
+    from fcpy.core import EcogTDMI
     import pickle
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'tdmi_snr_analysis/',

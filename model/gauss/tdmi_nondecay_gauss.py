@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from minfo.mi_float import tdmi_omp as TDMI
 from scipy.signal import detrend
 from scipy.stats import ks_2samp
-from filter import filter
+from fcpy.filter import filter
 
 # %%
 def tdcc(x, y, n_delay):
@@ -40,7 +40,8 @@ for i in range(2):
     ax.plot(x[i], alpha=1, label=f"neuron {i:d}")
 
 # add trend
-trend = np.sin(np.arange(T)/T*2*np.pi)
+trend = np.arange(T)/T
+# trend = np.sin(np.arange(T)/T*2*np.pi)
 trend -= trend.mean()
 # trend = np.random.randn(T)*.15
 x_trend = x.copy()
@@ -104,7 +105,7 @@ tdcc_test_trend[delays-1:] =       tdcc(x_trend[0, :],x_trend[1, :],delays)
 tdcc_test_trend[:delays] = np.flip(tdcc(x_trend[1, :],x_trend[0, :],delays))
 
 for i in range(x_trend.shape[0]):
-    x_trend[i,:] = filter(x_trend[i,:], 'above_delta', fs=1000)
+    x_trend[i,:] = filter(x_trend[i,:], 'beta', fs=1000)
 tdmi_test_trend_band = np.zeros(delays*2-1)
 tdmi_test_trend_band[delays-1:] =       TDMI(x_trend[0, :],x_trend[1, :],delays)
 tdmi_test_trend_band[:delays] = np.flip(TDMI(x_trend[1, :],x_trend[0, :],delays))

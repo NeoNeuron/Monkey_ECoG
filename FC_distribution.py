@@ -1,8 +1,8 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.core import EcogTDMI, EcogGC, EcogCC
-from utils.plot import plot_union
+from fcpy.core import EcogTDMI, EcogGC, EcogCC
+from fcpy.plot_frame import plot_union
 
 # %%
 data = EcogTDMI()

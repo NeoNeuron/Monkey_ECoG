@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt 
 plt.rcParams['axes.linewidth']=0.5
 plt.rcParams['lines.linewidth']=0.1
-from utils.tdmi import compute_delay_matrix, compute_snr_matrix, get_sparsity_threshold
-from cluster import get_cluster_id, get_sorted_mat
+from fcpy.tdmi import compute_delay_matrix, compute_snr_matrix, get_sparsity_threshold
+from fcpy.cluster import get_cluster_id, get_sorted_mat
 
 path = 'data_preprocessing_46_region/'
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)

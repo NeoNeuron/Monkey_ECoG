@@ -4,8 +4,8 @@
 # Make the Figure 1 for paper: Relationship between SC and FC(TDMI).
 
 # %%
-from utils.core import *
-from utils.utils import Linear_R2
+from fcpy.core import *
+from fcpy.utils import Linear_R2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, AutoMinorLocator

@@ -9,9 +9,9 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt 
     plt.rcParams['font.size']=15
     plt.rcParams['axes.labelsize'] = 15
-    from utils.core import EcogGC
-    from utils.plot import gen_mi_s_figure
-    from utils.utils import print_log
+    from fcpy.core import EcogGC
+    from fcpy.plot import gen_mi_s_figure
+    from fcpy.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'data_preprocessing_46_region/',
                     'order': 6,

@@ -7,7 +7,7 @@
 
 if __name__ == '__main__':
     import pickle
-    from utils.plot import gen_binary_recon_figures
+    from fcpy.plot import gen_binary_recon_figures
     path = 'tdmi_snr_analysis/'
     # ==================================================
     fnames = ['recon_fit_tdcc.pkl', 'recon_roc_tdcc.pkl', 'recon_gap_tdcc.pkl']

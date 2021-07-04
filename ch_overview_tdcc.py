@@ -12,10 +12,10 @@ if __name__ == '__main__':
     mpl.rcParams['xtick.labelsize'] = 16
     mpl.rcParams['ytick.labelsize'] = 16
     import matplotlib.pyplot as plt
-    from utils.core import EcogTDCC
-    from utils.plot import gen_sc_fc_figure_single
-    from utils.plot_frame import *
-    from utils.utils import print_log
+    from fcpy.core import EcogTDCC
+    from fcpy.plot import gen_sc_fc_figure_single
+    from fcpy.plot_frame import *
+    from fcpy.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'tdmi_snr_analysis/',
                    'is_interarea': False,

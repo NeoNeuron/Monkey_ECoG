@@ -1,6 +1,6 @@
 import numpy as np 
 from scipy.io import loadmat
-from utils.utils import CG
+from fcpy.utils import CG
 import matplotlib.pyplot as plt 
 
 path = 'data/'

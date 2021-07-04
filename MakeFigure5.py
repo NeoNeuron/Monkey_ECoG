@@ -10,7 +10,7 @@
 # * Figure 5-5   : Sorted colormap for diff(GC-SC)
 
 # %%
-from utils.core import *
+from fcpy.core import *
 from MakeFigure1 import axis_log_formater, gen_sc_fc_figure_new, spines_formater
 import numpy as np
 import matplotlib.pyplot as plt

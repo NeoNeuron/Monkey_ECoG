@@ -10,10 +10,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.size']=20
 plt.rcParams['axes.labelsize']=25
-from utils.roc import scan_auc_threshold
-from utils.plot import gen_auc_threshold_figure
-from utils.utils import print_log
-from utils.core import EcogTDMI
+from fcpy.roc import scan_auc_threshold
+from fcpy.plot import gen_auc_threshold_figure
+from fcpy.utils import print_log
+from fcpy.core import EcogTDMI
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 arg_default = {
     'path': 'tdmi_snr_analysis/',

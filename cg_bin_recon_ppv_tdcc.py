@@ -6,7 +6,7 @@
 # *   - All normalized to 0-1 valued matrix;
 
 if __name__ == '__main__':
-    from utils.plot import plot_ppv_curves
+    from fcpy.plot import plot_ppv_curves
     path = 'tdmi_snr_analysis/'
     fnames = ['recon_fit_tdcc_CG.npy', 'recon_gap_tdcc_CG.npy', 'recon_roc_tdcc_CG.npy']
     fnames = [path+fname for fname in fnames]

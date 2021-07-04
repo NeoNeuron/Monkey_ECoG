@@ -1,7 +1,7 @@
 # Author: Kai Chen
 import numpy as np
 from GC import GC
-from utils.utils import print_log
+from fcpy.utils import print_log
 import time
 import os
 from scipy.signal import detrend

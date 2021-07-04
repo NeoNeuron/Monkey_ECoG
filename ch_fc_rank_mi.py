@@ -11,10 +11,10 @@ if __name__ == '__main__':
     # plt.rcParams['axes.labelsize'] = 16
     plt.rcParams['xtick.labelsize'] = 12
     plt.rcParams['ytick.labelsize'] = 12
-    from utils.core import EcogTDMI
-    from utils.utils import print_log
-    from utils.plot import gen_fc_rank_figure_single
-    from utils.plot_frame import *
+    from fcpy.core import EcogTDMI
+    from fcpy.utils import print_log
+    from fcpy.plot import gen_fc_rank_figure_single
+    from fcpy.plot_frame import *
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {
         'path': 'tdmi_snr_analysis/',

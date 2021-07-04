@@ -11,9 +11,9 @@ if __name__ == '__main__':
     mpl.rcParams['xtick.labelsize'] = 16
     mpl.rcParams['ytick.labelsize'] = 16
     import matplotlib.pyplot as plt
-    from utils.core import EcogGC
-    from utils.plot import gen_causal_distribution_figure
-    from utils.utils import print_log
+    from fcpy.core import EcogGC
+    from fcpy.plot import gen_causal_distribution_figure
+    from fcpy.utils import print_log
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     arg_default = {'path': 'data_preprocessing_46_region/',
                    'order': 6,
