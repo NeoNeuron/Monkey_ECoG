@@ -2,10 +2,14 @@
 
 **Reconstruction of the large scale connectome based on macaque ECoG data.**
 
-## Compiler Cython-integrated MI estimator
+## Installation
 
 ```bash
+# compiler cython-integrated mutual-info estimator
 cd mutual_information
+pip install -e .
+# install fcpy
+cd ..
 pip install -e .
 ```
 
