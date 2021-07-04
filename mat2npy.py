@@ -23,8 +23,8 @@ for band in filters:
         data_shuffle[band] = np.ones_like(buffer['GC'])*buffer['gc_zero_line'][0,0]
     else:
         warnings.warn(f"{path:s}m_data_{band:s}.mat does not exist.")
-        data[band] = None
-        data_shuffle[band] = None
+        # data[band] = None
+        # data_shuffle[band] = None
 
 np.savez(path+'cgc.npz', **data)
 np.savez(path+'cgc_shuffled.npz', **data_shuffle)

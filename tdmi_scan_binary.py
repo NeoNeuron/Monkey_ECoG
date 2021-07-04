@@ -10,7 +10,7 @@ def double2bool(data, th = 0):
     return data_bin.astype(bool)
 # %%
 data_package = np.load('data/preprocessed_data.npz', allow_pickle=True)
-filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw']
+filter_pool = ['delta', 'theta', 'alpha', 'beta', 'gamma', 'high_gamma', 'raw', 'sub_delta', 'above_delta']
 # %%
 mi = {}
 delay = 3001
@@ -30,7 +30,7 @@ np.savez('data/tdmi_binary.npz', **mi)
 # %%
 import matplotlib.pyplot as plt
 mi = np.load('data/tdmi_binary.npz', allow_pickle=True)
-fig, ax = plt.subplots(2,4,figsize=(20,10))
+fig, ax = plt.subplots(2,5,figsize=(25,10))
 ax = ax.flatten()
 for i, band in enumerate(filter_pool):
     ax[i].hist(np.log10(mi[band].max(2)+1e-6).flatten(), bins=50)
