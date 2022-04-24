@@ -4,6 +4,7 @@ literatures
 .vscode
 .ipynb_checkpoints
 tdmi_snr_analysis
+*.egg-info
 
 # ignore file types
 *.npy
